@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 
+
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -28,8 +29,12 @@ const Header: React.FC = () => {
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
-          <div className="text-2xl font-bold text-[#7c393e]">
-            الصفحة العامة
+          <div className="flex items-center">
+            <img
+              src={"/logo.png"}
+              alt="صحوة Logo"
+              className="h-20 w-auto object-contain"
+            />
           </div>
 
           {/* Desktop Navigation */}
