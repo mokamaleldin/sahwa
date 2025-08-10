@@ -16,14 +16,6 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setIsMenuOpen(false);
-    }
-  };
-
   return (
     <header className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${
       isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
@@ -58,20 +50,20 @@ const Header: React.FC = () => {
             >
               الأعضاء
             </Link>
-            <button
-              onClick={() => scrollToSection('programs')}
+            <Link
+              to="/programs"
               className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
                 }`}
             >
               برامجنا
-            </button>
-            <button
-              onClick={() => scrollToSection('contact')}
+            </Link>
+            <Link
+              to="/contact"
               className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
                 }`}
             >
               تواصل معنا
-            </button>
+            </Link>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -106,18 +98,18 @@ const Header: React.FC = () => {
               >
                 الأعضاء
               </Link>
-              <button
-                onClick={() => scrollToSection('programs')}
+              <Link
+                to="/programs"
                 className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#7c393e] transition-colors duration-200"
               >
                 برامجنا
-              </button>
-              <button
-                onClick={() => scrollToSection('contact')}
+              </Link>
+              <Link
+                to="/contact"
                 className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#7c393e] transition-colors duration-200"
               >
                 تواصل معنا
-              </button>
+              </Link>
             </div>
           </div>
         )}

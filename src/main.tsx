@@ -5,6 +5,8 @@ import App from './App.tsx';
 import AdministrativePage from './pages/Administrative.tsx';
 import MembershipCardPage from './pages/MembershipCard.tsx';
 import MembersPage from './pages/Members.tsx';
+import ProgramsPage from './pages/Programs.tsx';
+import ContactAndGroupsPage from './pages/ContactAndGroups.tsx';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -15,6 +17,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/administrative" element={<AdministrativePage />} />
         <Route path="/membership-card" element={<MembershipCardPage />} />
         <Route path="/members" element={<MembersPage />} />
+        <Route path="/programs" element={<ProgramsPage />} />
+        <Route path="/contact" element={<ContactAndGroupsPage />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>
