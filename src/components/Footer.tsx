@@ -72,7 +72,7 @@ const Footer: React.FC = () => {
               </div>
               <div className="flex items-center justify-center md:justify-start space-x-reverse space-x-3">
                 <MapPin size={20} />
-                <span className="text-white/80">الرياض، المملكة العربية السعودية</span>
+                <span className="text-white/80">إسطنبول، تركيا</span>
               </div>
             </div>
           </div>
