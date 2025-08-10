@@ -17,10 +17,10 @@ const Hero: React.FC = () => {
       {/* Content */}
       <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 animate-fade-in-up">
-          الصفحة العامة
+          صحوة - sahwa
         </h1>
         <p className="text-xl sm:text-2xl text-white/90 mb-8 leading-relaxed animate-fade-in-up animation-delay-200">
-          نطمح إلى تكوين الطالب الجامعي السليم، الذي يحمل في قلبه نور الإيمان
+          صحوة لشباب امتنا
         </p>
         <button 
           onClick={() => document.getElementById('vision')?.scrollIntoView({ behavior: 'smooth' })}

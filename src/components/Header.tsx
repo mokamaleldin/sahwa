@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
-
+import { Link, useLocation } from 'react-router-dom';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -29,56 +30,55 @@ const Header: React.FC = () => {
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
-          <div className="flex items-center">
-            <img
-              src={"/logo.png"}
-              alt="صحوة Logo"
-              className="h-20 w-auto object-contain"
-            />
-          </div>
+          <Link to="/" className="text-2xl font-bold text-[#7c393e]">
+            صحوة - sahwa
+          </Link>
 
           {/* Desktop Navigation */}
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-reverse space-x-8">
-            <button 
-              onClick={() => scrollToSection('vision')}
-              className={`transition-colors duration-200 hover:text-[#7c393e] ${
-                isScrolled ? 'text-gray-700' : 'text-white'
-              }`}
+            <Link
+              to="/administrative"
+              className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
+                }`}
             >
-              الرؤية
+              الهيكل الاداري
+            </Link>
+            <Link
+              to="/membership-card"
+              className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
+                }`}
+            >
+              بطاقات العضوية
+            </Link>
+            <Link
+              to="/members"
+              className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
+                }`}
+            >
+              الأعضاء
+            </Link>
+            <button
+              onClick={() => scrollToSection('programs')}
+              className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
+                }`}
+            >
+              برامجنا
             </button>
-            <button 
-              onClick={() => scrollToSection('mission')}
-              className={`transition-colors duration-200 hover:text-[#7c393e] ${
-                isScrolled ? 'text-gray-700' : 'text-white'
-              }`}
+            <button
+              onClick={() => scrollToSection('contact')}
+              className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
+                }`}
             >
-              الرسالة
-            </button>
-            <button 
-              onClick={() => scrollToSection('goals')}
-              className={`transition-colors duration-200 hover:text-[#7c393e] ${
-                isScrolled ? 'text-gray-700' : 'text-white'
-              }`}
-            >
-              أهدافنا
-            </button>
-            <button 
-              onClick={() => scrollToSection('values')}
-              className={`transition-colors duration-200 hover:text-[#7c393e] ${
-                isScrolled ? 'text-gray-700' : 'text-white'
-              }`}
-            >
-              قيمنا ومبادئنا
+              تواصل معنا
             </button>
           </nav>
 
           {/* Mobile Menu Button */}
-          <button 
+          <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className={`md:hidden transition-colors duration-200 ${
-              isScrolled ? 'text-gray-700' : 'text-white'
-            }`}
+            className={`md:hidden transition-colors duration-200 ${isScrolled ? 'text-gray-700' : 'text-white'
+              }`}
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -88,29 +88,35 @@ const Header: React.FC = () => {
         {isMenuOpen && (
           <div className="md:hidden bg-white/95 backdrop-blur-md rounded-lg shadow-lg mb-4 animate-fade-in">
             <div className="py-4 space-y-4">
-              <button 
-                onClick={() => scrollToSection('vision')}
+              <Link
+                to="/administrative"
                 className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#7c393e] transition-colors duration-200"
               >
-                الرؤية
+                الهيكل الاداري
+              </Link>
+              <Link
+                to="/membership-card"
+                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#7c393e] transition-colors duration-200"
+              >
+                بطاقات العضوية
+              </Link>
+              <Link
+                to="/members"
+                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#7c393e] transition-colors duration-200"
+              >
+                الأعضاء
+              </Link>
+              <button
+                onClick={() => scrollToSection('programs')}
+                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#7c393e] transition-colors duration-200"
+              >
+                برامجنا
               </button>
-              <button 
-                onClick={() => scrollToSection('mission')}
+              <button
+                onClick={() => scrollToSection('contact')}
                 className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#7c393e] transition-colors duration-200"
               >
-                الرسالة
-              </button>
-              <button 
-                onClick={() => scrollToSection('goals')}
-                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#7c393e] transition-colors duration-200"
-              >
-                أهدافنا
-              </button>
-              <button 
-                onClick={() => scrollToSection('values')}
-                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#7c393e] transition-colors duration-200"
-              >
-                قيمنا ومبادئنا
+                تواصل معنا
               </button>
             </div>
           </div>
