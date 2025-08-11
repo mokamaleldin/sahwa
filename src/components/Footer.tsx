@@ -21,7 +21,7 @@ const Footer: React.FC = () => {
                   onClick={() => document.getElementById('administrative')?.scrollIntoView({ behavior: 'smooth' })}
                   className="text-white/80 hover:text-white transition-colors duration-200"
                 >
-                  الصفحة الإدارية
+                  الهيكل الاداري
                 </button>
               </li>
               <li>
@@ -37,7 +37,7 @@ const Footer: React.FC = () => {
                   onClick={() => document.getElementById('members')?.scrollIntoView({ behavior: 'smooth' })}
                   className="text-white/80 hover:text-white transition-colors duration-200"
                 >
-                  صفحة الأعضاء
+                  الأعضاء
                 </button>
               </li>
               <li>
@@ -45,7 +45,8 @@ const Footer: React.FC = () => {
                   onClick={() => document.getElementById('programs')?.scrollIntoView({ behavior: 'smooth' })}
                   className="text-white/80 hover:text-white transition-colors duration-200"
                 >
-                  صفحة البرامج
+                  برامجنا
+
                 </button>
               </li>
               <li>
@@ -53,7 +54,7 @@ const Footer: React.FC = () => {
                   onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
                   className="text-white/80 hover:text-white transition-colors duration-200"
                 >
-                  التواصل والمجموعات
+                  تواصل معنا
                 </button>
               </li>
             </ul>
@@ -81,6 +82,9 @@ const Footer: React.FC = () => {
         <div className="border-t border-white/20 mt-8 pt-8 text-center">
           <p className="text-white/60">
             © 2025 صحوة. جميع الحقوق محفوظة.
+          </p>
+          <p className="text-white/60">
+            Site by: <a href="https://www.mokamaleldin.com/" target="_blank" rel="noopener noreferrer">Mohamed Kamaleldin</a>
           </p>
         </div>
       </div>
