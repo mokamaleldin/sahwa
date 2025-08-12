@@ -7,66 +7,66 @@ const MembersPage: React.FC = () => {
     const leadershipTeam = [
         {
             id: 1,
-            name: "براء",
+            name: "البراء معمر",
             position: "المسؤول العام",
             photo: true,
-            university: "جامعة إستينيا",
+            university: "جامعة بلجي",
             description: "يشرف على جميع أنشطة المبادرة والتخطيط الاستراتيجي"
         },
         {
             id: 2,
-            name: "كمال",
+            name: "محمد كمال الدين",
             position: "مسؤول شؤون الطلاب",
             photo: true,
-            university: "جامعة بلجي",
+            university: "جامعة استنيا",
             description: "يتولى متابعة احتياجات الطلاب وتنسيق البرامج الطلابية"
         },
         {
             id: 3,
-            name: "أنس",
+            name: "أنس محمد",
             position: "المسؤول المالي",
             photo: true,
-            university: "جامعة إستينيا",
+            university: "صباح الدين",
             description: "يدير الموارد المالية للمبادرة وإعداد التقارير المالية"
         },
         {
             id: 4,
-            name: "عمرو",
+            name: "عمرو السيد",
             position: "المسؤول الإعلامي",
             photo: true,
-            university: "جامعة بلجي",
+            university: "جامعة استنيا",
             description: "يشرف على المحتوى الإعلامي ومنصات التواصل الاجتماعي"
         },
         {
             id: 5,
-            name: "عبدالله",
+            name: "عبدالله جامع",
             position: "مسؤول العلاقات العامة",
-            photo: false,
-            university: "جامعة إستينيا",
+            photo: true,
+            university: "جامعة بلجي",
             description: "يتولى التواصل مع الجهات الخارجية وبناء الشراكات"
         },
         {
             id: 6,
-            name: "كاميليا",
+            name: "كاميليا اليوسف",
             position: "مسؤولة شؤون الطالبات",
             photo: true,
-            university: "جامعة بلجي",
+            university: "جامعة استنيا",
             description: "تنسق الأنشطة الخاصة بالطالبات والتواصل مع الطالبات"
         },
         {
             id: 7,
-            name: "يقين",
+            name: "يقين تامر",
             position: "مسؤولة شؤون المتطوعين",
             photo: true,
-            university: "جامعة إستينيا",
+            university: "جامعة استنيا",
             description: "تدير برامج التطوع واستقطاب وتنظيم المتطوعين"
         },
         {
             id: 8,
-            name: "حسن",
+            name: "حسن طه",
             position: "مسؤول الأنشطة واللوجستيات",
-            photo: false,
-            university: "جامعة بلجي",
+            photo: true,
+            university: "جامعة استنيا",
             description: "يخطط وينظم الفعاليات ويؤمن الاحتياجات اللوجستية"
         },
     ];
@@ -77,70 +77,73 @@ const MembersPage: React.FC = () => {
             id: 1,
             name: "فريق شؤون الطلاب",
             members: [
-                { id: 101, name: "أحمد عبدالله", role: "منسق برامج", photo: true, university: "جامعة إستينيا" },
-                { id: 102, name: "محمد سعيد", role: "مسؤول الدعم", photo: false, university: "جامعة بلجي" },
-                { id: 103, name: "نورا أحمد", role: "منسقة تواصل", photo: true, university: "جامعة إستينيا" },
-                { id: 104, name: "عمر خالد", role: "مساعد مسؤول", photo: true, university: "جامعة بلجي" },
+                { id: 101, name: "عمر الجمل", photo: true, university: "جامعة استنيا" },
+                { id: 102, name: "أسامه أبوشويشه", photo: true, university: "جامعة بلجي" },
+                { id: 103, name: "رشا مجبور", photo: true, university: "جامعة استنيا" },
+                { id: 104, name: "خالد مسلم", photo: true, university: "جامعة بلجي" },
             ]
         },
         {
             id: 2,
             name: "الفريق المالي",
             members: [
-                { id: 201, name: "سارة محمد", role: "محاسبة", photo: true, university: "جامعة إستينيا" },
-                { id: 202, name: "خالد عمر", role: "مدقق مالي", photo: false, university: "جامعة بلجي" },
-                { id: 203, name: "ريم عبدالرحمن", role: "منسقة موارد", photo: true, university: "جامعة إستينيا" },
+                { id: 201, name: "سارة محمود", photo: true, university: "جامعة استنيا" },
+                { id: 202, name: "ريان", photo: true, university: "جامعة بلجي" },
             ]
         },
         {
             id: 3,
-            name: "الفريق الإعلامي",
+            name: "اللجنة الإعلامية",
             members: [
-                { id: 301, name: "فاطمة أحمد", role: "مصممة جرافيك", photo: true, university: "جامعة بلجي" },
-                { id: 302, name: "يوسف علي", role: "محرر محتوى", photo: false, university: "جامعة إستينيا" },
-                { id: 303, name: "لينا محمد", role: "مسؤولة سوشيال ميديا", photo: true, university: "جامعة بلجي" },
-                { id: 304, name: "عبدالرحمن فهد", role: "مصور", photo: false, university: "جامعة إستينيا" },
-                { id: 305, name: "نور الهدى", role: "مصممة فيديو", photo: true, university: "جامعة بلجي" },
+                { id: 301, name: "حماس تامر", photo: true, university: "جامعة استنيا" },
+                { id: 302, name: "جنة عبدربه", photo: true, university: "جامعة استنيا" },
+                { id: 303, name: "عنان عفيفي", photo: true, university: "جامعة استنيا" },
+                { id: 304, name: "آية رجوب", photo: true, university: "جامعة استنيا" },
+                { id: 305, name: "عفيف", photo: true, university: "جامعة بلجي" },
+                { id: 306, name: "فرحان", photo: true, university: "جامعة بلجي" },
+                { id: 307, name: "ماريا عقاد", photo: true, university: "جامعة بلجي" },
+
             ]
         },
         {
             id: 4,
             name: "فريق العلاقات العامة",
             members: [
-                { id: 401, name: "عبدالعزيز محمد", role: "منسق شراكات", photo: true, university: "جامعة إستينيا" },
-                { id: 402, name: "منى عبدالله", role: "مسؤولة تواصل خارجي", photo: false, university: "جامعة بلجي" },
-                { id: 403, name: "طارق سعيد", role: "مسؤول فعاليات خارجية", photo: true, university: "جامعة إستينيا" },
+                { id: 401, name: "عامر", photo: true, university: "جامعة استنيا" },
             ]
         },
         {
             id: 5,
             name: "فريق شؤون الطالبات",
             members: [
-                { id: 501, name: "سمية عادل", role: "منسقة برامج", photo: true, university: "جامعة بلجي" },
-                { id: 502, name: "رنا محمد", role: "مسؤولة تواصل", photo: false, university: "جامعة إستينيا" },
-                { id: 503, name: "دانية خالد", role: "منظمة فعاليات", photo: true, university: "جامعة بلجي" },
-                { id: 504, name: "هدى أحمد", role: "مستشارة", photo: false, university: "جامعة إستينيا" },
+                { id: 501, name: "ساره عقاد", photo: true, university: "جامعة بلجي" },
+                { id: 502, name: "خلود كردي", photo: true, university: "جامعة استنيا" },
             ]
         },
         {
             id: 6,
             name: "فريق شؤون المتطوعين",
             members: [
-                { id: 601, name: "محمد عبدالرحمن", role: "منسق استقطاب", photo: true, university: "جامعة بلجي" },
-                { id: 602, name: "نوف سلطان", role: "مسؤولة تدريب", photo: true, university: "جامعة إستينيا" },
-                { id: 603, name: "أسامة فهد", role: "منسق برامج تطوعية", photo: false, university: "جامعة بلجي" },
-                { id: 604, name: "غادة محمد", role: "مسؤولة متابعة", photo: true, university: "جامعة إستينيا" },
+                { id: 603, name: "أسامه خضر", photo: true, university: "جامعة بلجي" },
+                { id: 604, name: "خديجه محمود", photo: true, university: "جامعة استنيا" },
             ]
         },
         {
             id: 7,
             name: "فريق الأنشطة واللوجستيات",
             members: [
-                { id: 701, name: "سارة أحمد", role: "مسؤولة فعاليات", photo: true, university: "جامعة إستينيا" },
-                { id: 702, name: "فيصل عبدالله", role: "منسق لوجستي", photo: false, university: "جامعة بلجي" },
-                { id: 703, name: "رامي سعيد", role: "مسؤول قاعات", photo: true, university: "جامعة إستينيا" },
-                { id: 704, name: "ليان محمد", role: "منسقة ضيافة", photo: false, university: "جامعة بلجي" },
-                { id: 705, name: "ماجد عمر", role: "منسق تجهيزات", photo: true, university: "جامعة إستينيا" },
+                { id: 701, name: "وئام الغرباني", photo: true, university: "جامعة استنيا" },
+                { id: 702, name: "زياد خفاجي", photo: true, university: "جامعة بلجي" },
+                { id: 703, name: "غني محمد", photo: true, university: "جامعة استنيا" },
+                { id: 704, name: "فلك الحُميدان", photo: true, university: "جامعة استنيا" },
+                { id: 705, name: "حمدي النقيب", photo: true, university: "جامعة استنيا" },
+                { id: 706, name: "عدنان النبري", photo: true, university: "جامعة بلجي" },
+                { id: 707, name: "جوان سليمان", photo: true, university: "جامعة بلجي" },
+                { id: 708, name: "ايمن سليمان", photo: true, university: "جامعة استنيا" },
+                { id: 308, name: "فاطمة الزهراء", photo: true, university: "جامعة استنيا" },
+                { id: 309, name: "جمانه أحمد", photo: true, university: "جامعة بلجي" },
+                { id: 310, name: "عبدالرحمن اكساكالي", photo: true, university: "جامعة بلجي" },
+                { id: 311, name: "عزة الموصلي", photo: true, university: "جامعة استنيا" },
             ]
         },
     ];
@@ -189,16 +192,22 @@ const MembersPage: React.FC = () => {
                                 الجميع
                             </button>
                             <button
-                                className={`px-4 py-2 ${universityFilter === 'جامعة إستينيا' ? 'bg-[#7c393e] text-white' : 'bg-white text-gray-700 border-y border-gray-300'}`}
-                                onClick={() => setUniversityFilter('جامعة إستينيا')}
+                                className={`px-4 py-2 ${universityFilter === 'جامعة استنيا' ? 'bg-[#7c393e] text-white' : 'bg-white text-gray-700 border-y border-gray-300'}`}
+                                onClick={() => setUniversityFilter('جامعة استنيا')}
                             >
-                                جامعة إستينيا
+                                جامعة استنيا
                             </button>
                             <button
-                                className={`px-4 py-2 rounded-l-md ${universityFilter === 'جامعة بلجي' ? 'bg-[#7c393e] text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
+                                className={`px-4 py-2 ${universityFilter === 'جامعة بلجي' ? 'bg-[#7c393e] text-white' : 'bg-white text-gray-700 border-y border-gray-300'}`}
                                 onClick={() => setUniversityFilter('جامعة بلجي')}
                             >
                                 جامعة بلجي
+                            </button>
+                            <button
+                                className={`px-4 py-2 rounded-l-md ${universityFilter === 'صباح الدين' ? 'bg-[#7c393e] text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
+                                onClick={() => setUniversityFilter('صباح الدين')}
+                            >
+                                صباح الدين
                             </button>
                         </div>
                     </div>
@@ -257,7 +266,6 @@ const MembersPage: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     <h4 className="font-semibold">{member.name}</h4>
-                                                    <p className="text-[#7c393e] text-sm">{member.role}</p>
                                                     <p className="text-gray-500 text-xs mt-1">{member.university}</p>
                                                 </div>
                                             </div>
