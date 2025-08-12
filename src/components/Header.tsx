@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,10 +19,14 @@ const Header: React.FC = () => {
     <header className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${
       isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
     }`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          <Link to="/" className="text-2xl font-bold text-[#7c393e]">
-            صحوة - sahwa
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center ">
+          <Link to="/" >
+            <img
+              src="logo.svg"
+              alt="صحوة - sahwa"
+              className=" w-36 h-36"
+            />
           </Link>
 
           {/* Desktop Navigation */}
