@@ -518,9 +518,9 @@ const MembersPage: React.FC = () => {
             <div className="text-center bg-gradient-to-br from-[#7c393e] to-[#8b4346] p-12 rounded-2xl text-white max-w-6xl mx-auto mb-12">
                 <h3 className="text-3xl font-bold mb-4">انضم إلينا</h3>
                 <p className="text-xl mb-8 text-white/90">نرحب بانضمامك إلى مبادرة صحوة للمساهمة معنا في تحقيق أهدافنا وخدمة مجتمعنا الطلابي</p>
-                <button className="bg-white text-[#7c393e] font-bold py-4 px-8 rounded-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <a href='https://forms.gle/xaLReRNajenPYHkB6'  className="bg-white text-[#7c393e] font-bold py-4 px-8 rounded-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg">
                         سجل للتطوع معنا
-                    </button>
+                </a>
                 </div>
 
             {/* Call to Action */}
