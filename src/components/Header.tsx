@@ -32,20 +32,7 @@ const Header: React.FC = () => {
           {/* Desktop Navigation */}
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-reverse space-x-8">
-            <Link
-              to="/administrative"
-              className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
-                }`}
-            >
-              الهيكل الاداري
-            </Link>
-            <Link
-              to="/membership-card"
-              className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
-                }`}
-            >
-              بطاقات العضوية
-            </Link>
+
             <Link
               to="/members"
               className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
@@ -59,6 +46,13 @@ const Header: React.FC = () => {
                 }`}
             >
               برامجنا
+            </Link>
+            <Link
+              to="/membership-card"
+              className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
+                }`}
+            >
+              بطاقات العضوية
             </Link>
             <Link
               to="/contact"
