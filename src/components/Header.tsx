@@ -76,19 +76,7 @@ const Header: React.FC = () => {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden bg-white/95 backdrop-blur-md rounded-lg shadow-lg mb-4 animate-fade-in">
-            <div className="py-4 space-y-4">
-              <Link
-                to="/administrative"
-                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#c68f4f] transition-colors duration-200"
-              >
-                الهيكل الاداري
-              </Link>
-              <Link
-                to="/membership-card"
-                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#c68f4f] transition-colors duration-200"
-              >
-                بطاقات العضوية
-              </Link>
+            <div className="py-3 space-y-4">
               <Link
                 to="/members"
                 className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#c68f4f] transition-colors duration-200"
@@ -100,6 +88,12 @@ const Header: React.FC = () => {
                 className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#c68f4f] transition-colors duration-200"
               >
                 برامجنا
+              </Link>
+              <Link
+                to="/membership-card"
+                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#c68f4f] transition-colors duration-200"
+              >
+                بطاقات العضوية
               </Link>
               <Link
                 to="/contact"
