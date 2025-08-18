@@ -35,28 +35,28 @@ const Header: React.FC = () => {
 
             <Link
               to="/members"
-              className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
+              className={`transition-colors duration-200 hover:text-[#c68f4f] ${isScrolled ? 'text-gray-700' : 'text-white'
                 }`}
             >
               الأعضاء
             </Link>
             <Link
               to="/programs"
-              className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
+              className={`transition-colors duration-200 hover:text-[#c68f4f] ${isScrolled ? 'text-gray-700' : 'text-white'
                 }`}
             >
               برامجنا
             </Link>
             <Link
               to="/membership-card"
-              className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
+              className={`transition-colors duration-200 hover:text-[#c68f4f] ${isScrolled ? 'text-gray-700' : 'text-white'
                 }`}
             >
               بطاقات العضوية
             </Link>
             <Link
               to="/contact"
-              className={`transition-colors duration-200 hover:text-[#7c393e] ${isScrolled ? 'text-gray-700' : 'text-white'
+              className={`transition-colors duration-200 hover:text-[#c68f4f] ${isScrolled ? 'text-gray-700' : 'text-white'
                 }`}
             >
               تواصل معنا
@@ -79,31 +79,31 @@ const Header: React.FC = () => {
             <div className="py-4 space-y-4">
               <Link
                 to="/administrative"
-                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#7c393e] transition-colors duration-200"
+                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#c68f4f] transition-colors duration-200"
               >
                 الهيكل الاداري
               </Link>
               <Link
                 to="/membership-card"
-                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#7c393e] transition-colors duration-200"
+                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#c68f4f] transition-colors duration-200"
               >
                 بطاقات العضوية
               </Link>
               <Link
                 to="/members"
-                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#7c393e] transition-colors duration-200"
+                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#c68f4f] transition-colors duration-200"
               >
                 الأعضاء
               </Link>
               <Link
                 to="/programs"
-                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#7c393e] transition-colors duration-200"
+                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#c68f4f] transition-colors duration-200"
               >
                 برامجنا
               </Link>
               <Link
                 to="/contact"
-                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#7c393e] transition-colors duration-200"
+                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#c68f4f] transition-colors duration-200"
               >
                 تواصل معنا
               </Link>

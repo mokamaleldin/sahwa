@@ -1,23 +1,19 @@
 import React from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Hero from '../components/Hero';
 
 const ContactAndGroups: React.FC = () => {
     return (
         <div className="min-h-screen bg-white" dir="rtl">
             <Header />
             
-            {/* Hero Section */}
-            <div className="pt-32 pb-16 bg-gradient-to-b from-[#7c393e]/90 to-[#7c393e]/70">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center text-white">
-                        <h1 className="text-4xl md:text-5xl font-bold mb-4">صفحة التواصل والجروبات</h1>
-                        <p className="text-xl max-w-3xl mx-auto">
-                            انضم إلى مجموعات مبادرة صحوة وتابعنا على منصات التواصل الاجتماعي
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <Hero
+                title="صفحة التواصل والجروبات"
+                description="                            انضم إلى مجموعات مبادرة صحوة وتابعنا على منصات التواصل الاجتماعي
+"
+
+            />
             
             {/* WhatsApp Groups Section */}
             <section className="py-16 bg-white">
@@ -46,7 +42,7 @@ const ContactAndGroups: React.FC = () => {
                                 </p>
                                 <div className="flex justify-center">
                                     <a 
-                                        href="https://chat.whatsapp.com/JdWc8niorN4LS0DwH8xHv5" 
+                                        href="https://chat.whatsapp.com/K3j6B1lcA42B80O1KpTLFO" 
                                         target="_blank" 
                                         rel="noopener noreferrer"
                                         className="px-6 py-3 bg-[#25D366] text-white rounded-md font-semibold hover:bg-[#128C7E] transition-colors flex items-center"
@@ -59,7 +55,7 @@ const ContactAndGroups: React.FC = () => {
                                 </div>
                                 <div className="mt-6 text-center">
                                     <p className="text-sm text-gray-500">رابط مباشر:</p>
-                                    <p className="text-sm text-[#7c393e] break-all">chat.whatsapp.com/JdWc8niorN4LS0DwH8xHv5</p>
+                                    <p className="text-sm text-[#7c393e] break-all">https://chat.whatsapp.com/K3j6B1lcA42B80O1KpTLFO</p>
                                 </div>
                             </div>
                         </div>
@@ -111,9 +107,9 @@ const ContactAndGroups: React.FC = () => {
                         </p>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 ">
                         {/* Instagram */}
-                        <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow">
+                        <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow ">
                             <div className="p-8">
                                 <div className="flex justify-center mb-6">
                                     <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] flex items-center justify-center text-white">
@@ -183,39 +179,7 @@ const ContactAndGroups: React.FC = () => {
                 </div>
             </section>
             
-            {/* Direct Contact Section */}
-            <section className="py-16 bg-white">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="max-w-4xl mx-auto bg-gradient-to-br from-[#7c393e] to-[#7c393e]/90 rounded-lg shadow-lg overflow-hidden">
-                        <div className="p-8 md:p-12 text-center">
-                            <h2 className="text-3xl font-bold text-white mb-4">تواصل معنا مباشرة</h2>
-                            <p className="text-white/90 mb-8 max-w-2xl mx-auto">
-                                هل لديك أي استفسارات أو اقتراحات؟ لا تتردد في التواصل معنا مباشرة عبر البريد الإلكتروني أو رقم الهاتف
-                            </p>
-                            <div className="flex flex-col md:flex-row justify-center gap-6">
-                                <a 
-                                    href="mailto:sahwa.initiative@gmail.com" 
-                                    className="bg-white text-[#7c393e] px-6 py-3 rounded-md font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                    البريد الإلكتروني
-                                </a>
-                                <a 
-                                    href="tel:+905555555555" 
-                                    className="bg-white text-[#7c393e] px-6 py-3 rounded-md font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                    </svg>
-                                    الهاتف
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
+
             
             {/* FAQ Section */}
             <section className="py-16 bg-gray-50">

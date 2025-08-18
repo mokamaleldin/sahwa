@@ -1,6 +1,7 @@
 import React from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Hero from '../components/Hero';
 
 const Programs: React.FC = () => {
     // Program data
@@ -52,18 +53,13 @@ const Programs: React.FC = () => {
     return (
         <div className="min-h-screen bg-white" dir="rtl">
             <Header />
-            
-            {/* Hero Section */}
-            <div className="pt-32 pb-16 bg-gradient-to-b from-[#7c393e]/90 to-[#7c393e]/70">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center text-white">
-                        <h1 className="text-4xl md:text-5xl font-bold mb-4">صفحة البرامج</h1>
-                        <p className="text-xl max-w-3xl mx-auto">
-                            تقدم مبادرة صحوة مجموعة متنوعة من البرامج والأنشطة لخدمة الطلبة وتنمية مهاراتهم
-                        </p>
-                    </div>
-                </div>
-            </div>
+
+            <Hero
+                title="البرامج"
+                description="تقدم مبادرة صحوة مجموعة متنوعة من البرامج والأنشطة لخدمة الطلبة وتنمية مهاراتهم
+"
+            />
+
             
             {/* Programs Section */}
             <section className="py-16">

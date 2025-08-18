@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Hero from '../components/Hero';
 
 const MembersPage: React.FC = () => {
     // General Board of Directors
@@ -243,18 +244,11 @@ const MembersPage: React.FC = () => {
         <div className="min-h-screen bg-white" dir="rtl">
             <Header />
 
-            {/* Hero Section */}
-            <div className="pt-32 pb-16 bg-gradient-to-b from-[#7c393e]/90 to-[#7c393e]/70">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center text-white">
-                        <h1 className="text-4xl md:text-5xl font-bold mb-4">صفحة الأعضاء</h1>
-                        <div className="w-24 h-1 bg-[#c68f4f] mx-auto mb-6"></div>
-                        <p className="text-xl max-w-3xl mx-auto">
-                            تعرّف على أعضاء مبادرة صحوة من قادة ومسؤولين ومتطوعين
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <Hero
+                title="الأعضاء"
+                description="تعرّف على أعضاء مبادرة صحوة "
+
+            />
 
             {/* Filter Controls */}
             <div className="bg-gray-50 py-6 border-b border-gray-200">
@@ -520,17 +514,17 @@ const MembersPage: React.FC = () => {
             )}
 
             {/* Join Us Section */}
-            <section className="py-16 bg-[#7c393e]/10">
-                <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <h2 className="text-2xl font-bold text-[#7c393e] mb-4">انضم إلينا</h2>
-                    <p className="text-gray-700 mb-8">
-                        نرحب بانضمامك إلى مبادرة صحوة للمساهمة معنا في تحقيق أهدافنا وخدمة مجتمعنا الطلابي
-                    </p>
-                    <button className="bg-[#7c393e] text-white font-semibold px-8 py-3 rounded-md hover:bg-[#7c393e]/90 transition-colors">
+
+            <div className="text-center bg-gradient-to-br from-[#7c393e] to-[#8b4346] p-12 rounded-2xl text-white max-w-6xl mx-auto mb-12">
+                <h3 className="text-3xl font-bold mb-4">انضم إلينا</h3>
+                <p className="text-xl mb-8 text-white/90">نرحب بانضمامك إلى مبادرة صحوة للمساهمة معنا في تحقيق أهدافنا وخدمة مجتمعنا الطلابي</p>
+                <button className="bg-white text-[#7c393e] font-bold py-4 px-8 rounded-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg">
                         سجل للتطوع معنا
                     </button>
                 </div>
-            </section>
+
+            {/* Call to Action */}
+
 
             <Footer />
         </div>
