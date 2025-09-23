@@ -105,6 +105,7 @@ const Header: React.FC = () => {
           </div>
         )}
       </div>
+      
     </header>
   );
 };
