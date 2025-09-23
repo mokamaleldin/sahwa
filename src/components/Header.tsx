@@ -20,19 +20,25 @@ const Header: React.FC = () => {
       isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
     }`}>
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center ">
+        <div className="flex justify-between items-center px-4">
           <Link to="/" >
             <img
               src="logo.svg"
               alt="صحوة - sahwa"
-              className=" w-36 h-36"
+              className="w-24 h-24 md:w-36 md:h-36"
             />
           </Link>
 
           {/* Desktop Navigation */}
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-reverse space-x-8">
-
+            <Link
+              to="/"
+              className={`transition-colors duration-200 hover:text-[#c68f4f] ${isScrolled ? 'text-gray-700' : 'text-white'
+                }`}
+            >
+              الرئيسية
+            </Link>
             <Link
               to="/members"
               className={`transition-colors duration-200 hover:text-[#c68f4f] ${isScrolled ? 'text-gray-700' : 'text-white'
@@ -66,38 +72,49 @@ const Header: React.FC = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className={`md:hidden transition-colors duration-200 ${isScrolled ? 'text-gray-700' : 'text-white'
+            className={`md:hidden p-2 rounded-lg transition-all duration-200 hover:bg-black/10 ${isScrolled ? 'text-gray-700' : 'text-white'
               }`}
           >
-            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden bg-white/95 backdrop-blur-md rounded-lg shadow-lg mb-4 animate-fade-in">
-            <div className="py-3 space-y-4">
+          <div className="md:hidden absolute top-full left-4 right-4 bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-gray-100 animate-fade-in">
+            <div className="py-2">
+              <Link
+                to="/"
+                onClick={() => setIsMenuOpen(false)}
+                className="block px-4 py-3 text-right text-sm font-medium text-gray-700 hover:text-[#c68f4f] hover:bg-gray-50 transition-all duration-200 border-b border-gray-100 last:border-b-0"
+              >
+                الرئيسية
+              </Link>
               <Link
                 to="/members"
-                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#c68f4f] transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+                className="block px-4 py-3 text-right text-sm font-medium text-gray-700 hover:text-[#c68f4f] hover:bg-gray-50 transition-all duration-200 border-b border-gray-100 last:border-b-0"
               >
                 الأعضاء
               </Link>
               <Link
                 to="/programs"
-                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#c68f4f] transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+                className="block px-4 py-3 text-right text-sm font-medium text-gray-700 hover:text-[#c68f4f] hover:bg-gray-50 transition-all duration-200 border-b border-gray-100 last:border-b-0"
               >
                 برامجنا
               </Link>
               <Link
                 to="/membership-card"
-                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#c68f4f] transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+                className="block px-4 py-3 text-right text-sm font-medium text-gray-700 hover:text-[#c68f4f] hover:bg-gray-50 transition-all duration-200 border-b border-gray-100 last:border-b-0"
               >
                 بطاقات العضوية
               </Link>
               <Link
                 to="/contact"
-                className="block w-full text-right px-4 py-2 text-gray-700 hover:text-[#c68f4f] transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+                className="block px-4 py-3 text-right text-sm font-medium text-gray-700 hover:text-[#c68f4f] hover:bg-gray-50 transition-all duration-200"
               >
                 تواصل معنا
               </Link>

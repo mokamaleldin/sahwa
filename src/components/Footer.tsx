@@ -16,8 +16,14 @@ const Footer: React.FC = () => {
           <div className="text-center md:text-right">
             <h4 className="text-xl font-semibold mb-4">الأقسام</h4>
             <ul className="space-y-2">
-
-
+              <li>
+                <button
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  className="text-white/80 hover:text-white transition-colors duration-200"
+                >
+                  الرئيسية
+                </button>
+              </li>
               <li>
                 <button 
                   onClick={() => document.getElementById('members')?.scrollIntoView({ behavior: 'smooth' })}
