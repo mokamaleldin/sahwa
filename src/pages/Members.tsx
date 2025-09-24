@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Hero from '../components/Hero';
@@ -94,6 +94,18 @@ const MembersPage: React.FC = () => {
 
     // Filter by section
     const [sectionFilter, setSectionFilter] = useState('sahwa');
+    
+    // Animation state
+    const [isVisible, setIsVisible] = useState(false);
+    
+    useEffect(() => {
+        // Trigger animation after component mounts
+        const timer = setTimeout(() => {
+            setIsVisible(true);
+        }, 300);
+        
+        return () => clearTimeout(timer);
+    }, []);
 
     return (
         <div className="min-h-screen bg-white" dir="rtl">
@@ -139,18 +151,28 @@ const MembersPage: React.FC = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-bold text-[#7c393e] mb-8 text-center">جميع المتطوعين</h2>
 
-                        <div className="bg-white rounded-lg shadow-md p-6">
+                        <div className={`bg-white rounded-lg shadow-md p-6 transition-all duration-1000 ease-out ${
+                            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                        }`}>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                {sahwaVolunteers.map(member => (
-                                    <div key={member.id} className="bg-gray-50 rounded-lg p-3 hover:shadow-md transition-shadow text-center">
-                                        <div className="w-14 h-14 rounded-full bg-[#7c393e] flex items-center justify-center overflow-hidden mx-auto mb-2">
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <svg viewBox="0 0 24 24" className="w-8 h-8 text-white" fill="currentColor">
+                                {sahwaVolunteers.map((member, index) => (
+                                    <div 
+                                        key={member.id} 
+                                        className={`bg-gray-50 rounded-lg p-3 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 ease-in-out text-center transform ${
+                                            isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95'
+                                        }`}
+                                        style={{
+                                            transitionDelay: `${index * 50}ms`
+                                        }}
+                                    >
+                                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#7c393e] to-[#8b4346] flex items-center justify-center overflow-hidden mx-auto mb-2 shadow-md hover:shadow-lg transition-shadow duration-300">
+                                            <div className="w-full h-full flex items-center justify-center animate-pulse hover:animate-none">
+                                                <svg viewBox="0 0 24 24" className="w-8 h-8 text-white transition-transform duration-300 hover:scale-110" fill="currentColor">
                                                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
                                                 </svg>
                                             </div>
                                         </div>
-                                        <h5 className="font-semibold text-sm">{member.name}</h5>
+                                        <h5 className="font-semibold text-sm transition-colors duration-300 hover:text-[#7c393e]">{member.name}</h5>
                                     </div>
                                 ))}
                             </div>
@@ -165,20 +187,30 @@ const MembersPage: React.FC = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-bold text-[#7c393e] mb-8 text-center">جامعة استنيا</h2>
 
-                        <div className="bg-white rounded-lg shadow-md p-6">
+                        <div className={`bg-white rounded-lg shadow-md p-6 transition-all duration-1000 ease-out ${
+                            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                        }`}>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                {istanbulStudents.map(member => (
-                                    <div key={member.id} className="bg-gray-50 rounded-lg p-3 hover:shadow-md transition-shadow text-center">
-                                        <div className="w-14 h-14 rounded-full bg-[#7c393e] flex items-center justify-center overflow-hidden mx-auto mb-2">
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <svg viewBox="0 0 24 24" className="w-8 h-8 text-white" fill="currentColor">
+                                {istanbulStudents.map((member, index) => (
+                                    <div 
+                                        key={member.id} 
+                                        className={`bg-gray-50 rounded-lg p-3 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 ease-in-out text-center transform ${
+                                            isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95'
+                                        }`}
+                                        style={{
+                                            transitionDelay: `${index * 50}ms`
+                                        }}
+                                    >
+                                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#7c393e] to-[#8b4346] flex items-center justify-center overflow-hidden mx-auto mb-2 shadow-md hover:shadow-lg transition-shadow duration-300">
+                                            <div className="w-full h-full flex items-center justify-center animate-pulse hover:animate-none">
+                                                <svg viewBox="0 0 24 24" className="w-8 h-8 text-white transition-transform duration-300 hover:scale-110" fill="currentColor">
                                                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
                                                 </svg>
                                             </div>
                                         </div>
-                                        <h5 className="font-semibold text-sm">{member.name}</h5>
+                                        <h5 className="font-semibold text-sm transition-colors duration-300 hover:text-[#7c393e]">{member.name}</h5>
                                         {member.position && (
-                                            <p className="text-[#c68f4f] text-xs mt-1">{member.position}</p>
+                                            <p className="text-[#c68f4f] text-xs mt-1 transition-colors duration-300 hover:text-[#d49c5c]">{member.position}</p>
                                         )}
                                     </div>
                                 ))}
@@ -194,18 +226,28 @@ const MembersPage: React.FC = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-bold text-[#7c393e] mb-8 text-center">جامعة بلجي</h2>
 
-                        <div className="bg-white rounded-lg shadow-md p-6">
+                        <div className={`bg-white rounded-lg shadow-md p-6 transition-all duration-1000 ease-out ${
+                            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                        }`}>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                                {bilgiStudents.map(member => (
-                                    <div key={member.id} className="bg-gray-50 rounded-lg p-3 hover:shadow-md transition-shadow text-center">
-                                        <div className="w-14 h-14 rounded-full bg-[#7c393e] flex items-center justify-center overflow-hidden mx-auto mb-2">
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <svg viewBox="0 0 24 24" className="w-8 h-8 text-white" fill="currentColor">
+                                {bilgiStudents.map((member, index) => (
+                                    <div 
+                                        key={member.id} 
+                                        className={`bg-gray-50 rounded-lg p-3 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 ease-in-out text-center transform ${
+                                            isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95'
+                                        }`}
+                                        style={{
+                                            transitionDelay: `${index * 50}ms`
+                                        }}
+                                    >
+                                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#7c393e] to-[#8b4346] flex items-center justify-center overflow-hidden mx-auto mb-2 shadow-md hover:shadow-lg transition-shadow duration-300">
+                                            <div className="w-full h-full flex items-center justify-center animate-pulse hover:animate-none">
+                                                <svg viewBox="0 0 24 24" className="w-8 h-8 text-white transition-transform duration-300 hover:scale-110" fill="currentColor">
                                                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
                                                 </svg>
                                             </div>
                                         </div>
-                                        <h5 className="font-semibold text-sm">{member.name}</h5>
+                                        <h5 className="font-semibold text-sm transition-colors duration-300 hover:text-[#7c393e]">{member.name}</h5>
                                     </div>
                                 ))}
                             </div>
@@ -215,10 +257,12 @@ const MembersPage: React.FC = () => {
             )}
 
             {/* Join Us Section */}
-            <div className="text-center bg-gradient-to-br from-[#7c393e] to-[#8b4346] p-12 rounded-2xl text-white max-w-6xl mx-auto mb-12">
-                <h3 className="text-3xl font-bold mb-4">انضم إلينا</h3>
+            <div className={`text-center bg-gradient-to-br from-[#7c393e] to-[#8b4346] p-12 rounded-2xl text-white max-w-6xl mx-auto mb-12 transition-all duration-1200 ease-out ${
+                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+            }`}>
+                <h3 className="text-3xl font-bold mb-4 animate-pulse">انضم إلينا</h3>
                 <p className="text-xl mb-8 text-white/90">نرحب بانضمامك إلى مبادرة صحوة للمساهمة معنا في تحقيق أهدافنا وخدمة مجتمعنا الطلابي</p>
-                <a href='https://forms.gle/xaLReRNajenPYHkB6' className="bg-white text-[#7c393e] font-bold py-4 px-8 rounded-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <a href='https://forms.gle/xaLReRNajenPYHkB6' className="bg-white text-[#7c393e] font-bold py-4 px-8 rounded-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-lg inline-block animate-bounce">
                     سجل للتطوع معنا
                 </a>
             </div>
