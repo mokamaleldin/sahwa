@@ -65,7 +65,7 @@ const Header: React.FC = () => {
               className={`transition-colors duration-200 hover:text-[#c68f4f] ${isScrolled ? 'text-gray-700' : 'text-white'
                 }`}
             >
-              تواصل معنا
+              انضم لنا
             </Link>
           </nav>
 
@@ -116,7 +116,7 @@ const Header: React.FC = () => {
                 onClick={() => setIsMenuOpen(false)}
                 className="block px-4 py-3 text-right text-sm font-medium text-gray-700 hover:text-[#c68f4f] hover:bg-gray-50 transition-all duration-200"
               >
-                تواصل معنا
+                انضم لنا
               </Link>
             </div>
           </div>

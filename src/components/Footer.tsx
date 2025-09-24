@@ -54,14 +54,14 @@ const Footer: React.FC = () => {
                   onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
                   className="text-white/80 hover:text-white transition-colors duration-200"
                 >
-                  تواصل معنا
+                  انضم لنا
                 </button>
               </li>
             </ul>
           </div>
 
           <div className="text-center md:text-right">
-            <h4 className="text-xl font-semibold mb-4">تواصل معنا</h4>
+            <h4 className="text-xl font-semibold mb-4">انضم لنا</h4>
             <div className="space-y-3">
               <div className="flex items-center justify-center md:justify-start space-x-reverse space-x-3">
                 <Mail size={20} />
