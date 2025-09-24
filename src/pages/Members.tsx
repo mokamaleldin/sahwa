@@ -94,16 +94,16 @@ const MembersPage: React.FC = () => {
 
     // Filter by section
     const [sectionFilter, setSectionFilter] = useState('sahwa');
-    
+
     // Animation state
     const [isVisible, setIsVisible] = useState(false);
-    
+
     useEffect(() => {
         // Trigger animation after component mounts
         const timer = setTimeout(() => {
             setIsVisible(true);
         }, 300);
-        
+
         return () => clearTimeout(timer);
     }, []);
 
@@ -151,16 +151,14 @@ const MembersPage: React.FC = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-bold text-[#7c393e] mb-8 text-center">جميع المتطوعين</h2>
 
-                        <div className={`bg-white rounded-lg shadow-md p-6 transition-all duration-1000 ease-out ${
-                            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                        }`}>
+                        <div className={`bg-white rounded-lg shadow-md p-6 transition-all duration-1000 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                            }`}>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {sahwaVolunteers.map((member, index) => (
-                                    <div 
-                                        key={member.id} 
-                                        className={`bg-gray-50 rounded-lg p-3 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 ease-in-out text-center transform ${
-                                            isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95'
-                                        }`}
+                                    <div
+                                        key={member.id}
+                                        className={`bg-gray-50 rounded-lg p-3 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 ease-in-out text-center transform ${isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95'
+                                            }`}
                                         style={{
                                             transitionDelay: `${index * 50}ms`
                                         }}
@@ -187,16 +185,14 @@ const MembersPage: React.FC = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-bold text-[#7c393e] mb-8 text-center">جامعة استنيا</h2>
 
-                        <div className={`bg-white rounded-lg shadow-md p-6 transition-all duration-1000 ease-out ${
-                            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                        }`}>
+                        <div className={`bg-white rounded-lg shadow-md p-6 transition-all duration-1000 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                            }`}>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {istanbulStudents.map((member, index) => (
-                                    <div 
-                                        key={member.id} 
-                                        className={`bg-gray-50 rounded-lg p-3 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 ease-in-out text-center transform ${
-                                            isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95'
-                                        }`}
+                                    <div
+                                        key={member.id}
+                                        className={`bg-gray-50 rounded-lg p-3 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 ease-in-out text-center transform ${isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95'
+                                            }`}
                                         style={{
                                             transitionDelay: `${index * 50}ms`
                                         }}
@@ -226,16 +222,14 @@ const MembersPage: React.FC = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <h2 className="text-3xl font-bold text-[#7c393e] mb-8 text-center">جامعة بلجي</h2>
 
-                        <div className={`bg-white rounded-lg shadow-md p-6 transition-all duration-1000 ease-out ${
-                            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                        }`}>
+                        <div className={`bg-white rounded-lg shadow-md p-6 transition-all duration-1000 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                            }`}>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {bilgiStudents.map((member, index) => (
-                                    <div 
-                                        key={member.id} 
-                                        className={`bg-gray-50 rounded-lg p-3 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 ease-in-out text-center transform ${
-                                            isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95'
-                                        }`}
+                                    <div
+                                        key={member.id}
+                                        className={`bg-gray-50 rounded-lg p-3 hover:shadow-lg hover:-translate-y-1 transition-all duration-500 ease-in-out text-center transform ${isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95'
+                                            }`}
                                         style={{
                                             transitionDelay: `${index * 50}ms`
                                         }}
@@ -257,9 +251,8 @@ const MembersPage: React.FC = () => {
             )}
 
             {/* Join Us Section */}
-            <div className={`text-center bg-gradient-to-br from-[#7c393e] to-[#8b4346] p-12 rounded-2xl text-white max-w-6xl mx-auto mb-12 transition-all duration-1200 ease-out ${
-                isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
-            }`}>
+            <div className={`text-center bg-gradient-to-br from-[#7c393e] to-[#8b4346] p-12 rounded-2xl text-white max-w-6xl mx-auto mb-12 transition-all duration-1200 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+                }`}>
                 <h3 className="text-3xl font-bold mb-4 animate-pulse">انضم إلينا</h3>
                 <p className="text-xl mb-8 text-white/90">نرحب بانضمامك إلى مبادرة صحوة للمساهمة معنا في تحقيق أهدافنا وخدمة مجتمعنا الطلابي</p>
                 <a href='https://forms.gle/xaLReRNajenPYHkB6' className="bg-white text-[#7c393e] font-bold py-4 px-8 rounded-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl shadow-lg inline-block animate-bounce">
