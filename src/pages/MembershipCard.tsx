@@ -8,11 +8,11 @@ const MembershipCardPage: React.FC = () => {
         <div className="min-h-screen bg-white" dir="rtl">
             <Header />
 
-            <Hero
+            {/* <Hero
                 title="بطاقة انتساب صحوة"
                 description="احصل على بطاقة الانتساب الرسمية لمبادرة صحوة واستمتع بالمزايا الحصرية"
-               
-            />
+
+            /> */}
 
             {/* Main Content */}
             <section className="py-16 md:py-24">
