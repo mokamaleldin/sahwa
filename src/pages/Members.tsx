@@ -19,6 +19,11 @@ const MembersPage: React.FC = () => {
         { id: 134, name: "عائشه عزيز", photo: true, university: "istinye", position: "مسؤولة شؤون الطلاب بنات" },
         { id: 104, name: "حماس تامر", photo: true, university: "istinye" },
         { id: 105, name: "جنة عبدربه", photo: true, university: "istinye" },
+        { id: 132, name: "أسامه جمال", photo: true, university: "istinye" },
+        { id: 135, name: "عبدالعزيز", photo: true, university: "istinye" },
+        { id: 136, name: "أدهم", photo: true, university: "istinye" },
+        { id: 137, name: "محمد حطاب", photo: true, university: "istinye" },
+        { id: 138, name: "إبراهيم فارس", photo: true, university: "istinye" },
         { id: 106, name: "عنان عفيفي", photo: true, university: "istinye" },
         { id: 107, name: "آية رجوب", photo: true, university: "istinye" },
         { id: 111, name: "عامر", photo: true, university: "istinye" },
@@ -31,11 +36,7 @@ const MembersPage: React.FC = () => {
         { id: 118, name: "عزة الموصلي", photo: true, university: "istinye" },
         { id: 119, name: "سارة محمود", photo: true, university: "istinye" },
         { id: 120, name: "خديجه محمود", photo: true, university: "istinye" },
-        { id: 132, name: "أسامه جمال", photo: true, university: "istinye" },
-        { id: 135, name: "عبدالعزيز", photo: true, university: "istinye" },
-        { id: 136, name: "أدهم", photo: true, university: "istinye" },
-        { id: 137, name: "محمد حطاب", photo: true, university: "istinye" },
-        { id: 138, name: "إبراهيم فارس", photo: true, university: "istinye" },
+
 
         // Bilgi University
         { id: 101, name: "البراء معمر", photo: true, university: "bilgi", position: "مسؤول الجامعة" },
