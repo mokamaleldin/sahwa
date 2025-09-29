@@ -32,6 +32,10 @@ const MembersPage: React.FC = () => {
         { id: 119, name: "سارة محمود", photo: true, university: "istinye" },
         { id: 120, name: "خديجه محمود", photo: true, university: "istinye" },
         { id: 132, name: "أسامه جمال", photo: true, university: "istinye" },
+        { id: 135, name: "عبدالعزيز", photo: true, university: "istinye" },
+        { id: 136, name: "أدهم", photo: true, university: "istinye" },
+        { id: 137, name: "محمد حطاب", photo: true, university: "istinye" },
+        { id: 138, name: "إبراهيم فارس", photo: true, university: "istinye" },
 
         // Bilgi University
         { id: 101, name: "البراء معمر", photo: true, university: "bilgi", position: "مسؤول الجامعة" },
