@@ -14,7 +14,7 @@ const MembersPage: React.FC = () => {
         { id: 5, name: "فاطمة الزهراء", photo: true, university: "istinye", position: "مسؤولة الأنشطة بنات" },
         { id: 6, name: "حسن طه", photo: true, university: "istinye", position: "مسؤول العلاقات العامة" },
         { id: 7, name: "عمر الجمل", photo: true, university: "istinye", position: "مسؤول المتطوعين شباب" },
-        { id: 8, name: "خلود الكردي", photo: true, university: "istinye", position: "نائبة مسؤولة الأنشطة بنات" },
+        { id: 8, name: "خلود كردي", photo: true, university: "istinye", position: "نائبة مسؤولة الأنشطة بنات" },
         { id: 133, name: "محمد أبو حسين", photo: true, university: "istinye", position: "مسؤول الأنشطة شباب" },
         { id: 134, name: "عائشه عزيز", photo: true, university: "istinye", position: "مسؤولة شؤون الطلاب بنات" },
         { id: 104, name: "حماس تامر", photo: true, university: "istinye" },
@@ -41,13 +41,14 @@ const MembersPage: React.FC = () => {
         // Bilgi University
         { id: 101, name: "البراء معمر", photo: true, university: "bilgi", position: "مسؤول الجامعة" },
         { id: 121, name: "ساره عقاد", photo: true, university: "bilgi", position: "مسؤولة الطالبات" },
-        { id: 103, name: "عبدالله جامع", photo: true, university: "bilgi" },
-        { id: 122, name: "أسامه أبوشويشه", photo: true, university: "bilgi", position: "مسؤول المتطوعين شباب" },
+        { id: 103, name: "عبدالله جامع", photo: true, university: "bilgi", position: "مسؤول العلاقات العامة" },
+        { id: 122, name: "أسامه أبوشويشه", photo: true, university: "bilgi", position: "مسؤول شؤون الطلاب شباب" },
+        { id: 110, name: " مريم", photo: true, university: "bilgi", position: " مسؤولة الأنشطة بنات" },
+        { id: 126, name: "جوان سليمان", photo: true, university: "bilgi", position: "مسؤولة شؤون الطلاب بنات" },
+        { id: 127, name: "جمانه أحمد", photo: true, university: "bilgi", position: "نائبة مسؤولة الأنشطة بنات" },
         { id: 123, name: "خالد مسلم", photo: true, university: "bilgi" },
         { id: 124, name: "زياد خفاجي", photo: true, university: "bilgi" },
         { id: 125, name: "عدنان النبري", photo: true, university: "bilgi" },
-        { id: 126, name: "جوان سليمان", photo: true, university: "bilgi" },
-        { id: 127, name: "جمانه أحمد", photo: true, university: "bilgi" },
         { id: 128, name: "عبدالرحمن اكساكالي", photo: true, university: "bilgi" },
         { id: 129, name: "ريان", photo: true, university: "bilgi" },
         { id: 130, name: "أسامه خضر", photo: true, university: "bilgi" },
@@ -57,7 +58,7 @@ const MembersPage: React.FC = () => {
         { id: 109, name: "فرحان", photo: true, university: "bilgi" },
 
         // Other volunteers (no specific university)
-        { id: 102, name: "أنس محمد", photo: true, university: "other" },
+        { id: 102, name: "أنس محمد", photo: true, university: "other" }
     ];
 
     // Filter functions for each university
