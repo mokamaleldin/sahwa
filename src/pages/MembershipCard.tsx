@@ -17,7 +17,6 @@ const MembershipCardPage: React.FC = () => {
             <Hero
                 title="بطاقة انتساب صحوة"
                 description="احصل على بطاقة الانتساب الرسمية لمبادرة صحوة واستمتع بالمزايا الحصرية"
-
             />
 
             {/* Main Content */}
