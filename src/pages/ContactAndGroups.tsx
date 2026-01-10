@@ -2,10 +2,42 @@ import React from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Hero from '../components/Hero';
+import SEO from '../components/SEO';
 
 const ContactAndGroups: React.FC = () => {
+    // Structured data for contact page
+    const contactStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "ContactPage",
+        "name": "تواصل معنا - صحوة",
+        "description": "تواصل مع مبادرة صحوة وانضم لجروبات الواتساب",
+        "mainEntity": {
+            "@type": "Organization",
+            "name": "صحوة",
+            "contactPoint": [
+                {
+                    "@type": "ContactPoint",
+                    "telephone": "+905345195501",
+                    "email": "sahwa.org.tr@gmail.com",
+                    "contactType": "customer service",
+                    "availableLanguage": ["Arabic", "Turkish"]
+                }
+            ],
+            "sameAs": [
+                "https://www.instagram.com/sahwa.tr/"
+            ]
+        }
+    };
+
     return (
         <div className="min-h-screen bg-white" dir="rtl">
+            <SEO
+                title="تواصل معنا وانضم لجروباتنا"
+                description="انضم إلى جروبات واتساب مبادرة صحوة في جامعة استنيا وجامعة بلجي. تابعنا على انستجرام وتيك توك. تواصل معنا مباشرة."
+                keywords="تواصل صحوة, واتساب صحوة, انستجرام صحوة, جروب استنيا, جروب بلجي"
+                canonicalUrl="/contact"
+                structuredData={contactStructuredData}
+            />
             <Header />
             
             <Hero

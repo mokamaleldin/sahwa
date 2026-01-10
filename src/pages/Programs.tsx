@@ -2,8 +2,49 @@ import React from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Hero from '../components/Hero';
+import SEO from '../components/SEO';
 
 const Programs: React.FC = () => {
+    // Structured data for programs page
+    const programsStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": "برامج مبادرة صحوة",
+        "description": "مجموعة متنوعة من البرامج الإسلامية والتعليمية للطلاب في تركيا",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "الديوانية",
+                "description": "جلسات حوارية أسبوعية للطلاب لمناقشة القضايا المختلفة"
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "حفظ القرآن",
+                "description": "برنامج منظم لحفظ القرآن الكريم مع حلقات أسبوعية"
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "أحكام التجويد",
+                "description": "دورات متخصصة في أحكام تجويد القرآن الكريم"
+            },
+            {
+                "@type": "ListItem",
+                "position": 4,
+                "name": "الدروس الشهرية",
+                "description": "محاضرات ودروس شهرية في مواضيع متنوعة"
+            },
+            {
+                "@type": "ListItem",
+                "position": 5,
+                "name": "الأنشطة",
+                "description": "أنشطة رياضية وثقافية وترفيهية ورحلات"
+            }
+        ]
+    };
+
     // Program data
     const programs = [
         {
@@ -52,6 +93,13 @@ const Programs: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-white" dir="rtl">
+            <SEO
+                title="البرامج والأنشطة"
+                description="تعرف على برامج مبادرة صحوة: الديوانية، حفظ القرآن، أحكام التجويد، الدروس الشهرية والأنشطة المتنوعة للطلاب المسلمين في تركيا"
+                keywords="برامج صحوة, حفظ قرآن تركيا, دروس إسلامية اسطنبول, أنشطة طلابية, تجويد القرآن"
+                canonicalUrl="/programs"
+                structuredData={programsStructuredData}
+            />
             <Header />
 
             <Hero

@@ -1,0 +1,30 @@
+# Robots.txt for sahwa.space
+# https://sahwa.space
+
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://sahwa.space/sitemap.xml
+
+# Crawl-delay for politeness (optional, some crawlers respect this)
+Crawl-delay: 1
+
+# Block common non-essential paths (adjust as needed)
+Disallow: /api/
+Disallow: /_next/
+Disallow: /assets/
+Disallow: /*.json$
+
+# Allow important assets
+Allow: /logo.svg
+Allow: /logo.png
+
+# Google specific
+User-agent: Googlebot
+Allow: /
+
+# Bing specific
+User-agent: Bingbot
+Allow: /

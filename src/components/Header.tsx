@@ -16,22 +16,27 @@ const Header: React.FC = () => {
   }, []);
 
   return (
-    <header className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${
-      isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
-    }`}>
+    <header 
+      className={`fixed top-0 right-0 left-0 z-50 transition-all duration-300 ${
+        isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
+      }`}
+      role="banner"
+    >
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center px-4">
-          <Link to="/" >
+          <Link to="/" aria-label="صحوة - الصفحة الرئيسية">
             <img
-              src="logo.svg"
-              alt="صحوة - sahwa"
+              src="/logo.svg"
+              alt="شعار مبادرة صحوة - حركة شبابية لإحياء الهوية الإسلامية"
               className="w-24 h-24 md:w-36 md:h-36"
+              width="144"
+              height="144"
+              loading="eager"
             />
           </Link>
 
           {/* Desktop Navigation */}
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-reverse space-x-8">
+          <nav className="hidden md:flex space-x-reverse space-x-8" aria-label="القائمة الرئيسية">
             <Link
               to="/"
               className={`transition-colors duration-200 hover:text-[#c68f4f] ${isScrolled ? 'text-gray-700' : 'text-white'
@@ -74,6 +79,9 @@ const Header: React.FC = () => {
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className={`md:hidden p-2 rounded-lg transition-all duration-200 hover:bg-black/10 ${isScrolled ? 'text-gray-700' : 'text-white'
               }`}
+            aria-label={isMenuOpen ? 'إغلاق القائمة' : 'فتح القائمة'}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
           >
             {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -81,7 +89,11 @@ const Header: React.FC = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden absolute top-full left-4 right-4 bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-gray-100 animate-fade-in">
+          <nav 
+            id="mobile-menu"
+            className="md:hidden absolute top-full left-4 right-4 bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-gray-100 animate-fade-in"
+            aria-label="القائمة الجوال"
+          >
             <div className="py-2">
               <Link
                 to="/"
@@ -119,7 +131,7 @@ const Header: React.FC = () => {
                 انضم لنا
               </Link>
             </div>
-          </div>
+          </nav>
         )}
       </div>
       

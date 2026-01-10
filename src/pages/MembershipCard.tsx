@@ -2,9 +2,29 @@ import React, { useState } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Hero from '../components/Hero';
+import SEO from '../components/SEO';
 
 const MembershipCardPage: React.FC = () => {
     const [isFlipped, setIsFlipped] = useState(false);
+
+    // Structured data for membership card page
+    const membershipStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "بطاقة انتساب صحوة",
+        "description": "احصل على بطاقة الانتساب الرسمية لمبادرة صحوة واستمتع بالمزايا الحصرية",
+        "mainEntity": {
+            "@type": "Product",
+            "name": "كرت منتسب صحوة",
+            "description": "بطاقة الانتساب الرسمية للمتطوعين المتميزين في مبادرة صحوة",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "TRY",
+                "availability": "https://schema.org/InStock"
+            }
+        }
+    };
 
     const handleCardClick = () => {
         setIsFlipped(!isFlipped);
@@ -12,6 +32,13 @@ const MembershipCardPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-white" dir="rtl">
+            <SEO
+                title="بطاقة انتساب صحوة"
+                description="احصل على بطاقة الانتساب الرسمية لمبادرة صحوة. استمتع بخصومات حصرية، حضور مجاني للفعاليات، وملف شخصي رقمي. تعرف على شروط الحصول على البطاقة."
+                keywords="بطاقة صحوة, كرت منتسب, عضوية صحوة, خصومات طلاب تركيا, بطاقة تطوع"
+                canonicalUrl="/membership-card"
+                structuredData={membershipStructuredData}
+            />
             <Header />
 
             <Hero

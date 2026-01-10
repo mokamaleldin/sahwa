@@ -2,8 +2,25 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import Hero from '../components/Hero';
+import SEO from '../components/SEO';
 
 const MembersPage: React.FC = () => {
+    // Structured data for members/team page
+    const membersStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "AboutPage",
+        "name": "أعضاء مبادرة صحوة",
+        "description": "تعرف على المتطوعين والأعضاء في مبادرة صحوة من جامعة استنيا وجامعة بلجي",
+        "mainEntity": {
+            "@type": "Organization",
+            "name": "صحوة",
+            "member": {
+                "@type": "OrganizationRole",
+                "roleName": "متطوعين"
+            }
+        }
+    };
+
     // All members with university info
     const allMembers = [
         // Istinye University
@@ -83,6 +100,13 @@ const MembersPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-white" dir="rtl">
+            <SEO
+                title="الأعضاء والمتطوعين"
+                description="تعرف على أعضاء ومتطوعي مبادرة صحوة من جامعة استنيا وجامعة بلجي في اسطنبول، تركيا. انضم لفريقنا وكن جزءاً من التغيير."
+                keywords="أعضاء صحوة, متطوعين صحوة, جامعة استنيا, جامعة بلجي, فريق صحوة تركيا"
+                canonicalUrl="/members"
+                structuredData={membersStructuredData}
+            />
             <Header />
 
             <Hero
