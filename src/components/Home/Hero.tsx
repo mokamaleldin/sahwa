@@ -25,8 +25,11 @@ const Hero: React.FC = () => {
         >
           صحوة - Sahwa
         </h1>
-        <p className="text-xl sm:text-2xl text-white/90 mb-8 leading-relaxed animate-fade-in-up animation-delay-200">
+        <p className="text-xl sm:text-2xl text-white/90 mb-4 leading-relaxed animate-fade-in-up animation-delay-200">
           صحوة لشباب أمتنا - مبادرة طلابية لإحياء الهوية الإسلامية في الجامعات التركية
+        </p>
+        <p className="text-base sm:text-lg text-white/80 mb-8 leading-relaxed animate-fade-in-up animation-delay-300">
+          نُعرَف باسم "صحوة / Sahwa" وبعضهم يكتبها "Sah7a" أو "صحوه" — كلها تشير إلى مبادرتنا.
         </p>
         <button 
           onClick={() => document.getElementById('vision')?.scrollIntoView({ behavior: 'smooth' })}

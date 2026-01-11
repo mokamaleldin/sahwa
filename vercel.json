@@ -5,6 +5,14 @@
             "destination": "/"
         }
     ],
+    "redirects": [
+        {
+            "source": "/(.*)",
+            "has": [{ "type": "host", "value": "www.sahwa.space" }],
+            "destination": "https://sahwa.space/$1",
+            "permanent": true
+        }
+    ],
     "headers": [
         {
             "source": "/(.*).(js|css|png|jpg|jpeg|gif|svg|ico|woff2|woff|ttf)",

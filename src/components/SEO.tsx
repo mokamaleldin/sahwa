@@ -9,6 +9,8 @@ interface SEOProps {
   ogImage?: string;
   noindex?: boolean;
   structuredData?: object;
+  siteNameOverride?: string;
+  alternateName?: string | string[];
 }
 
 const BASE_URL = 'https://sahwa.space';
@@ -24,9 +26,20 @@ const SEO: React.FC<SEOProps> = ({
   ogImage = DEFAULT_IMAGE,
   noindex = false,
   structuredData,
+  siteNameOverride,
+  alternateName,
 }) => {
-  const fullTitle = `${title} | ${SITE_NAME}`;
+  const siteName = siteNameOverride || SITE_NAME;
+  const fullTitle = `${title} | ${siteName}`;
   const fullCanonicalUrl = canonicalUrl ? `${BASE_URL}${canonicalUrl}` : BASE_URL;
+  const mergedStructuredData = (() => {
+    if (!structuredData) return null;
+    const data: any = { ...(structuredData as any) };
+    if (alternateName) {
+      data.alternateName = Array.isArray(alternateName) ? alternateName : [alternateName];
+    }
+    return data;
+  })();
 
   return (
     <Helmet>
@@ -48,7 +61,7 @@ const SEO: React.FC<SEOProps> = ({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={ogImage} />
-      <meta property="og:site_name" content={SITE_NAME} />
+      <meta property="og:site_name" content={siteName} />
       <meta property="og:locale" content="ar_SA" />
       
       {/* Twitter */}
@@ -59,9 +72,9 @@ const SEO: React.FC<SEOProps> = ({
       <meta name="twitter:image" content={ogImage} />
       
       {/* Structured Data */}
-      {structuredData && (
+      {(mergedStructuredData || structuredData) && (
         <script type="application/ld+json">
-          {JSON.stringify(structuredData)}
+          {JSON.stringify(mergedStructuredData || structuredData)}
         </script>
       )}
     </Helmet>
