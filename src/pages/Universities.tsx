@@ -31,13 +31,55 @@ const universities: University[] = [
 ];
 
 const Universities: React.FC = () => {
+  // Structured data for universities listing
+  const universitiesStructuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "@id": "https://sahwa.space/universities#webpage",
+      "name": "جامعات صحوة - Sahwa Universities",
+      "description": "اكتشف مجتمعات صحوة الطلابية في الجامعات التركية - جامعة استنيا وجامعة بلجي في إسطنبول",
+      "url": "https://sahwa.space/universities",
+      "isPartOf": {
+        "@id": "https://sahwa.space/#website"
+      },
+      "mainEntity": {
+        "@type": "ItemList",
+        "itemListElement": universities.map((uni, index) => ({
+          "@type": "ListItem",
+          "position": index + 1,
+          "name": uni.name,
+          "url": `https://sahwa.space/universities/${uni.id}`
+        }))
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": "صحوة - مجتمعات الجامعات",
+      "description": "مجتمعات صحوة الطلابية في جامعات تركيا",
+      "areaServed": {
+        "@type": "City",
+        "name": "Istanbul",
+        "alternateName": "إسطنبول"
+      }
+    }
+  ];
+
+  const breadcrumbs = [
+    { name: "الرئيسية", url: "/" },
+    { name: "الجامعات", url: "/universities" }
+  ];
+
   return (
     <>
       <SEO
-        title="الجامعات - صحوة"
-        description="اكتشف مجتمعات صحوة في الجامعات التركية"
-        keywords="صحوة, جامعات, تركيا, طلاب"
+        title="الجامعات | صحوة - Sahwa Universities Turkey"
+        description="اكتشف مجتمعات صحوة الطلابية في الجامعات التركية. انضم لمجتمع صحوة في جامعة استنيا Istinye University أو جامعة بلجي Bilgi University في إسطنبول. Student communities in Istanbul universities."
+        keywords="صحوة جامعات, جامعة استنيا, جامعة بلجي, Istinye University, Bilgi University, طلاب إسطنبول, student groups Istanbul, university community Turkey, صحوة استنيا, صحوة بلجي"
         canonicalUrl="/universities"
+        structuredData={universitiesStructuredData}
+        breadcrumbs={breadcrumbs}
       />
       <Header />
       

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Instagram, Youtube, Send, MessageCircle, Mail, Phone, Heart } from 'lucide-react';
+import { Instagram, Youtube, Send, MessageCircle, Mail, Phone } from 'lucide-react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import SEO from '../components/SEO';
@@ -64,13 +64,59 @@ const socialLinks: SocialLink[] = [
 ];
 
 const SocialMedia: React.FC = () => {
+  // Comprehensive structured data for social media page
+  const socialStructuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "ContactPage",
+      "@id": "https://sahwa.space/social#webpage",
+      "name": "تابع صحوة - Sahwa Social Media",
+      "description": "تابع صحوة على منصات التواصل الاجتماعي - واتساب، تيليجرام، انستجرام، تيك توك، يوتيوب",
+      "url": "https://sahwa.space/social",
+      "isPartOf": {
+        "@id": "https://sahwa.space/#website"
+      },
+      "mainEntity": {
+        "@type": "Organization",
+        "@id": "https://sahwa.space/#organization"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "صحوة",
+      "url": "https://sahwa.space",
+      "sameAs": [
+        "https://www.instagram.com/sahwa.tr/",
+        "https://www.youtube.com/@sahwatr",
+        "https://t.me/sahwatr",
+        "https://www.tiktok.com/@sahwa.tr",
+        "https://whatsapp.com/channel/0029Vb7fQXK5K3zbii8FQN2y"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+905345195501",
+        "email": "sahwaturkey@gmail.com",
+        "contactType": "customer service",
+        "availableLanguage": ["Arabic", "Turkish", "English"]
+      }
+    }
+  ];
+
+  const breadcrumbs = [
+    { name: "الرئيسية", url: "/" },
+    { name: "تابعنا", url: "/social" }
+  ];
+
   return (
     <>
       <SEO
-        title="تابعنا - صحوة"
-        description="تابع صحوة على منصات التواصل الاجتماعي"
-        keywords="صحوة, انستجرام, يوتيوب, تيك توك, واتساب, تيليجرام"
+        title="تابعنا | صحوة - Sahwa Social Media"
+        description="تابع صحوة Sahwa على منصات التواصل الاجتماعي. انضم لقناة واتساب صحوة، تيليجرام @sahwatr، انستجرام @sahwa.tr، تيك توك @sahwa.tr، يوتيوب @sahwatr. Follow Sahwa on WhatsApp, Telegram, Instagram, TikTok, YouTube."
+        keywords="صحوة واتساب, صحوة انستجرام, صحوة تيليجرام, صحوة يوتيوب, صحوة تيك توك, Sahwa WhatsApp, Sahwa Instagram, @sahwa.tr, @sahwatr, قناة صحوة, sahwa telegram, sahwa social media"
         canonicalUrl="/social"
+        structuredData={socialStructuredData}
+        breadcrumbs={breadcrumbs}
       />
       <Header />
       

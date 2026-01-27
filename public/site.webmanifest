@@ -1,0 +1,30 @@
+{
+  "name": "صحوة - Sahwa Student Community",
+  "short_name": "صحوة",
+  "description": "صحوة مساحة شبابية لطلاب الجامعات في تركيا - Sahwa student community in Turkey",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFEFD",
+  "theme_color": "#7F373B",
+  "orientation": "portrait-primary",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["education", "social", "community"],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

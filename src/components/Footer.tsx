@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 sm:gap-12">
           {/* Brand */}
           <div className="text-center md:text-right">
-            <h2 className="text-2xl font-bold mb-4">صحوة</h2>
+            <h2 className="text-2xl font-bold mb-4 text-white/70">صحوة</h2>
             <p className="text-white/70 leading-relaxed text-sm">
               مساحة شبابية تنطلق من هوية هذه الأمة، تجمع الطلاب حول الصحبة الصالحة والوعي والعمل.
             </p>
@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
 
           {/* Quick Links */}
           <nav className="text-center md:text-right" aria-label="روابط سريعة">
-            <h3 className="text-lg font-semibold mb-4">روابط سريعة</h3>
+            <h3 className="text-lg font-semibold mb-4 text-white/70">روابط سريعة</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/" className="text-white/70 hover:text-white transition-colors text-sm">
@@ -44,7 +44,7 @@ const Footer: React.FC = () => {
 
           {/* Contact */}
           <address className="text-center md:text-right not-italic">
-            <h3 className="text-lg font-semibold mb-4">تواصل معنا</h3>
+            <h3 className="text-lg font-semibold mb-4 text-white/70">تواصل معنا</h3>
             <div className="space-y-3 text-sm">
               <a href="mailto:sahwaturkey@gmail.com" className="flex items-center justify-center md:justify-start gap-3 text-white/70 hover:text-white transition-colors">
                 <Mail size={16} />

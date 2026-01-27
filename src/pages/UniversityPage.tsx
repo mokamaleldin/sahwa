@@ -62,13 +62,63 @@ const UniversityPage: React.FC = () => {
     );
   }
 
+  // Comprehensive structured data for university page
+  const universityStructuredData = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "@id": `https://sahwa.space/universities/${university.id}#webpage`,
+      "name": `صحوة ${university.name} - Sahwa ${university.nameEn}`,
+      "description": university.introduction,
+      "url": `https://sahwa.space/universities/${university.id}`,
+      "isPartOf": {
+        "@id": "https://sahwa.space/#website"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": `صحوة ${university.name}`,
+      "alternateName": [`Sahwa ${university.nameEn}`, `صحوة ${university.nameEn}`],
+      "description": university.introduction,
+      "url": `https://sahwa.space/universities/${university.id}`,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Istanbul",
+        "addressCountry": "TR"
+      },
+      "parentOrganization": {
+        "@id": "https://sahwa.space/#organization"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": `صحوة - ${university.name}`,
+      "description": `مجتمع صحوة الطلابي في ${university.name}`,
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": university.city,
+        "addressCountry": "TR"
+      }
+    }
+  ];
+
+  const breadcrumbs = [
+    { name: "الرئيسية", url: "/" },
+    { name: "الجامعات", url: "/universities" },
+    { name: university.name, url: `/universities/${university.id}` }
+  ];
+
   return (
     <>
       <SEO
-        title={`${university.name} - صحوة`}
-        description={university.introduction}
-        keywords={`صحوة, ${university.name}, ${university.nameEn}, طلاب`}
+        title={`صحوة ${university.name} | Sahwa ${university.nameEn} - مجتمع طلابي`}
+        description={`${university.introduction} انضم لمجتمع صحوة في ${university.name} (${university.nameEn}) في ${university.city}. Student community at ${university.nameEn} Istanbul.`}
+        keywords={`صحوة ${university.name}, ${university.nameEn}, ${university.nameEn} students, طلاب ${university.name}, صحوة ${university.city}, student group ${university.nameEn}, مجتمع طلابي ${university.name}`}
         canonicalUrl={`/universities/${university.id}`}
+        structuredData={universityStructuredData}
+        breadcrumbs={breadcrumbs}
       />
       <Header />
       

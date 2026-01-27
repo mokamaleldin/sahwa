@@ -1,45 +1,59 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   
-  <!-- Homepage -->
+  <!-- Homepage - Primary landing page -->
   <url>
     <loc>https://sahwa.space/</loc>
-    <lastmod>2026-01-10</lastmod>
+    <lastmod>2026-01-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://sahwa.space/og-image.png</image:loc>
+      <image:title>صحوة - Sahwa مجتمع طلابي</image:title>
+      <image:caption>صحوة مساحة شبابية لطلاب الجامعات في تركيا</image:caption>
+    </image:image>
   </url>
   
-  <!-- Programs Page -->
+  <!-- Universities Listing Page -->
   <url>
-    <loc>https://sahwa.space/programs</loc>
-    <lastmod>2026-01-10</lastmod>
+    <loc>https://sahwa.space/universities</loc>
+    <lastmod>2026-01-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   
-  <!-- Members Page -->
+  <!-- Istinye University Page -->
   <url>
-    <loc>https://sahwa.space/members</loc>
-    <lastmod>2026-01-10</lastmod>
+    <loc>https://sahwa.space/universities/istinye</loc>
+    <lastmod>2026-01-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Bilgi University Page -->
+  <url>
+    <loc>https://sahwa.space/universities/bilgi</loc>
+    <lastmod>2026-01-27</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Social Media / Follow Us Page -->
+  <url>
+    <loc>https://sahwa.space/social</loc>
+    <lastmod>2026-01-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   
-  <!-- Membership Card Page -->
-  <url>
-    <loc>https://sahwa.space/membership-card</loc>
-    <lastmod>2026-01-10</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  
-  <!-- Contact and Groups Page -->
+  <!-- Contact Page -->
   <url>
     <loc>https://sahwa.space/contact</loc>
-    <lastmod>2026-01-10</lastmod>
+    <lastmod>2026-01-27</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.7</priority>
   </url>
   
 </urlset>

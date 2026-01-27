@@ -1,30 +1,83 @@
+# ===========================================
 # Robots.txt for sahwa.space
+# صحوة - Sahwa Student Community
 # https://sahwa.space
+# ===========================================
 
-# Allow all crawlers
+# Allow all crawlers full access
 User-agent: *
 Allow: /
+Allow: /universities
+Allow: /universities/istinye
+Allow: /universities/bilgi
+Allow: /social
+Allow: /contact
+
+# Allow important assets for indexing
+Allow: /logo.svg
+Allow: /logo.png
+Allow: /og-image.png
+Allow: /*.css
+Allow: /*.js
+
+# Block only technical/build paths
+Disallow: /api/
+Disallow: /_next/static/
+Disallow: /node_modules/
+Disallow: /.git/
 
 # Sitemap location
 Sitemap: https://sahwa.space/sitemap.xml
 
-# Crawl-delay for politeness (optional, some crawlers respect this)
-Crawl-delay: 1
+# ===========================================
+# Search Engine Specific Rules
+# ===========================================
 
-# Block common non-essential paths (adjust as needed)
-Disallow: /api/
-Disallow: /_next/
-Disallow: /assets/
-Disallow: /*.json$
-
-# Allow important assets
-Allow: /logo.svg
-Allow: /logo.png
-
-# Google specific
+# Google
 User-agent: Googlebot
 Allow: /
+Crawl-delay: 1
 
-# Bing specific
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Googlebot-Mobile
+Allow: /
+
+# Bing
 User-agent: Bingbot
 Allow: /
+Crawl-delay: 1
+
+User-agent: MSNBot
+Allow: /
+
+# Yandex (important for Turkish/Russian users)
+User-agent: Yandex
+Allow: /
+Crawl-delay: 2
+
+# DuckDuckGo
+User-agent: DuckDuckBot
+Allow: /
+
+# Social Media Crawlers
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
+# ===========================================
+# Host directive (for Yandex)
+# ===========================================
+Host: https://sahwa.space

@@ -31,14 +31,14 @@ const Header: React.FC = () => {
       role="banner"
     >
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center px-6 py-2">
+        <div className="flex justify-between items-center ">
           <Link to="/" aria-label="صحوة - الصفحة الرئيسية">
             <img
               src="/logo.svg"
               alt="شعار صحوة"
-              className="w-16 h-16 md:w-20 md:h-20"
-              width="120"
-              height="120"
+              className="w-20 h-20 md:w-28 md:h-28"
+              width="112"
+              height="112"
               loading="eager"
             />
           </Link>
