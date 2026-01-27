@@ -1,6 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Home } from 'lucide-react';
 import SEO from '../components/SEO';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const NotFoundPage: React.FC = () => {
   return (
@@ -10,23 +13,26 @@ const NotFoundPage: React.FC = () => {
         description="عذراً، الصفحة التي تبحث عنها غير موجودة. يمكنك العودة للصفحة الرئيسية."
         noindex={true}
       />
-      <main className="min-h-screen flex items-center justify-center bg-gray-50" dir="rtl">
-        <div className="text-center px-4">
-          <h1 className="text-9xl font-bold text-[#7c393e]">404</h1>
-          <h2 className="text-3xl font-semibold text-gray-800 mt-4 mb-2">
+      <Header />
+      <main className="min-h-screen flex items-center justify-center bg-gray-50 pt-24" dir="rtl">
+        <div className="text-center px-6 max-w-lg">
+          <div className="text-9xl font-bold text-[#2c3e50]/10 mb-8">404</div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
             الصفحة غير موجودة
-          </h2>
-          <p className="text-gray-600 mb-8">
+          </h1>
+          <p className="text-gray-600 mb-10 leading-relaxed">
             عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها.
           </p>
           <Link
             to="/"
-            className="inline-block bg-[#7c393e] text-white px-8 py-4 rounded-full font-semibold hover:bg-[#5a2a2e] transition-colors duration-300"
+            className="inline-flex items-center gap-3 bg-[#2c3e50] text-white px-8 py-4 rounded-full font-medium hover:bg-[#34495e] transition-colors duration-300"
           >
-            العودة للصفحة الرئيسية
+            <Home size={20} />
+            العودة للرئيسية
           </Link>
         </div>
       </main>
+      <Footer />
     </>
   );
 };

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 * {
-  font-family: 'Tajawal', sans-serif;
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
 }
 
 html {
@@ -14,15 +14,16 @@ html {
 body {
   margin: 0;
   padding: 0;
-  background-color: #ffffff;
-  line-height: 1.6;
+  background-color: #FFFEFD;
+  line-height: 1.8;
+  color: #4a4a4a;
 }
 
 /* Custom Animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -39,91 +40,101 @@ body {
   }
 }
 
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
 .animate-fade-in-up {
-  animation: fadeInUp 0.8s ease-out forwards;
+  animation: fadeInUp 0.6s ease-out forwards;
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.6s ease-out forwards;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animation-delay-100 {
+  animation-delay: 100ms;
 }
 
 .animation-delay-200 {
   animation-delay: 200ms;
 }
 
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
 .animation-delay-400 {
   animation-delay: 400ms;
 }
 
-.animation-delay-600 {
-  animation-delay: 600ms;
-}
-
-.animation-delay-800 {
-  animation-delay: 800ms;
-}
-
-.animation-delay-1000 {
-  animation-delay: 1000ms;
+.animation-delay-500 {
+  animation-delay: 500ms;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #FFFEFD;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #7c393e;
-  border-radius: 4px;
+  background: #7F373B;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #5c2b2f;
+  background: #5f292c;
 }
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
-  line-height: 1.2;
+  line-height: 1.4;
+  color: #7F373B;
 }
 
 p {
-  line-height: 1.5;
+  line-height: 1.9;
 }
 
-/* Bullet points styling for RTL */
-ul {
-  list-style-position: inside;
+/* Selection */
+::selection {
+  background-color: #7F373B;
+  color: white;
 }
 
-li {
-  text-align: right;
+/* Focus styles */
+*:focus-visible {
+  outline: 2px solid #C79250;
+  outline-offset: 2px;
 }
 
-/* Custom gradient text */
-.gradient-text {
-  background: linear-gradient(135deg, #7c393e 0%, #c68f4f 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* Smooth transitions */
+a, button {
+  transition: all 0.25s ease;
 }
 
-/* 3D Card Flip Effect */
-.perspective-1000 {
-  perspective: 1000px;
+/* Form inputs */
+input, textarea, select {
+  font-family: 'Tajawal', sans-serif;
+} */
+a, button {
+  transition: all 0.2s ease;
 }
 
-.transform-style-preserve-3d {
-  transform-style: preserve-3d;
-}
-
-.backface-hidden {
-  backface-visibility: hidden;
-}
-
-.rotate-y-180 {
-  transform: rotateY(180deg);
+/* Form inputs */
+input, textarea, select {
+  font-family: 'Tajawal', sans-serif;
 }
