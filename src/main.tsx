@@ -8,7 +8,7 @@ import UniversityPage from './pages/UniversityPage.tsx';
 import Contact from './pages/Contact.tsx';
 import SocialMedia from './pages/SocialMedia.tsx';
 import NotFoundPage from './pages/NotFound.tsx';
-import ScrollToTop from './components/ScrollToTop.tsx';
+import ScrollToTop from './components/shared/ScrollToTop.tsx';
 import { Analytics } from "@vercel/analytics/react";
 import './index.css';
 

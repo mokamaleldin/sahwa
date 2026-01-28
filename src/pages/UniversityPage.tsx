@@ -1,8 +1,8 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MessageCircle, ArrowRight, Users } from 'lucide-react';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
+import Header from '../components/shared/Header';
+import Footer from '../components/shared/Footer';
 import SEO from '../components/SEO';
 
 interface UniversityData {
