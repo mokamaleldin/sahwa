@@ -7,7 +7,6 @@ import DefinitionSection from '../components/Home/DefinitionSection';
 import GoalSection from '../components/Home/GoalSection';
 import SloganSection from '../components/Home/SloganSection';
 import CTASection from '../components/Home/CTASection';
-import QuickLinksSection from '../components/Home/QuickLinksSection';
 
 const Home: React.FC = () => {
   const homepageStructuredData = [
@@ -83,7 +82,6 @@ const Home: React.FC = () => {
         <GoalSection />
         <SloganSection />
         <CTASection />
-        <QuickLinksSection />
       </main>
       <Footer />
     </>

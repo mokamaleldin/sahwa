@@ -183,7 +183,7 @@ const SocialMedia: React.FC = () => {
           {/* University Groups Section */}
           <div className="mb-12">
             <h2 className="text-xl font-bold text-[#7F373B] mb-6 text-center">مجموعات الجامعات</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <a
                 href="https://chat.whatsapp.com/K3j6B1lcA42B80O1KpTLFO"
                 target="_blank"
@@ -210,6 +210,21 @@ const SocialMedia: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-[#7F373B]">جامعة بيلجي</h3>
+                  <p className="text-sm text-gray-500">مجموعة واتساب</p>
+                </div>
+              </a>
+              
+              <a
+                href="https://chat.whatsapp.com/Koqd707ViD2BPYoC7yHJ1Q"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group bg-white border border-gray-100 rounded-2xl p-5 hover:border-[#7F373B]/20 hover:shadow-lg transition-all duration-300 flex items-center gap-4"
+              >
+                <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center text-green-600 group-hover:bg-green-500 group-hover:text-white transition-all">
+                  <MessageCircle size={22} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-[#7F373B]">جامعة توبكابية</h3>
                   <p className="text-sm text-gray-500">مجموعة واتساب</p>
                 </div>
               </a>

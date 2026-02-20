@@ -28,6 +28,13 @@ const universities: University[] = [
     city: 'إسطنبول',
     description: 'مساحة شبابية لطلاب بلجي تنطلق من هوية الأمة',
   },
+  {
+    id: 'topkapi',
+    name: 'جامعة توبكابية',
+    nameEn: 'Topkapi University',
+    city: 'إسطنبول',
+    description: 'مجتمع طلابي يجمع طلاب توبكابية حول القيم والوعي',
+  },
 ];
 
 const Universities: React.FC = () => {
