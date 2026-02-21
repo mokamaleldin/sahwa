@@ -214,7 +214,7 @@ const SocialMedia: React.FC = () => {
                 </div>
               </a>
               
-              <a
+              {/* <a
                 href="https://chat.whatsapp.com/Koqd707ViD2BPYoC7yHJ1Q"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -227,7 +227,7 @@ const SocialMedia: React.FC = () => {
                   <h3 className="font-bold text-[#7F373B]">جامعة توبكابية</h3>
                   <p className="text-sm text-gray-500">مجموعة واتساب</p>
                 </div>
-              </a>
+              </a> */}
             </div>
           </div>
 
