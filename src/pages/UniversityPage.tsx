@@ -34,15 +34,15 @@ const universitiesData: Record<string, UniversityData> = {
     studentMessage: 'في بلجي، نبني مجتمعًا طلابيًا يجمعنا حول القيم والوعي. كن جزءًا من رحلتنا.',
     whatsappGroup: 'https://chat.whatsapp.com/BrHWBBCth9nCyxDw4a8pdH',
   },
-  // 'topkapi': {
-  //   id: 'topkapi',
-  //   name: 'جامعة توبكابية',
-  //   nameEn: 'Topkapi University',
-  //   city: 'إسطنبول',
-  //   introduction: 'مرحبًا بكم في صحوة توبكابية. نحن مجموعة من الطلاب نسعى لبناء بيئة صحية تُعين على الثبات والوعي خلال الحياة الجامعية.',
-  //   studentMessage: 'نحن طلاب مثلكم، نفهم تحديات الحياة الجامعية ونسعى معًا للنمو والتطور. انضموا إلينا لنكون صحبة تعين بعضها على الخير.',
-  //   whatsappGroup: 'https://chat.whatsapp.com/Koqd707ViD2BPYoC7yHJ1Q',
-  // },
+  'gelisim': {
+    id: 'gelisim',
+    name: 'جامعة جيليشيم',
+    nameEn: 'Gelişim University',
+    city: 'إسطنبول',
+    introduction: 'مرحبًا بكم في صحوة جيليشيم. نحن مجموعة من الطلاب نسعى لبناء بيئة صحية تُعين على الثبات والوعي خلال الحياة الجامعية.',
+    studentMessage: 'نحن طلاب مثلكم، نفهم تحديات الحياة الجامعية ونسعى معًا للنمو والتطور. انضموا إلينا لنكون صحبة تعين بعضها على الخير.',
+    whatsappGroup: 'https://chat.whatsapp.com/JFewtz9mYMHFNOWDXjNAsB',
+  },
 };
 
 const UniversityPage: React.FC = () => {

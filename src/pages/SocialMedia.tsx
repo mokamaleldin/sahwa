@@ -214,8 +214,8 @@ const SocialMedia: React.FC = () => {
                 </div>
               </a>
               
-              {/* <a
-                href="https://chat.whatsapp.com/Koqd707ViD2BPYoC7yHJ1Q"
+              <a
+                href="https://chat.whatsapp.com/JFewtz9mYMHFNOWDXjNAsB"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group bg-white border border-gray-100 rounded-2xl p-5 hover:border-[#7F373B]/20 hover:shadow-lg transition-all duration-300 flex items-center gap-4"
@@ -224,10 +224,10 @@ const SocialMedia: React.FC = () => {
                   <MessageCircle size={22} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-[#7F373B]">جامعة توبكابية</h3>
+                  <h3 className="font-bold text-[#7F373B]">جامعة جيليشيم</h3>
                   <p className="text-sm text-gray-500">مجموعة واتساب</p>
                 </div>
-              </a> */}
+              </a>
             </div>
           </div>
 
