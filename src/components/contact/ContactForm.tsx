@@ -16,7 +16,7 @@ interface ContactFormProps {
 const ContactForm: React.FC<ContactFormProps> = ({ formData, isSubmitting, onSubmit, onChange }) => {
   return (
     <div className="lg:col-span-3">
-      <form onSubmit={onSubmit} className="bg-white border border-gray-100 rounded-2xl p-8">
+      <form onSubmit={onSubmit} className="section-card p-5 sm:p-8">
         <div className="space-y-5">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
@@ -29,7 +29,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ formData, isSubmitting, onSub
               value={formData.name}
               onChange={onChange}
               required
-              className="w-full px-4 py-3 bg-[#FFFEFD] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#C79250]/50 focus:border-[#C79250] transition-all outline-none"
+              className="w-full px-4 py-3.5 bg-[#FFFEFD] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#C79250]/50 focus:border-[#C79250] transition-all outline-none text-base"
               placeholder="أدخل اسمك"
             />
           </div>
@@ -45,7 +45,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ formData, isSubmitting, onSub
               value={formData.email}
               onChange={onChange}
               required
-              className="w-full px-4 py-3 bg-[#FFFEFD] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#C79250]/50 focus:border-[#C79250] transition-all outline-none"
+              className="w-full px-4 py-3.5 bg-[#FFFEFD] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#C79250]/50 focus:border-[#C79250] transition-all outline-none text-base"
               placeholder="example@email.com"
             />
           </div>
@@ -60,7 +60,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ formData, isSubmitting, onSub
               name="phone"
               value={formData.phone}
               onChange={onChange}
-              className="w-full px-4 py-3 bg-[#FFFEFD] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#C79250]/50 focus:border-[#C79250] transition-all outline-none"
+              className="w-full px-4 py-3.5 bg-[#FFFEFD] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#C79250]/50 focus:border-[#C79250] transition-all outline-none text-base"
               placeholder="+90 XXX XXX XX XX"
             />
           </div>
@@ -76,7 +76,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ formData, isSubmitting, onSub
               onChange={onChange}
               rows={5}
               required
-              className="w-full px-4 py-3 bg-[#FFFEFD] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#C79250]/50 focus:border-[#C79250] transition-all outline-none resize-none"
+              className="w-full px-4 py-3.5 bg-[#FFFEFD] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#C79250]/50 focus:border-[#C79250] transition-all outline-none resize-none text-base"
               placeholder="اكتب رسالتك هنا..."
             />
           </div>
@@ -84,7 +84,7 @@ const ContactForm: React.FC<ContactFormProps> = ({ formData, isSubmitting, onSub
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-[#7F373B] text-white py-4 rounded-xl font-medium text-lg hover:bg-[#6a2e31] transition-colors flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="tap-target w-full bg-[#7F373B] text-white py-4 rounded-xl font-medium text-base sm:text-lg hover:bg-[#6a2e31] transition-colors flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <span>جارٍ الإرسال...</span>

@@ -3,6 +3,21 @@
 @tailwind utilities;
 
 * {
+  box-sizing: border-box;
+}
+
+:root {
+  --brand-primary: #7f373b;
+  --brand-primary-dark: #662b2f;
+  --brand-accent: #c79250;
+  --bg-base: #fffefd;
+  --bg-soft: #faf5f2;
+  --text-main: #3f3f46;
+  --text-muted: #6b7280;
+  --card-shadow: 0 12px 30px -18px rgba(127, 55, 59, 0.38);
+}
+
+* {
   font-family: 'IBM Plex Sans Arabic', sans-serif;
 }
 
@@ -14,9 +29,24 @@ html {
 body {
   margin: 0;
   padding: 0;
-  background-color: #FFFEFD;
-  line-height: 1.8;
-  color: #4a4a4a;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(127, 55, 59, 0.06), transparent 30%),
+    radial-gradient(circle at 0% 100%, rgba(199, 146, 80, 0.08), transparent 35%),
+    var(--bg-base);
+  line-height: 1.75;
+  color: var(--text-main);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Custom Animations */
@@ -87,54 +117,85 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #FFFEFD;
+  background: #fffefd;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #7F373B;
+  background: var(--brand-primary);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #5f292c;
+  background: var(--brand-primary-dark);
 }
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
-  line-height: 1.4;
-  color: #7F373B;
+  line-height: 1.35;
+  color: var(--brand-primary);
 }
 
 p {
-  line-height: 1.9;
+  line-height: 1.85;
 }
 
 /* Selection */
 ::selection {
-  background-color: #7F373B;
+  background-color: var(--brand-primary);
   color: white;
 }
 
 /* Focus styles */
 *:focus-visible {
-  outline: 2px solid #C79250;
+  outline: 2px solid var(--brand-accent);
   outline-offset: 2px;
 }
 
 /* Smooth transitions */
 a, button {
   transition: all 0.25s ease;
+  touch-action: manipulation;
 }
 
 /* Form inputs */
 input, textarea, select {
   font-family: 'Tajawal', sans-serif;
-} */
-a, button {
-  transition: all 0.2s ease;
 }
 
-/* Form inputs */
-input, textarea, select {
-  font-family: 'Tajawal', sans-serif;
+@layer components {
+  .app-shell {
+    @apply min-h-screen bg-transparent;
+  }
+
+  .page-container {
+    @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-card {
+    @apply bg-white/90 border border-[#7F373B]/10 rounded-2xl sm:rounded-3xl shadow-sm;
+    box-shadow: var(--card-shadow);
+  }
+
+  .section-divider {
+    @apply inline-block w-12 h-0.5 bg-[#C79250] mb-6;
+  }
+
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

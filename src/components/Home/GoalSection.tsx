@@ -10,23 +10,19 @@ const GoalSection: React.FC = () => {
   ];
 
   return (
-    <section className="py-24 sm:py-32 bg-[#7F373B]/[0.02]">
-      <div className="max-w-4xl mx-auto px-6 sm:px-8">
+    <section className="py-16 sm:py-24 lg:py-28 bg-[#7F373B]/[0.03]">
+      <div className="page-container max-w-5xl">
         <div className="text-center">
-          <span className="inline-block w-12 h-0.5 bg-[#C79250] mb-8"></span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-[#7F373B] mb-10">
+          <span className="section-divider"></span>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#7F373B] mb-8 sm:mb-10">
             كيف تتحقق هذه الرؤية؟
           </h2>
 
-          <p className="text-base sm:text-lg text-gray-700 mb-8">
-            الأهداف الاستراتيجية
-          </p>
-
-          <ol className="text-right space-y-4">
+          <ol className="text-right grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {strategicGoals.map((goal, index) => (
               <li
                 key={goal}
-                className="bg-[#FFFEFD] border border-[#7F373B]/10 rounded-2xl p-5 sm:p-6 text-gray-700 leading-[1.9]"
+                className="section-card p-5 sm:p-6 text-gray-700 leading-[1.9]"
               >
                 <span className="text-[#7F373B] font-bold ml-2">{index + 1}-</span>
                 {goal}

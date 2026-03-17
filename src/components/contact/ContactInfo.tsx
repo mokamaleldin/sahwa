@@ -6,7 +6,7 @@ const ContactInfo: React.FC = () => {
     <div className="lg:col-span-2 space-y-4">
       <a
         href="mailto:sahwaturkey@gmail.com"
-        className="flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-5 hover:border-[#7F373B]/20 hover:shadow-md transition-all group"
+        className="tap-target flex items-center gap-4 section-card p-4 sm:p-5 hover:border-[#7F373B]/20 hover:-translate-y-0.5 transition-all group"
       >
         <div className="w-12 h-12 bg-[#7F373B]/5 rounded-xl flex items-center justify-center text-[#7F373B] group-hover:bg-[#7F373B] group-hover:text-white transition-all">
           <Mail size={22} />
@@ -19,7 +19,7 @@ const ContactInfo: React.FC = () => {
 
       <a
         href="tel:+905345195501"
-        className="flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-5 hover:border-[#7F373B]/20 hover:shadow-md transition-all group"
+        className="tap-target flex items-center gap-4 section-card p-4 sm:p-5 hover:border-[#7F373B]/20 hover:-translate-y-0.5 transition-all group"
       >
         <div className="w-12 h-12 bg-[#7F373B]/5 rounded-xl flex items-center justify-center text-[#7F373B] group-hover:bg-[#7F373B] group-hover:text-white transition-all">
           <Phone size={22} />
@@ -30,7 +30,7 @@ const ContactInfo: React.FC = () => {
         </div>
       </a>
 
-      <div className="flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-5">
+      <div className="flex items-center gap-4 section-card p-4 sm:p-5">
         <div className="w-12 h-12 bg-[#7F373B]/5 rounded-xl flex items-center justify-center text-[#7F373B]">
           <MapPin size={22} />
         </div>

@@ -131,20 +131,20 @@ const UniversityPage: React.FC = () => {
       />
       <Header />
       
-      <main className="min-h-screen pt-28 pb-16 bg-[#FFFEFD]">
+      <main className="app-shell pt-24 sm:pt-28 pb-12 sm:pb-16">
         {/* Header */}
-        <div className="max-w-3xl mx-auto px-6 sm:px-8 mb-16">
+        <div className="page-container max-w-4xl mb-10 sm:mb-16">
           <Link
             to="/universities"
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-[#7F373B] mb-8 transition-colors text-sm"
+            className="tap-target inline-flex items-center gap-2 text-gray-500 hover:text-[#7F373B] mb-8 transition-colors text-sm"
           >
             <ArrowRight size={16} />
             جميع الجامعات
           </Link>
           
           <div className="text-center">
-            <span className="inline-block w-12 h-0.5 bg-[#C79250] mb-6"></span>
-            <h1 className="text-4xl sm:text-5xl font-bold text-[#7F373B] mb-3">
+            <span className="section-divider"></span>
+            <h1 className="text-3xl sm:text-5xl font-bold text-[#7F373B] mb-3">
               {university.name}
             </h1>
             <p className="text-gray-500">{university.nameEn} • {university.city}</p>
@@ -152,31 +152,31 @@ const UniversityPage: React.FC = () => {
         </div>
 
         {/* Introduction */}
-        <section className="max-w-3xl mx-auto px-6 sm:px-8 mb-16">
-          <div className="bg-[#7F373B]/[0.03] rounded-3xl p-8 sm:p-10">
+        <section className="page-container max-w-4xl mb-12 sm:mb-16">
+          <div className="section-card bg-[#7F373B]/[0.03] p-6 sm:p-10">
             <h2 className="text-xl font-bold text-[#7F373B] mb-4">مرحبًا بكم</h2>
-            <p className="text-lg text-gray-600 leading-relaxed">
+            <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
               {university.introduction}
             </p>
           </div>
         </section>
 
         {/* Student Message */}
-        <section className="max-w-3xl mx-auto px-6 sm:px-8 mb-16">
-          <div className="text-center">
+        <section className="page-container max-w-4xl mb-12 sm:mb-16">
+          <div className="section-card text-center p-6 sm:p-10">
             <div className="w-16 h-16 bg-[#C79250]/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <Users size={28} className="text-[#C79250]" />
             </div>
             <h2 className="text-xl font-bold text-[#7F373B] mb-6">رسالة من الطلاب</h2>
-            <blockquote className="text-xl text-gray-600 leading-relaxed font-light">
+            <blockquote className="text-lg sm:text-xl text-gray-600 leading-relaxed font-light">
               "{university.studentMessage}"
             </blockquote>
           </div>
         </section>
 
         {/* CTA - Join */}
-        <section className="max-w-3xl mx-auto px-6 sm:px-8">
-          <div className="bg-[#7F373B] rounded-3xl p-10 sm:p-12 text-center relative overflow-hidden">
+        <section className="page-container max-w-4xl">
+          <div className="bg-[#7F373B] rounded-3xl p-7 sm:p-12 text-center relative overflow-hidden shadow-xl">
             {/* Decorative */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-[#C79250]/20 rounded-full translate-x-1/2 -translate-y-1/2"></div>
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -translate-x-1/2 translate-y-1/2"></div>
@@ -193,7 +193,7 @@ const UniversityPage: React.FC = () => {
                 href={university.whatsappGroup}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-3 bg-white text-[#7F373B] px-8 py-4 rounded-full font-medium text-lg hover:bg-gray-100 transition-colors"
+                className="tap-target inline-flex items-center justify-center gap-3 bg-white text-[#7F373B] px-6 sm:px-8 py-3.5 rounded-xl font-medium text-base sm:text-lg hover:bg-gray-100 transition-colors"
               >
                 <MessageCircle size={22} />
                 انضم عبر واتساب

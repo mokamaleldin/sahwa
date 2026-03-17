@@ -104,7 +104,7 @@ const Contact: React.FC = () => {
           structuredData={contactStructuredData}
           breadcrumbs={breadcrumbs}
         />
-        <main className="min-h-screen pt-32 pb-16 bg-[#FFFEFD]">
+        <main className="app-shell pt-24 sm:pt-28 pb-12 sm:pb-16">
           <SuccessMessage />
         </main>
         <Footer />
@@ -124,11 +124,11 @@ const Contact: React.FC = () => {
         breadcrumbs={breadcrumbs}
       />
       <Header />
-      <main className="min-h-screen pt-28 pb-20 bg-[#FFFEFD]">
-        <div className="max-w-4xl mx-auto px-6 sm:px-8">
+      <main className="app-shell pt-24 sm:pt-28 pb-14 sm:pb-20">
+        <div className="page-container max-w-5xl">
           <ContactHeader />
 
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-8">
             <ContactInfo />
             <ContactForm 
               formData={formData}

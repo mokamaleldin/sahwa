@@ -76,7 +76,7 @@ const Home: React.FC = () => {
         breadcrumbs={breadcrumbs}
       />
       <Header />
-      <main className="min-h-screen bg-[#FFFEFD]">
+      <main className="app-shell">
         <HeroSection />
         <DefinitionSection />
         <GoalSection />

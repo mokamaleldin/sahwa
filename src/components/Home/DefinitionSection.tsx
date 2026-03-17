@@ -8,7 +8,7 @@ const DefinitionSection: React.FC = () => {
     },
     {
       title: 'هوية الأمة الواحدة',
-      description: 'نرسّخ معنى أننا أمة واحدة لا تعترف بحدود سايكس بيكو، وأن رابطتنا الإسلام.',
+      description: 'نرسّخ معنى أننا أمة واحدة تجمعنا رابطة الإسلام والقيم المشتركة.',
     },
     {
       title: 'صحبة وأخوّة وسند',
@@ -25,15 +25,15 @@ const DefinitionSection: React.FC = () => {
   ];
 
   return (
-    <section id="definition" className="py-24 sm:py-32 bg-[#FFFEFD]">
-      <div className="max-w-4xl mx-auto px-6 sm:px-8">
+    <section id="definition" className="py-16 sm:py-24 lg:py-28">
+      <div className="page-container max-w-5xl">
         <div className="text-center">
-          <span className="inline-block w-12 h-0.5 bg-[#C79250] mb-8"></span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-[#7F373B] mb-10">
+          <span className="section-divider"></span>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-[#7F373B] mb-8 sm:mb-10">
             رؤية صحوة
           </h2>
 
-          <p className="text-lg sm:text-xl leading-[2] text-gray-700 font-light mb-10">
+          <p className="section-card text-base sm:text-xl leading-[2] text-gray-700 font-light mb-8 sm:mb-10 p-5 sm:p-8">
             صحوة هي مساحة طلابية
             <br />
             تنطلق من هوية الأمة الواحدة
@@ -45,10 +45,10 @@ const DefinitionSection: React.FC = () => {
             ويكونوا عنصرًا فعالًا في نهضة أمتهم
           </p>
 
-          <div className="text-right space-y-5">
+          <div className="text-right grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {visionPoints.map((point, index) => (
-              <div key={point.title} className="bg-white border border-[#7F373B]/10 rounded-2xl p-5 sm:p-6">
-                <p className="text-[#7F373B] font-bold text-base sm:text-lg mb-2">
+              <div key={point.title} className="section-card p-5 sm:p-6">
+                <p className="text-[#7F373B] font-bold text-base sm:text-lg mb-2 leading-relaxed">
                   {index + 1}. {point.title}
                 </p>
                 <p className="text-gray-600 leading-[1.9] text-sm sm:text-base font-light">

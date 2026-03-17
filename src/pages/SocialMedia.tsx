@@ -120,15 +120,15 @@ const SocialMedia: React.FC = () => {
       />
       <Header />
       
-      <main className="min-h-screen pt-28 pb-20 bg-[#FFFEFD]">
-        <div className="max-w-4xl mx-auto px-6 sm:px-8">
+      <main className="app-shell pt-24 sm:pt-28 pb-14 sm:pb-20">
+        <div className="page-container max-w-5xl">
           {/* Page Header */}
-          <div className="text-center mb-16">
-            <span className="inline-block w-12 h-0.5 bg-[#C79250] mb-6"></span>
-            <h1 className="text-4xl sm:text-5xl font-bold text-[#7F373B] mb-4">
+          <div className="text-center mb-10 sm:mb-16">
+            <span className="section-divider"></span>
+            <h1 className="text-3xl sm:text-5xl font-bold text-[#7F373B] mb-4">
               تابعنا
             </h1>
-            <p className="text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
               كن على اتصال مع مجتمع صحوة
             </p>
           </div>
@@ -141,7 +141,7 @@ const SocialMedia: React.FC = () => {
                 href={social.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`group relative bg-[#7F373B] text-white rounded-2xl p-6 hover:scale-[1.02] transition-all duration-300 animate-fade-in-up overflow-hidden`}
+                className={`group tap-target relative bg-[#7F373B] text-white rounded-2xl p-5 sm:p-6 hover:scale-[1.02] transition-all duration-300 animate-fade-in-up overflow-hidden shadow-lg`}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 {/* Decorative accent */}
@@ -168,7 +168,7 @@ const SocialMedia: React.FC = () => {
                 href={social.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group bg-white border border-gray-100 rounded-2xl p-6 hover:border-[#7F373B]/20 hover:shadow-lg transition-all duration-300 animate-fade-in-up text-center"
+                className="group tap-target section-card p-5 sm:p-6 hover:border-[#7F373B]/20 hover:-translate-y-0.5 transition-all duration-300 animate-fade-in-up text-center"
                 style={{ animationDelay: `${(index + 2) * 100}ms` }}
               >
                 <div className="w-14 h-14 bg-[#7F373B]/5 rounded-xl flex items-center justify-center mx-auto mb-4 text-[#7F373B] group-hover:bg-[#7F373B] group-hover:text-white transition-all duration-300">
@@ -188,7 +188,7 @@ const SocialMedia: React.FC = () => {
                 href="https://chat.whatsapp.com/K3j6B1lcA42B80O1KpTLFO"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group bg-white border border-gray-100 rounded-2xl p-5 hover:border-[#7F373B]/20 hover:shadow-lg transition-all duration-300 flex items-center gap-4"
+                className="group tap-target section-card p-5 hover:border-[#7F373B]/20 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-4"
               >
                 <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center text-green-600 group-hover:bg-green-500 group-hover:text-white transition-all">
                   <MessageCircle size={22} />
@@ -203,7 +203,7 @@ const SocialMedia: React.FC = () => {
                 href="https://chat.whatsapp.com/BrHWBBCth9nCyxDw4a8pdH"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group bg-white border border-gray-100 rounded-2xl p-5 hover:border-[#7F373B]/20 hover:shadow-lg transition-all duration-300 flex items-center gap-4"
+                className="group tap-target section-card p-5 hover:border-[#7F373B]/20 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-4"
               >
                 <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center text-green-600 group-hover:bg-green-500 group-hover:text-white transition-all">
                   <MessageCircle size={22} />
@@ -218,7 +218,7 @@ const SocialMedia: React.FC = () => {
                 href="https://chat.whatsapp.com/JFewtz9mYMHFNOWDXjNAsB"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group bg-white border border-gray-100 rounded-2xl p-5 hover:border-[#7F373B]/20 hover:shadow-lg transition-all duration-300 flex items-center gap-4"
+                className="group tap-target section-card p-5 hover:border-[#7F373B]/20 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-4"
               >
                 <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center text-green-600 group-hover:bg-green-500 group-hover:text-white transition-all">
                   <MessageCircle size={22} />
@@ -232,12 +232,12 @@ const SocialMedia: React.FC = () => {
           </div>
 
           {/* Contact Section */}
-          <div className="bg-[#7F373B]/[0.03] rounded-3xl p-8 sm:p-10 mb-12">
+          <div className="section-card bg-[#7F373B]/[0.03] p-6 sm:p-10 mb-12">
             <h2 className="text-xl font-bold text-[#7F373B] mb-6 text-center">تواصل مباشر</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <a
                 href="mailto:sahwaturkey@gmail.com"
-                className="flex items-center gap-4 bg-white rounded-xl p-4 hover:shadow-md transition-all group"
+                className="tap-target flex items-center gap-4 bg-white rounded-xl p-4 hover:shadow-md transition-all group"
               >
                 <div className="w-12 h-12 bg-[#7F373B]/5 rounded-xl flex items-center justify-center text-[#7F373B] group-hover:bg-[#7F373B] group-hover:text-white transition-all">
                   <Mail size={22} />
@@ -250,7 +250,7 @@ const SocialMedia: React.FC = () => {
               
               <a
                 href="tel:+905345195501"
-                className="flex items-center gap-4 bg-white rounded-xl p-4 hover:shadow-md transition-all group"
+                className="tap-target flex items-center gap-4 bg-white rounded-xl p-4 hover:shadow-md transition-all group"
               >
                 <div className="w-12 h-12 bg-[#7F373B]/5 rounded-xl flex items-center justify-center text-[#7F373B] group-hover:bg-[#7F373B] group-hover:text-white transition-all">
                   <Phone size={22} />

@@ -90,31 +90,31 @@ const Universities: React.FC = () => {
       />
       <Header />
       
-      <main className="min-h-screen pt-28 pb-20 bg-[#FFFEFD]">
-        <div className="max-w-4xl mx-auto px-6 sm:px-8">
+      <main className="app-shell pt-24 sm:pt-28 pb-14 sm:pb-20">
+        <div className="page-container max-w-5xl">
           {/* Page Header */}
-          <div className="text-center mb-16">
-            <span className="inline-block w-12 h-0.5 bg-[#C79250] mb-6"></span>
-            <h1 className="text-4xl sm:text-5xl font-bold text-[#7F373B] mb-4">
+          <div className="text-center mb-10 sm:mb-16">
+            <span className="section-divider"></span>
+            <h1 className="text-3xl sm:text-5xl font-bold text-[#7F373B] mb-4">
               الجامعات
             </h1>
-            <p className="text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
               اكتشف مجتمع صحوة في جامعتك
             </p>
           </div>
 
           {/* Universities Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {universities.map((university, index) => (
               <Link
                 key={university.id}
                 to={`/universities/${university.id}`}
-                className="group bg-white border border-gray-100 rounded-2xl p-8 hover:border-[#7F373B]/20 hover:shadow-lg transition-all duration-300 animate-fade-in-up"
+                className="group section-card p-5 sm:p-7 hover:border-[#7F373B]/20 hover:-translate-y-0.5 transition-all duration-300 animate-fade-in-up"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="flex items-start justify-between mb-5">
                   <div>
-                    <h2 className="text-2xl font-bold text-[#7F373B] mb-1 group-hover:text-[#6a2e31] transition-colors">
+                    <h2 className="text-xl sm:text-2xl font-bold text-[#7F373B] mb-1 group-hover:text-[#6a2e31] transition-colors">
                       {university.name}
                     </h2>
                     <p className="text-sm text-gray-500">{university.nameEn}</p>
