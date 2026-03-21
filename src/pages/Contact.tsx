@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import SEO from '../components/SEO';
 import ContactHeader from '../components/contact/ContactHeader';
 import ContactInfo from '../components/contact/ContactInfo';
-import ContactForm from '../components/contact/ContactForm';
-import SuccessMessage from '../components/contact/SuccessMessage';
 import Header from '../components/shared/Header';
 import Footer from '../components/shared/Footer';
 
@@ -53,65 +51,6 @@ const breadcrumbs = [
 ];
 
 const Contact: React.FC = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    message: '',
-  });
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    // Create mailto link with form data
-    const subject = encodeURIComponent(`رسالة من ${formData.name}`);
-    const body = encodeURIComponent(
-      `الاسم: ${formData.name}\n` +
-      `البريد الإلكتروني: ${formData.email}\n` +
-      `${formData.phone ? `رقم الهاتف: ${formData.phone}\n` : ''}` +
-      `\nالرسالة:\n${formData.message}`
-    );
-    
-    // Open email client
-    window.location.href = `mailto:sahwaturkey@gmail.com?subject=${subject}&body=${body}`;
-    
-    // Show success after a brief delay
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-    }, 500);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  if (isSubmitted) {
-    return (
-      <>
-      <Header />
-        <SEO
-          title="تواصل معنا | صحوة - Contact Sahwa"
-          description="تواصل مع فريق صحوة Sahwa. راسلنا على sahwaturkey@gmail.com أو اتصل على +905345195501. Contact Sahwa student community in Turkey."
-          keywords="تواصل صحوة, contact sahwa, صحوة email, صحوة هاتف, sahwa contact, sahwa turkey contact, التواصل مع صحوة"
-          canonicalUrl="/contact"
-          structuredData={contactStructuredData}
-          breadcrumbs={breadcrumbs}
-        />
-        <main className="app-shell pt-24 sm:pt-28 pb-12 sm:pb-16">
-          <SuccessMessage />
-        </main>
-        <Footer />
-        </>
-    );
-  }
-
   return (
     <>
   
@@ -130,12 +69,6 @@ const Contact: React.FC = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-8">
             <ContactInfo />
-            <ContactForm 
-              formData={formData}
-              isSubmitting={isSubmitting}
-              onSubmit={handleSubmit}
-              onChange={handleChange}
-            />
           </div>
         </div>
       </main>
