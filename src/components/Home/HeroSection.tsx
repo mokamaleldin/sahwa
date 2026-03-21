@@ -17,28 +17,12 @@ const HeroSection: React.FC = () => {
         
         {/* Slogan */}
         <p className="text-lg sm:text-2xl text-[#C79250] font-medium mb-4 animate-fade-in-up animation-delay-200">
-          صحوة لشباب أمتنا
+          شباب أمتنا
         </p>
 
-        <p className="text-sm sm:text-lg text-gray-600 max-w-2xl mx-auto leading-8 mb-10 animate-fade-in-up animation-delay-300">
-          مساحة طلابية تجمع الشباب على الأخوة والوعي والعمل، داخل الجامعات وخارجها.
+        <p className="text-sm sm:text-lg text-gray-600 max-w-2xl mx-auto leading-8 mb-12 sm:mb-16 animate-fade-in-up animation-delay-300">
+          مساحة طلابية إسلامية في جامعات تركيا
         </p>
-
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 mb-12 sm:mb-16 animate-fade-in-up animation-delay-400">
-          <Link
-            to="/universities"
-            className="tap-target inline-flex items-center justify-center gap-2.5 bg-[#7F373B] text-white px-6 py-3.5 rounded-xl font-medium hover:bg-[#6a2e31] shadow-sm"
-          >
-            اكتشف الجامعات
-            <ArrowLeft size={18} />
-          </Link>
-          <Link
-            to="/social"
-            className="tap-target inline-flex items-center justify-center gap-2.5 bg-white text-[#7F373B] border border-[#7F373B]/20 px-6 py-3.5 rounded-xl font-medium hover:bg-[#7F373B]/5"
-          >
-            تابعنا
-          </Link>
-        </div>
         
         {/* Scroll hint */}
         <button 

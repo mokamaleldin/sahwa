@@ -19,22 +19,6 @@ const ContactForm: React.FC<ContactFormProps> = ({ formData, isSubmitting, onSub
       <form onSubmit={onSubmit} className="section-card p-5 sm:p-8">
         <div className="space-y-5">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              الاسم <span className="text-[#7F373B]">*</span>
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={onChange}
-              required
-              className="w-full px-4 py-3.5 bg-[#FFFEFD] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#C79250]/50 focus:border-[#C79250] transition-all outline-none text-base"
-              placeholder="أدخل اسمك"
-            />
-          </div>
-
-          <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
               البريد الإلكتروني <span className="text-[#7F373B]">*</span>
             </label>
@@ -47,21 +31,6 @@ const ContactForm: React.FC<ContactFormProps> = ({ formData, isSubmitting, onSub
               required
               className="w-full px-4 py-3.5 bg-[#FFFEFD] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#C79250]/50 focus:border-[#C79250] transition-all outline-none text-base"
               placeholder="example@email.com"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-              رقم الهاتف <span className="text-gray-400 text-xs">(اختياري)</span>
-            </label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={onChange}
-              className="w-full px-4 py-3.5 bg-[#FFFEFD] border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#C79250]/50 focus:border-[#C79250] transition-all outline-none text-base"
-              placeholder="+90 XXX XXX XX XX"
             />
           </div>
 

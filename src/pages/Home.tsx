@@ -79,8 +79,8 @@ const Home: React.FC = () => {
       <main className="app-shell">
         <HeroSection />
         <DefinitionSection />
-        <GoalSection />
         <SloganSection />
+        <GoalSection />
         <CTASection />
       </main>
       <Footer />
