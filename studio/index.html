@@ -138,11 +138,24 @@
     </footer>
   </main>
   <div id="toast" class="toast" role="status" hidden></div>
-  <script src="/studio-assets/template-assets.js?v=1.4.0"></script>
-  <script src="/studio-assets/arabic-joining.js?v=1.4.0"></script>
-  <script src="/studio-assets/engine.js?v=1.4.0"></script>
-  <script src="/studio-assets/portrait.js?v=1.4.0"></script>
-  <script src="/studio-assets/app.js?v=1.4.0"></script>
-  <script src="/studio-assets/integration.js?v=1.4.0"></script>
+  <dialog id="matte-dialog" class="matte-dialog" aria-labelledby="matte-heading" dir="rtl">
+    <div class="matte-heading"><h2 id="matte-heading">مراجعة حواف الصورة</h2><button type="button" id="matte-cancel" class="text-button">إغلاق</button></div>
+    <div class="matte-tools">
+      <div class="matte-modes" role="group" aria-label="أداة تعديل الحواف"><button type="button" class="small-button" data-matte-mode="erase" aria-pressed="true">مسح الزائد</button><button type="button" class="small-button" data-matte-mode="restore" aria-pressed="false">استعادة الجزء الناقص</button><button type="button" id="matte-undo" class="small-button" disabled>تراجع</button></div>
+      <label for="matte-size">حجم الفرشاة <output id="matte-size-value">24 px</output><input id="matte-size" type="range" min="2" max="80" value="24" dir="ltr"></label>
+      <label for="matte-zoom">تكبير المعاينة <output id="matte-zoom-value">100%</output><input id="matte-zoom" type="range" min="1" max="4" step="0.1" value="1" dir="ltr"></label>
+      <label for="matte-background">خلفية المراجعة<select id="matte-background"><option value="checker">مربعات شفافة</option><option value="dark">داكنة</option><option value="light">فاتحة</option><option value="wine">لون صحوة</option></select></label>
+    </div>
+    <div id="matte-stage" class="matte-stage" data-background="checker"><canvas id="matte-canvas" aria-label="الصورة المفرغة، اسحب بالفرشاة لتعديل حوافها"></canvas></div>
+    <div class="matte-footer"><p id="matte-message" role="status"></p><button type="button" id="matte-save" class="small-button">حفظ الحواف</button></div>
+  </dialog>
+  <script src="/studio-assets/template-assets.js?v=1.5.0"></script>
+  <script src="/studio-assets/arabic-joining.js?v=1.5.0"></script>
+  <script src="/studio-assets/engine.js?v=1.5.0"></script>
+  <script src="/studio-assets/matting-core.js?v=1.5.0"></script>
+  <script src="/studio-assets/portrait.js?v=1.5.0"></script>
+  <script src="/studio-assets/matte-editor.js?v=1.5.0"></script>
+  <script src="/studio-assets/app.js?v=1.5.0"></script>
+  <script src="/studio-assets/integration.js?v=1.5.0"></script>
 </body>
 </html>
