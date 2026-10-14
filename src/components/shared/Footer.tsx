@@ -36,8 +36,8 @@ const Footer: React.FC = () => {
                   </Link>
               </li>
               <li>
-                  <Link to="/contact" className="tap-target inline-flex items-center text-white/75 hover:text-white transition-colors text-sm sm:text-base">
-                  تواصل معنا
+                  <Link to="/login" className="tap-target inline-flex items-center text-white/75 hover:text-white transition-colors text-sm sm:text-base">
+                  تسجيل الدخول
                   </Link>
               </li>
               </ul>

@@ -53,8 +53,8 @@ const Home: React.FC = () => {
           {
             "@type": "ListItem",
             "position": 3,
-            "name": "تواصل معنا",
-            "url": "https://sahwa.space/contact"
+            "name": "تسجيل الدخول",
+            "url": "https://sahwa.space/login"
           }
         ]
       }

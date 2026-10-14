@@ -24,7 +24,7 @@ const Header: React.FC = () => {
     { to: '/', label: 'الرئيسية' },
     { to: '/universities', label: 'الجامعات' },
     { to: '/social', label: 'تابعنا' },
-    { to: '/contact', label: 'تواصل معنا' },
+    { to: '/login', label: 'تسجيل الدخول' },
   ];
 
   return (

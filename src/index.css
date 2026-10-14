@@ -162,6 +162,30 @@ input, textarea, select {
   font-family: 'Tajawal', sans-serif;
 }
 
+.login-input {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 14px;
+  border: 1px solid rgba(127, 55, 59, 0.16);
+  border-radius: 12px;
+  background: #fffefd;
+  color: var(--text-main);
+  font: inherit;
+  font-size: 14px;
+}
+
+.login-input:focus {
+  border-color: var(--brand-primary);
+}
+
+.login-input:disabled {
+  opacity: 0.6;
+}
+
+.login-password {
+  padding-right: 48px;
+}
+
 @layer components {
   .app-shell {
     @apply min-h-screen bg-transparent;

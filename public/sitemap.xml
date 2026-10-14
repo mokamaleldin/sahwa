@@ -48,12 +48,4 @@
     <priority>0.8</priority>
   </url>
   
-  <!-- Contact Page -->
-  <url>
-    <loc>https://sahwa.space/contact</loc>
-    <lastmod>2026-01-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
 </urlset>

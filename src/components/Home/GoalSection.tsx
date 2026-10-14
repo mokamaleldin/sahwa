@@ -41,7 +41,7 @@ const GoalSection: React.FC = () => {
           <ol className="text-right grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
             {strategicGoals.map((goal, index) => (
               <li
-                key={goal}
+                key={goal.title}
                 className="section-card p-5 sm:p-6 text-gray-700 leading-[1.9]"
               >
                 <span className="text-[#7F373B] font-bold ml-2">{index + 1}-</span>{' '}
