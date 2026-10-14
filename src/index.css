@@ -280,6 +280,7 @@ input, textarea, select {
   padding-right: 48px;
 }
 
+
 @layer components {
   .app-shell {
     @apply min-h-screen bg-transparent;
