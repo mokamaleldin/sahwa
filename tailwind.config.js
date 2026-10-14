@@ -5,13 +5,21 @@ export default {
     extend: {
       colors: {
         brand: {
-          primary: '#7F373B',
-          background: '#FFFEFD',
-          accent: '#C79250',
+          primary: '#752026',
+          dark: '#350E15',
+          gold: '#D6AD63',
+          accent: '#D6AD63',
+          background: '#F2E9E2',
+          paper: '#F2E9E2',
+          muted: '#765C5E',
+          line: '#DCCDC7',
         },
       },
       fontFamily: {
-        arabic: ['Tajawal', 'sans-serif'],
+        heading: ['Milan Display', 'Milan Display Black', 'IBM Plex Sans Arabic', 'sans-serif'],
+        sans: ['IBM Plex Sans Arabic', 'sans-serif'],
+        arabic: ['IBM Plex Sans Arabic', 'sans-serif'],
+        body: ['IBM Plex Sans Arabic', 'sans-serif'],
       },
     },
   },

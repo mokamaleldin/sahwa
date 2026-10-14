@@ -1,0 +1,197 @@
+/* Shared Site Header for Studio */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(242, 233, 226, 0.95);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(117, 32, 38, 0.1);
+  padding: 0 20px;
+  min-height: 80px;
+  height: auto;
+}
+
+.header-container {
+  max-width: 1250px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 0;
+}
+
+.header-logo-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.header-logo-img, .brand-mark {
+  height: 58px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.studio-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.studio-navigation a,
+.studio-navigation button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 9999px;
+  font-family: 'IBM Plex Sans Arabic', 'SahwaBodyRegular', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  color: #350E15;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.studio-navigation a:hover {
+  color: #752026;
+  background: rgba(117, 32, 38, 0.05);
+}
+
+.studio-navigation a.active-studio-link {
+  background: #752026;
+  color: #F2E9E2;
+}
+
+.studio-navigation button#logout-button {
+  border: 1px solid rgba(117, 32, 38, 0.2);
+  color: #752026;
+  background: transparent;
+}
+
+.studio-navigation button#logout-button:hover {
+  background: rgba(117, 32, 38, 0.08);
+}
+
+.studio-navigation button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* Page Intro matching Universities style */
+.page-intro {
+  margin: 24px auto 32px;
+  text-align: center;
+  display: block;
+}
+
+.page-intro-header {
+  text-align: center;
+}
+
+.section-divider {
+  display: inline-block;
+  width: 48px;
+  height: 2px;
+  background: #D6AD63;
+  margin-bottom: 12px;
+}
+
+.page-intro h1 {
+  font-family: 'Milan Display', 'Milan Display Black', 'SahwaTitle', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #752026;
+  margin: 0 0 10px;
+}
+
+.page-intro .lead {
+  font-size: 15px;
+  color: rgba(53, 14, 21, 0.85);
+  margin: 0;
+  line-height: 1.8;
+}
+
+/* Shared Site Footer for Studio */
+.site-footer {
+  background: #F2E9E2;
+  border-top: 1px solid rgba(117, 32, 38, 0.12);
+  padding: 40px 20px;
+  margin-top: 48px;
+  text-align: center;
+}
+
+.footer-inner {
+  max-width: 1250px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.footer-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+.footer-social-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.footer-social-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(117, 32, 38, 0.06);
+  color: #752026;
+  transition: all 0.2s ease;
+}
+
+.footer-social-links a:hover {
+  background: #752026;
+  color: #F2E9E2;
+}
+
+.footer-copy {
+  font-size: 13px;
+  color: #765C5E;
+}
+
+@media (max-width: 640px) {
+  .site-header {
+    padding: 0 16px;
+  }
+  .header-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .studio-navigation {
+    justify-content: center;
+    gap: 4px;
+  }
+  .studio-navigation a,
+  .studio-navigation button {
+    font-size: 11px;
+    padding: 6px 10px;
+    min-height: 36px;
+  }
+  .page-intro h1 {
+    font-size: 26px;
+  }
+}

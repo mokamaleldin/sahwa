@@ -17,16 +17,16 @@ const NotFoundPage: React.FC = () => {
       <main className="app-shell flex items-center justify-center pt-24 pb-12" dir="rtl">
         <div className="text-center page-container max-w-lg">
           <div className="section-card p-7 sm:p-10">
-            <div className="text-8xl sm:text-9xl font-bold text-[#7F373B]/10 mb-6">404</div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#7F373B] mb-4">
+            <div className="text-8xl sm:text-9xl font-bold text-[#752026]/10 mb-6">404</div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#752026] mb-4">
             الصفحة غير موجودة
             </h1>
-            <p className="text-gray-600 mb-8 sm:mb-10 leading-relaxed">
+            <p className="text-[#765C5E] mb-8 sm:mb-10 leading-relaxed">
             عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها.
             </p>
             <Link
               to="/"
-              className="tap-target inline-flex items-center gap-3 bg-[#7F373B] text-white px-7 py-3.5 rounded-xl font-medium hover:bg-[#6a2e31] transition-colors duration-300"
+              className="tap-target inline-flex items-center gap-3 bg-[#752026] text-[#F2E9E2] px-7 py-3.5 rounded-xl font-medium hover:bg-[#350E15] transition-colors duration-200"
             >
               <Home size={20} />
               العودة للرئيسية

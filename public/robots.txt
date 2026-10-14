@@ -11,7 +11,6 @@ Allow: /universities
 Allow: /universities/istinye
 Allow: /universities/bilgi
 Allow: /social
-Allow: /contact
 
 # Allow important assets for indexing
 Allow: /logo.svg
@@ -22,6 +21,8 @@ Allow: /*.js
 
 # Block only technical/build paths
 Disallow: /api/
+Disallow: /login
+Disallow: /studio
 Disallow: /_next/static/
 Disallow: /node_modules/
 Disallow: /.git/

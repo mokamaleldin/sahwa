@@ -25,13 +25,13 @@
     
     <!-- Viewport & Mobile -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#7F373B" />
+    <meta name="theme-color" content="#752026" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="صحوة Sahwa" />
     <meta name="application-name" content="صحوة Sahwa" />
-    <meta name="msapplication-TileColor" content="#7F373B" />
+    <meta name="msapplication-TileColor" content="#752026" />
     <meta name="format-detection" content="telephone=yes" />
     
     <!-- Canonical URL -->
@@ -42,7 +42,6 @@
     <link rel="alternate" hreflang="x-default" href="https://sahwa.space/" />
     
     <!-- Favicons -->
-    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/logo.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
@@ -76,12 +75,9 @@
     <meta name="twitter:creator" content="@sahwatr" />
     <meta name="twitter:site" content="@sahwatr" />
     
-    <!-- Preconnect for Performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    
-    <!-- Font Loading with display=swap for better CLS -->
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Preload Critical Local Fonts -->
+    <link rel="preload" href="/fonts/milan/milan-display-black.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/ibm-plex/IBMPlexSansArabic-Regular.woff2" as="font" type="font/woff2" crossorigin />
     
     <!-- DNS Prefetch for external resources -->
     <link rel="dns-prefetch" href="https://www.instagram.com" />

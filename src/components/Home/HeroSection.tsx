@@ -1,58 +1,47 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
 
 const HeroSection: React.FC = () => {
   return (
-    <section className="min-h-[88vh] sm:min-h-screen flex items-center justify-center relative overflow-hidden pt-12">
-      {/* Subtle decorative elements */}
-      <div className="absolute top-16 right-2 sm:right-10 w-48 sm:w-72 h-48 sm:h-72 bg-[#7F373B]/8 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-10 left-2 sm:left-10 w-56 sm:w-96 h-56 sm:h-96 bg-[#C79250]/10 rounded-full blur-3xl"></div>
-      
-      <div className="relative z-10 text-center px-4 sm:px-8 max-w-4xl mx-auto pt-20 sm:pt-24">
-        {/* Main Title */}
-        <h1 className="text-5xl sm:text-7xl lg:text-8xl font-bold text-[#7F373B] mb-5 sm:mb-6 animate-fade-in-up tracking-tight">
+    <section className="min-h-[55vh] sm:min-h-[65vh] flex items-center justify-center relative overflow-hidden pt-24 sm:pt-28 pb-8">
+      {/* Subtle side decorative emblem */}
+      <div 
+        className="absolute top-1/2 -left-16 sm:-left-12 -translate-y-1/2 pointer-events-none opacity-5 select-none"
+        aria-hidden="true"
+      >
+        <img
+          src="/sahwa-icon.png"
+          alt=""
+          className="w-72 h-72 sm:w-96 sm:h-96 object-contain"
+        />
+      </div>
+
+      <div className="relative z-10 text-center px-4 sm:px-8 max-w-2xl mx-auto flex flex-col items-center">
+        {/* Secondary Golden Geometric Icon */}
+        <div className="mb-6 sm:mb-8 animate-fade-in">
+          <img
+            src="/sahwa-icon.png"
+            alt="أيقونة صحوة"
+            className="w-20 h-20 sm:w-28 sm:h-28 object-contain mx-auto drop-shadow-sm transition-transform duration-300 hover:scale-105"
+            width="112"
+            height="112"
+            loading="eager"
+          />
+        </div>
+
+        {/* Brand Name in Milan Display Black */}
+        <h1 className="text-5xl sm:text-7xl font-heading font-bold text-[#752026] mb-4 tracking-normal">
           صحوة
         </h1>
-        
-        {/* Slogan */}
-        <p className="text-lg sm:text-2xl text-[#C79250] font-medium mb-4 animate-fade-in-up animation-delay-200">
-          صحوة لشباب أمتنا
-        </p>
 
-        <p className="text-sm sm:text-lg text-gray-600 max-w-2xl mx-auto leading-8 mb-10 animate-fade-in-up animation-delay-300">
-          مساحة طلابية تجمع الشباب على الأخوة والوعي والعمل، داخل الجامعات وخارجها.
-        </p>
+        <span className="inline-block w-12 h-0.5 bg-[#D6AD63] my-3"></span>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 mb-12 sm:mb-16 animate-fade-in-up animation-delay-400">
-          <Link
-            to="/universities"
-            className="tap-target inline-flex items-center justify-center gap-2.5 bg-[#7F373B] text-white px-6 py-3.5 rounded-xl font-medium hover:bg-[#6a2e31] shadow-sm"
-          >
-            اكتشف الجامعات
-            <ArrowLeft size={18} />
-          </Link>
-          <Link
-            to="/social"
-            className="tap-target inline-flex items-center justify-center gap-2.5 bg-white text-[#7F373B] border border-[#7F373B]/20 px-6 py-3.5 rounded-xl font-medium hover:bg-[#7F373B]/5"
-          >
-            تابعنا
-          </Link>
-        </div>
-        
-        {/* Scroll hint */}
-        <button 
-          onClick={() => document.getElementById('definition')?.scrollIntoView({ behavior: 'smooth' })}
-          className="animate-fade-in-up animation-delay-500 group tap-target"
-          aria-label="اكتشف المزيد"
-        >
-          <div className="w-8 h-14 border-2 border-[#7F373B]/30 rounded-full flex justify-center mx-auto hover:border-[#7F373B]/60 transition-colors">
-            <div className="w-1.5 h-4 bg-[#7F373B]/40 rounded-full mt-3 animate-bounce"></div>
-          </div>
-        </button>
+        <p className="text-base sm:text-lg text-[#350E15]/80 font-medium">
+          شباب أمتنا
+        </p>
       </div>
     </section>
   );
 };
 
 export default HeroSection;
+

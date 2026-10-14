@@ -90,15 +90,34 @@ const Universities: React.FC = () => {
       />
       <Header />
       
-      <main className="app-shell pt-24 sm:pt-28 pb-14 sm:pb-20">
-        <div className="page-container max-w-5xl">
+      <main className="app-shell pt-24 sm:pt-28 pb-14 sm:pb-20 relative overflow-hidden">
+        {/* Subtle side decorative emblem */}
+        <div 
+          className="absolute top-24 -left-16 sm:-left-12 pointer-events-none opacity-5 select-none"
+          aria-hidden="true"
+        >
+          <img
+            src="/sahwa-icon.png"
+            alt=""
+            className="w-72 h-72 sm:w-80 sm:h-80 object-contain"
+          />
+        </div>
+
+        <div className="page-container max-w-5xl relative z-10">
           {/* Page Header */}
           <div className="text-center mb-10 sm:mb-16">
+            <div className="mb-3 flex justify-center">
+              <img
+                src="/sahwa-icon.png"
+                alt=""
+                className="w-9 h-9 sm:w-11 sm:h-11 object-contain drop-shadow-sm"
+              />
+            </div>
             <span className="section-divider"></span>
-            <h1 className="text-3xl sm:text-5xl font-bold text-[#7F373B] mb-4">
+            <h1 className="text-3xl sm:text-5xl font-heading font-bold text-[#752026] mb-4">
               الجامعات
             </h1>
-            <p className="text-base sm:text-lg text-gray-600 max-w-xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg text-[#350E15]/80 max-w-xl mx-auto leading-relaxed">
               اكتشف مجتمع صحوة في جامعتك
             </p>
           </div>
@@ -109,28 +128,28 @@ const Universities: React.FC = () => {
               <Link
                 key={university.id}
                 to={`/universities/${university.id}`}
-                className="group section-card p-5 sm:p-7 hover:border-[#7F373B]/20 hover:-translate-y-0.5 transition-all duration-300 animate-fade-in-up"
+                className="group section-card p-5 sm:p-7 hover:border-[#752026]/30 hover:-translate-y-0.5 transition-all duration-200 animate-fade-in-up"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="flex items-start justify-between mb-5">
+                <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-[#7F373B] mb-1 group-hover:text-[#6a2e31] transition-colors">
+                    <h2 className="text-xl sm:text-2xl font-bold text-[#752026] mb-1 group-hover:text-[#350E15] transition-colors">
                       {university.name}
                     </h2>
-                    <p className="text-sm text-gray-500">{university.nameEn}</p>
+                    <p className="text-sm text-[#765C5E]">{university.nameEn}</p>
                   </div>
                 </div>
                 
-                <p className="text-gray-600 mb-6 leading-relaxed">
+                <p className="text-[#350E15]/85 mb-6 leading-relaxed">
                   {university.description}
                 </p>
                 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-gray-400">
+                  <div className="flex items-center gap-2 text-[#765C5E]">
                     <MapPin size={16} />
                     <span className="text-sm">{university.city}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-[#C79250] font-medium group-hover:gap-3 transition-all">
+                  <div className="flex items-center gap-2 text-[#752026] font-medium group-hover:gap-3 transition-all">
                     <span className="text-sm">اكتشف</span>
                     <ArrowLeft size={16} />
                   </div>

@@ -4,9 +4,8 @@ import Footer from '../components/shared/Footer';
 import SEO from '../components/SEO';
 import HeroSection from '../components/Home/HeroSection';
 import DefinitionSection from '../components/Home/DefinitionSection';
-import GoalSection from '../components/Home/GoalSection';
 import SloganSection from '../components/Home/SloganSection';
-import CTASection from '../components/Home/CTASection';
+import VolunteerSection from '../components/Home/VolunteerSection';
 
 const Home: React.FC = () => {
   const homepageStructuredData = [
@@ -53,8 +52,8 @@ const Home: React.FC = () => {
           {
             "@type": "ListItem",
             "position": 3,
-            "name": "تواصل معنا",
-            "url": "https://sahwa.space/contact"
+            "name": "تسجيل الدخول",
+            "url": "https://sahwa.space/login"
           }
         ]
       }
@@ -79,9 +78,8 @@ const Home: React.FC = () => {
       <main className="app-shell">
         <HeroSection />
         <DefinitionSection />
-        <GoalSection />
         <SloganSection />
-        <CTASection />
+        <VolunteerSection />
       </main>
       <Footer />
     </>

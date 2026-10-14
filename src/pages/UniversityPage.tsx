@@ -131,31 +131,50 @@ const UniversityPage: React.FC = () => {
       />
       <Header />
       
-      <main className="app-shell pt-24 sm:pt-28 pb-12 sm:pb-16">
+      <main className="app-shell pt-24 sm:pt-28 pb-12 sm:pb-16 relative overflow-hidden">
+        {/* Subtle side decorative emblem */}
+        <div 
+          className="absolute top-24 -left-16 sm:-left-12 pointer-events-none opacity-5 select-none"
+          aria-hidden="true"
+        >
+          <img
+            src="/sahwa-icon.png"
+            alt=""
+            className="w-72 h-72 sm:w-80 sm:h-80 object-contain"
+          />
+        </div>
+
         {/* Header */}
-        <div className="page-container max-w-4xl mb-10 sm:mb-16">
+        <div className="page-container max-w-4xl mb-10 sm:mb-16 relative z-10">
           <Link
             to="/universities"
-            className="tap-target inline-flex items-center gap-2 text-gray-500 hover:text-[#7F373B] mb-8 transition-colors text-sm"
+            className="tap-target inline-flex items-center gap-2 text-[#765C5E] hover:text-[#752026] mb-8 transition-colors text-sm"
           >
             <ArrowRight size={16} />
             جميع الجامعات
           </Link>
           
           <div className="text-center">
+            <div className="mb-3 flex justify-center">
+              <img
+                src="/sahwa-icon.png"
+                alt=""
+                className="w-9 h-9 sm:w-11 sm:h-11 object-contain drop-shadow-sm"
+              />
+            </div>
             <span className="section-divider"></span>
-            <h1 className="text-3xl sm:text-5xl font-bold text-[#7F373B] mb-3">
+            <h1 className="text-3xl sm:text-5xl font-heading font-bold text-[#752026] mb-3">
               {university.name}
             </h1>
-            <p className="text-gray-500">{university.nameEn} • {university.city}</p>
+            <p className="text-[#765C5E]">{university.nameEn} • {university.city}</p>
           </div>
         </div>
 
         {/* Introduction */}
         <section className="page-container max-w-4xl mb-12 sm:mb-16">
-          <div className="section-card bg-[#7F373B]/[0.03] p-6 sm:p-10">
-            <h2 className="text-xl font-bold text-[#7F373B] mb-4">مرحبًا بكم</h2>
-            <p className="text-base sm:text-lg text-gray-600 leading-relaxed">
+          <div className="section-card p-6 sm:p-10 text-right">
+            <h2 className="text-xl font-bold text-[#752026] mb-4">مرحبًا بكم</h2>
+            <p className="text-base sm:text-lg text-[#350E15]/85 leading-relaxed">
               {university.introduction}
             </p>
           </div>
@@ -164,11 +183,11 @@ const UniversityPage: React.FC = () => {
         {/* Student Message */}
         <section className="page-container max-w-4xl mb-12 sm:mb-16">
           <div className="section-card text-center p-6 sm:p-10">
-            <div className="w-16 h-16 bg-[#C79250]/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Users size={28} className="text-[#C79250]" />
+            <div className="w-16 h-16 bg-[#D6AD63]/15 rounded-full flex items-center justify-center mx-auto mb-6 text-[#752026]">
+              <Users size={28} />
             </div>
-            <h2 className="text-xl font-bold text-[#7F373B] mb-6">رسالة من الطلاب</h2>
-            <blockquote className="text-lg sm:text-xl text-gray-600 leading-relaxed font-light">
+            <h2 className="text-xl font-bold text-[#752026] mb-6">رسالة من الطلاب</h2>
+            <blockquote className="text-lg sm:text-xl text-[#350E15]/85 leading-relaxed font-normal">
               "{university.studentMessage}"
             </blockquote>
           </div>
@@ -176,16 +195,12 @@ const UniversityPage: React.FC = () => {
 
         {/* CTA - Join */}
         <section className="page-container max-w-4xl">
-          <div className="bg-[#7F373B] rounded-3xl p-7 sm:p-12 text-center relative overflow-hidden shadow-xl">
-            {/* Decorative */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#C79250]/20 rounded-full translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full -translate-x-1/2 translate-y-1/2"></div>
-            
+          <div className="bg-[#752026] rounded-3xl p-7 sm:p-12 text-center relative overflow-hidden shadow-lg text-[#F2E9E2]">
             <div className="relative z-10">
-              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+              <h2 className="text-2xl sm:text-3xl font-bold text-[#F2E9E2] mb-3">
                 انضم إلى صحوة {university.name.replace('جامعة ', '')}
               </h2>
-              <p className="text-white/70 mb-8 max-w-md mx-auto">
+              <p className="text-[#F2E9E2]/80 mb-8 max-w-md mx-auto">
                 كن جزءًا من مجتمعنا الطلابي
               </p>
               
@@ -193,10 +208,10 @@ const UniversityPage: React.FC = () => {
                 href={university.whatsappGroup}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="tap-target inline-flex items-center justify-center gap-3 bg-white text-[#7F373B] px-6 sm:px-8 py-3.5 rounded-xl font-medium text-base sm:text-lg hover:bg-gray-100 transition-colors"
+                className="tap-target inline-flex items-center justify-center gap-3 bg-[#F2E9E2] text-[#752026] px-6 sm:px-8 py-3.5 rounded-xl font-medium text-base sm:text-lg hover:bg-white transition-colors shadow-sm"
               >
                 <MessageCircle size={22} />
-                انضم عبر واتساب
+                <span>انضم عبر واتساب</span>
               </a>
             </div>
           </div>

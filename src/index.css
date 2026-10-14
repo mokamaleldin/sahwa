@@ -2,19 +2,113 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Local Font Declarations */
+@font-face {
+  font-family: 'Milan Display';
+  src: url('/fonts/milan/milan-display-black.woff2') format('woff2'),
+       url('/fonts/milan/milan-display-black.woff') format('woff'),
+       url('/fonts/milan/milan-display-black.ttf') format('truetype');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Milan Display Black';
+  src: url('/fonts/milan/milan-display-black.woff2') format('woff2'),
+       url('/fonts/milan/milan-display-black.woff') format('woff'),
+       url('/fonts/milan/milan-display-black.ttf') format('truetype');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/fonts/ibm-plex/IBMPlexSansArabic-Thin.woff2') format('woff2'),
+       url('/fonts/ibm-plex/IBMPlexSansArabic-Thin.woff') format('woff'),
+       url('/fonts/ibm-plex/IBMPlexSansArabic-Thin.ttf') format('truetype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/fonts/ibm-plex/IBMPlexSansArabic-ExtraLight.woff2') format('woff2'),
+       url('/fonts/ibm-plex/IBMPlexSansArabic-ExtraLight.woff') format('woff'),
+       url('/fonts/ibm-plex/IBMPlexSansArabic-ExtraLight.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/fonts/ibm-plex/IBMPlexSansArabic-Light.woff2') format('woff2'),
+       url('/fonts/ibm-plex/IBMPlexSansArabic-Light.woff') format('woff'),
+       url('/fonts/ibm-plex/IBMPlexSansArabic-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/fonts/ibm-plex/IBMPlexSansArabic-Regular.woff2') format('woff2'),
+       url('/fonts/ibm-plex/IBMPlexSansArabic-Regular.woff') format('woff'),
+       url('/fonts/ibm-plex/IBMPlexSansArabic-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/fonts/ibm-plex/IBMPlexSansArabic-Medium.woff2') format('woff2'),
+       url('/fonts/ibm-plex/IBMPlexSansArabic-Medium.woff') format('woff'),
+       url('/fonts/ibm-plex/IBMPlexSansArabic-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/fonts/ibm-plex/IBMPlexSansArabic-SemiBold.woff2') format('woff2'),
+       url('/fonts/ibm-plex/IBMPlexSansArabic-SemiBold.woff') format('woff'),
+       url('/fonts/ibm-plex/IBMPlexSansArabic-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans Arabic';
+  src: url('/fonts/ibm-plex/IBMPlexSansArabic-Bold.woff2') format('woff2'),
+       url('/fonts/ibm-plex/IBMPlexSansArabic-Bold.woff') format('woff'),
+       url('/fonts/ibm-plex/IBMPlexSansArabic-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 * {
   box-sizing: border-box;
 }
 
 :root {
-  --brand-primary: #7f373b;
-  --brand-primary-dark: #662b2f;
-  --brand-accent: #c79250;
-  --bg-base: #fffefd;
-  --bg-soft: #faf5f2;
-  --text-main: #3f3f46;
-  --text-muted: #6b7280;
-  --card-shadow: 0 12px 30px -18px rgba(127, 55, 59, 0.38);
+  --brand-primary: #752026;
+  --brand-primary-dark: #350e15;
+  --brand-accent: #d6ad63;
+  --brand-dark: #350e15;
+  --brand-gold: #d6ad63;
+  --bg-base: #f2e9e2;
+  --bg-soft: #ede4dc;
+  --text-main: #350e15;
+  --text-muted: #765c5e;
+  --line: #dccdc7;
+  --card-shadow: 0 10px 25px -15px rgba(117, 32, 38, 0.2);
 }
 
 * {
@@ -24,16 +118,14 @@
 html {
   direction: rtl;
   scroll-behavior: smooth;
+  background-color: var(--bg-base);
 }
 
 body {
   margin: 0;
   padding: 0;
-  background:
-    radial-gradient(circle at 100% 0%, rgba(127, 55, 59, 0.06), transparent 30%),
-    radial-gradient(circle at 0% 100%, rgba(199, 146, 80, 0.08), transparent 35%),
-    var(--bg-base);
-  line-height: 1.75;
+  background-color: var(--bg-base);
+  line-height: 1.8;
   color: var(--text-main);
   min-height: 100vh;
   overflow-x: hidden;
@@ -117,7 +209,7 @@ canvas {
 }
 
 ::-webkit-scrollbar-track {
-  background: #fffefd;
+  background: var(--bg-base);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -131,8 +223,10 @@ canvas {
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
+  font-family: 'Milan Display', 'Milan Display Black', 'IBM Plex Sans Arabic', sans-serif;
   line-height: 1.35;
   color: var(--brand-primary);
+  letter-spacing: normal;
 }
 
 p {
@@ -142,7 +236,7 @@ p {
 /* Selection */
 ::selection {
   background-color: var(--brand-primary);
-  color: white;
+  color: var(--bg-base);
 }
 
 /* Focus styles */
@@ -159,7 +253,31 @@ a, button {
 
 /* Form inputs */
 input, textarea, select {
-  font-family: 'Tajawal', sans-serif;
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+}
+
+.login-input {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 14px;
+  border: 1px solid rgba(117, 32, 38, 0.16);
+  border-radius: 12px;
+  background: var(--bg-base);
+  color: var(--text-main);
+  font: inherit;
+  font-size: 14px;
+}
+
+.login-input:focus {
+  border-color: var(--brand-primary);
+}
+
+.login-input:disabled {
+  opacity: 0.6;
+}
+
+.login-password {
+  padding-right: 48px;
 }
 
 @layer components {
@@ -172,12 +290,13 @@ input, textarea, select {
   }
 
   .section-card {
-    @apply bg-white/90 border border-[#7F373B]/10 rounded-2xl sm:rounded-3xl shadow-sm;
+    @apply bg-brand-background rounded-2xl sm:rounded-3xl shadow-sm;
+    border: 1px solid rgba(117, 32, 38, 0.12);
     box-shadow: var(--card-shadow);
   }
 
   .section-divider {
-    @apply inline-block w-12 h-0.5 bg-[#C79250] mb-6;
+    @apply inline-block w-12 h-0.5 bg-[#D6AD63] mb-6;
   }
 
   .tap-target {
