@@ -7,7 +7,7 @@
   'use strict';
   const TEMPLATE = Object.freeze({
     id: 'sahwa-simple-v1', width: 1080, height: 1300, color: '#752026',
-    title: { right: 781, width: 510, max: 136.69, min: 78, lineHeight: 147.9, baselines: [429.62, 577.52] },
+    title: { right: 781, width: 510, y: 323, height: 326, max: 136.69, min: 78, lineHeight: 147.9, baselines: [429.62, 577.52] },
     subtitle: { right: 781, width: 500, max: 31.58, min: 26, lineHeight: 47, baseline: 709.19 },
     information: { right: 737.9, width: 465, max: 31.58, min: 26, baselines: [862.33, 959.67, 1051.95], markerX: 714.2, markerY: [822.71, 920.75, 1015.65], markerSize: 54.88 }
   });
@@ -120,12 +120,40 @@
     }
     return { text: stretched, count };
   }
+  function titleInk(ctx, text, size) {
+    const measured = ctx.measureText(text);
+    const sensible = value => Number.isFinite(value) && value >= 0 && value <= size * 3;
+    return {
+      ascent: sensible(measured.actualBoundingBoxAscent) ? measured.actualBoundingBoxAscent : size,
+      descent: sensible(measured.actualBoundingBoxDescent) ? measured.actualBoundingBoxDescent : size * 0.4
+    };
+  }
   function layoutTitle(ctx, text, spec, family, enabled = true) {
-    const fitted = fit(ctx, text, spec, family, 700, 2);
-    if (!fitted) return null;
-    font(ctx, fitted.size, family, 700);
-    const stretched = fitted.lines.map(line => enabled ? stretchLine(ctx, line, spec.width * 0.94) : { text: line, count: 0 });
-    return { ...fitted, lines: stretched.map(line => line.text), kashidaCount: stretched.reduce((sum, line) => sum + line.count, 0) };
+    const top = spec.y ?? spec.bounds?.[1] ?? spec.baselines[0] - spec.max;
+    const height = spec.height ?? (spec.bounds ? spec.bounds[3] - top : spec.baselines[1] - top + spec.max * 0.5);
+    for (let size = spec.max; size >= spec.min - 0.01; size -= 1) {
+      font(ctx, size, family, 700);
+      const wrapped = wrap(ctx, text, spec.width);
+      if (!wrapped || wrapped.length > 2) continue;
+      const stretched = wrapped.map(line => enabled ? stretchLine(ctx, line, spec.width * 0.94) : { text: line, count: 0 });
+      const lines = stretched.map(line => line.text);
+      const ink = lines.map(line => titleInk(ctx, line, size));
+      // Original Photoshop baselines belong to the original font. Measure the
+      // replacement font's actual ink, including the deep tails of ف and ي.
+      const gap = Math.max(24, size * 0.22);
+      const usedHeight = ink.reduce((sum, line) => sum + line.ascent + line.descent, 0) + gap * (lines.length - 1);
+      if (usedHeight > height + 0.5) continue;
+      let cursor = top + (height - usedHeight) / 2;
+      const baselines = [], inkBounds = [];
+      for (const line of ink) {
+        baselines.push(cursor + line.ascent);
+        inkBounds.push({ top: cursor, bottom: cursor + line.ascent + line.descent });
+        cursor += line.ascent + line.descent + gap;
+      }
+      return { size, lines, family, weight: 700, baselines, inkBounds, gap,
+        kashidaCount: stretched.reduce((sum, line) => sum + line.count, 0) };
+    }
+    return null;
   }
   function exportDimensions(template, scale = 3) {
     scale = Number(scale);
@@ -216,7 +244,7 @@
     ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic'; ctx.direction = 'rtl';
     if ('fontKerning' in ctx) ctx.fontKerning = 'normal';
 
-    let titleSize = null, titleLines = [], kashidaCount = 0, subtitleSize = null, subtitleLines = [];
+    let titleSize = null, titleLines = [], titleBaselines = [], titleInkBounds = [], kashidaCount = 0, subtitleSize = null, subtitleLines = [];
     const original = sameText(input.title, template.defaults.title) && input.title.split('\n').length <= 2 && !!images.originalTitle && titleMode !== 'custom';
     if (!input.title) errors.push({ field: 'title', message: 'اكتب العنوان الرئيسي.' });
     else if (original) ctx.drawImage(images.originalTitle, 0, 0, template.width, template.height);
@@ -226,9 +254,8 @@
       if (!fitted) errors.push({ field: 'title', message: 'العنوان لا يناسب مساحة القالب. اختصره أو وزّعه على سطرين أقصر.' });
       else {
         titleSize = fitted.size;
-        titleLines = fitted.lines; kashidaCount = fitted.kashidaCount;
-        const baselines = fitted.lines.length === 1 ? [layout.title.singleBaseline ?? (layout.title.baselines[0] + layout.title.baselines[1]) / 2] : layout.title.baselines;
-        drawText(ctx, fitted, layout.title.right, baselines, layout.title.align);
+        titleLines = fitted.lines; titleBaselines = fitted.baselines; titleInkBounds = fitted.inkBounds; kashidaCount = fitted.kashidaCount;
+        drawText(ctx, fitted, layout.title.right, fitted.baselines, layout.title.align);
       }
       if (titleMode === 'original') errors.push({ field: 'titleFont', message: 'ارفع Asal Arabic Bold أو Milan Display Black من دليل الهوية، أو فعّل خط العنوان المؤقت.' });
     }
@@ -270,7 +297,7 @@
       informationCount++;
     }
     ctx.restore();
-    return { valid: errors.length === 0, errors, input, titleSize, titleLines, kashidaCount, subtitleSize, subtitleLines, originalTitle: original, informationCount, temporaryFont: titleMode === 'trial' && !original, templateId: template.id, customPhoto: !!options.photoImage && fields.image };
+    return { valid: errors.length === 0, errors, input, titleSize, titleLines, titleBaselines, titleInkBounds, kashidaCount, subtitleSize, subtitleLines, originalTitle: original, informationCount, temporaryFont: titleMode === 'trial' && !original, templateId: template.id, customPhoto: !!options.photoImage && fields.image };
   }
   function parseFontNames(buffer) {
     const view = new DataView(buffer);

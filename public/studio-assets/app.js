@@ -125,11 +125,15 @@
     document.getElementById('photo-name').textContent = photo?.name || 'الصورة الأصلية';
     document.getElementById('photo-controls').hidden = !photo;
     document.getElementById('photo-original-button').hidden = !photo;
-    const busy = processingPhotoId === template.id;
+    const busy = processingPhotoId !== null;
     form.elements.photoMode.querySelector('option[value="cutout"]').disabled = !!photo && !photo.hasTransparency;
     if (photo && !photo.hasTransparency && form.elements.photoMode.value === 'cutout') form.elements.photoMode.value = 'circle';
-    document.getElementById('photo-remove-background').disabled = !photo || busy || photo.hasTransparency;
-    document.getElementById('photo-remove-background').title = photo?.hasTransparency ? 'الصورة مفرغة بالفعل.' : 'تفريغ الشخص داخل المتصفح';
+    const canRemove = photo && (!photo.hasTransparency || photo.originalFile);
+    document.getElementById('photo-remove-background').disabled = !canRemove || busy;
+    document.getElementById('photo-remove-background').textContent = photo?.removedBackground ? 'إعادة التفريغ بدقة' : 'تفريغ صورة الشخص بدقة';
+    document.getElementById('photo-remove-background').title = canRemove ? 'تفريغ الشخص والشعر على جهازك' : 'الصورة مفرغة بالفعل.';
+    document.getElementById('photo-refine-background').hidden = !photo?.originalFile || !photo.removedBackground;
+    document.getElementById('photo-refine-background').disabled = busy;
     document.getElementById('photo-undo-background').hidden = !photo?.removedBackground;
     document.getElementById('photo-undo-background').disabled = busy;
     document.getElementById('photo-original-button').disabled = busy;
@@ -315,22 +319,40 @@
     catch { if (template.id === id) photoError.textContent = 'الصورة جاهزة للجلسة الحالية؛ تعذّر حفظها على هذا الجهاز.'; }
   }
   document.getElementById('photo-remove-background').addEventListener('click', async () => {
-    const photo = photos.get(template.id); if (!photo || photo.hasTransparency || processingPhotoId) return;
+    const photo = photos.get(template.id); if (!photo || (photo.hasTransparency && !photo.originalFile) || processingPhotoId) return;
     const id = template.id, token = ++photoVersion; processingPhotoId = id; showPhotoState(); draw();
     try {
-      const blob = await Portrait.removePersonBackground(photo.rawImage, message => {
+      const original = photo.originalFile ? await loadPhoto(photo.originalFile) : photo;
+      const blob = await Portrait.removePersonBackground(original.rawImage, message => {
         if (template.id === id && token === photoVersion) photoError.textContent = message;
       });
-      const filename = `${photo.file.name.replace(/\.[^.]+$/, '')}-cutout.png`;
+      const filename = `${original.file.name.replace(/\.[^.]+$/, '')}-cutout.png`;
       const processed = await loadPhoto(new File([blob], filename, { type: 'image/png' }));
       if (template.id !== id || token !== photoVersion) return;
       processed.originalFile = photo.originalFile || photo.file; processed.removedBackground = true;
       photos.set(id, processed); form.elements.photoMode.value = 'cutout'; putTransform();
       photoError.textContent = ''; draw(); saveInput(); await persistPhoto(id, processed);
-      toast('تم تفريغ صورة الشخص. راجع الحواف؛ يمكنك إلغاء التفريغ.');
+      toast('تم التفريغ الدقيق. يمكنك تكبير الصورة ومراجعة الحواف.');
     } catch (error) {
       if (template.id === id && token === photoVersion) photoError.textContent = error.message || 'تعذّر التفريغ. يمكنك استخدام وضع الدائرة.';
     } finally { processingPhotoId = null; showPhotoState(); draw(); }
+  });
+  document.getElementById('photo-refine-background').addEventListener('click', async () => {
+    const photo = photos.get(template.id); if (!photo?.originalFile || processingPhotoId) return;
+    const id = template.id, token = ++photoVersion;
+    processingPhotoId = id; showPhotoState(); draw();
+    try {
+      const original = await loadPhoto(photo.originalFile);
+      const blob = await window.SahwaMatteEditor.edit(original.rawImage, photo.rawImage);
+      if (!blob || template.id !== id || token !== photoVersion) return;
+      const processed = await loadPhoto(new File([blob], photo.file.name, { type: 'image/png' }));
+      if (template.id !== id || token !== photoVersion) return;
+      processed.originalFile = photo.originalFile; processed.removedBackground = true;
+      photos.set(id, processed); form.elements.photoMode.value = 'cutout';
+      photoError.textContent = ''; draw(); saveInput(); await persistPhoto(id, processed);
+      toast('تم حفظ تعديلات الحواف.');
+    } catch (error) { if (template.id === id && token === photoVersion) photoError.textContent = error.message || 'تعذّر مراجعة الحواف.'; }
+    finally { processingPhotoId = null; showPhotoState(); draw(); }
   });
   document.getElementById('photo-undo-background').addEventListener('click', async () => {
     const photo = photos.get(template.id); if (!photo?.originalFile) return;

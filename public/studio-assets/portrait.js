@@ -4,10 +4,9 @@
   else root.SahwaPortrait = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
-  const VISION_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/vision_bundle.mjs';
-  const WASM_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm';
-  const MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/1/selfie_segmenter.tflite';
-  let segmenterPromise = null;
+  const scriptUrl = typeof document !== 'undefined' ? document.currentScript?.src || location.href : '';
+  let worker = null, nextJob = 0;
+  const jobs = new Map();
   function canvas(width, height, createCanvas) {
     const output = createCanvas ? createCanvas(width, height) : document.createElement('canvas');
     output.width = width; output.height = height; return output;
@@ -17,7 +16,7 @@
     for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
       const alpha = data[(y * width + x) * 4 + 3];
       if (alpha < 240) transparent++;
-      if (alpha <= 8) continue;
+      if (alpha <= 1) continue;
       left = Math.min(left, x); top = Math.min(top, y); right = Math.max(right, x); bottom = Math.max(bottom, y);
     }
     if (right < 0) return null;
@@ -41,59 +40,57 @@
     return { image: cropped, hasTransparency: true };
   }
   function confidenceAlpha(values) {
-    const alpha = new Uint8ClampedArray(values.length);
-    for (let i = 0; i < values.length; i++) {
-      const value = Number.isFinite(values[i]) ? values[i] : 0;
-      const normalized = Math.max(0, Math.min(1, (value - 0.15) / 0.75));
-      alpha[i] = Math.round(normalized * normalized * (3 - 2 * normalized) * 255);
-    }
-    return alpha;
+    return Uint8ClampedArray.from(values, value => Math.round(Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0)) * 255));
   }
-  async function segmenter(onStatus) {
-    if (!segmenterPromise) {
-      onStatus('جارٍ تحميل أداة التفريغ لأول مرة… تحتاج إلى الإنترنت.');
-      segmenterPromise = (async () => {
-        const { FilesetResolver, ImageSegmenter } = await import(VISION_URL);
-        const fileset = await FilesetResolver.forVisionTasks(WASM_URL);
-        return ImageSegmenter.createFromOptions(fileset, {
-          baseOptions: { modelAssetPath: MODEL_URL, delegate: 'CPU' },
-          runningMode: 'IMAGE', outputConfidenceMasks: true, outputCategoryMask: false
-        });
-      })();
-      segmenterPromise.catch(() => { segmenterPromise = null; });
+  function failWorker() {
+    worker?.terminate(); worker = null;
+    for (const job of jobs.values()) { clearTimeout(job.timer); job.reject(new Error('تعذّر تشغيل أداة التفريغ. أعد المحاولة أو استخدم صورة PNG مفرغة.')); }
+    jobs.clear();
+  }
+  function runWorker(payload, onStatus) {
+    if (!globalThis.WebAssembly || !globalThis.Worker) return Promise.reject(new Error('التفريغ غير مدعوم في هذا المتصفح. استخدم إصدارًا حديثًا أو ارفع صورة PNG مفرغة.'));
+    if (!worker) {
+      worker = new Worker(new URL('matting-worker.js?v=1.5.0', scriptUrl), { type: 'module' });
+      worker.onerror = failWorker;
+      worker.onmessage = ({ data }) => {
+        const job = jobs.get(data.id); if (!job) return;
+        if (data.status) { job.onStatus(data.status); return; }
+        clearTimeout(job.timer); jobs.delete(data.id);
+        if (data.error) job.reject(new Error(data.error)); else job.resolve(data);
+      };
     }
-    return segmenterPromise;
+    return new Promise((resolve, reject) => {
+      const id = ++nextJob;
+      jobs.set(id, { resolve, reject, onStatus, timer: setTimeout(failWorker, 180000) });
+      const transfer = [payload.rgba]; if (payload.alpha) transfer.push(payload.alpha);
+      worker.postMessage({ ...payload, id }, transfer);
+    });
+  }
+  function imagePixels(image, width, height) {
+    if (!width || !height) {
+      const ratio = Math.min(1, 2048 / Math.max(image.width, image.height));
+      width = Math.max(1, Math.round(image.width * ratio)); height = Math.max(1, Math.round(image.height * ratio));
+    }
+    const picture = canvas(width, height), ctx = picture.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0, width, height);
+    return ctx.getImageData(0, 0, width, height);
+  }
+  function pngBlob(output) {
+    const picture = canvas(output.width, output.height), ctx = picture.getContext('2d');
+    const pixels = ctx.createImageData(output.width, output.height); pixels.data.set(new Uint8ClampedArray(output.rgba));
+    ctx.putImageData(pixels, 0, 0);
+    return new Promise((resolve, reject) => picture.toBlob(blob => {
+      picture.width = picture.height = 1;
+      if (blob) resolve(blob); else reject(new Error('تعذّر تجهيز الصورة المفرغة.'));
+    }, 'image/png'));
   }
   async function removePersonBackground(image, onStatus = () => {}) {
-    if (!window.WebAssembly) throw new Error('التفريغ غير مدعوم في هذا المتصفح. ارفع صورة PNG مفرغة أو استخدم وضع الدائرة.');
-    let tool;
-    try { tool = await segmenter(onStatus); }
-    catch { throw new Error('تعذّر تحميل أداة التفريغ. تحقق من الإنترنت أو ارفع صورة PNG مفرغة.'); }
-    const ratio = Math.min(1, 2560 / Math.max(image.width, image.height));
-    const picture = canvas(Math.max(1, Math.round(image.width * ratio)), Math.max(1, Math.round(image.height * ratio)));
-    const ctx = picture.getContext('2d'); ctx.drawImage(image, 0, 0, picture.width, picture.height);
-    onStatus('جارٍ تفريغ صورة الشخص على جهازك…');
-    await new Promise(resolve => requestAnimationFrame(resolve));
-    const result = tool.segment(picture);
-    try {
-      // This pinned selfie model has one output channel: foreground/person.
-      const mask = result.confidenceMasks?.[0];
-      if (!mask) throw new Error('تعذّر التعرف على الشخص. استخدم وضع الدائرة لهذه الصورة.');
-      const confidence = mask.getAsFloat32Array();
-      let personPixels = 0;
-      for (const value of confidence) if (value > 0.6) personPixels++;
-      if (personPixels < confidence.length * 0.005) throw new Error('لم أتعرف على شخص واضح. استخدم وضع الدائرة للصور العامة.');
-      const alpha = confidenceAlpha(confidence), matte = canvas(mask.width, mask.height);
-      const matteContext = matte.getContext('2d'), pixels = matteContext.createImageData(mask.width, mask.height);
-      for (let i = 0; i < alpha.length; i++) { pixels.data[i * 4] = 255; pixels.data[i * 4 + 1] = 255; pixels.data[i * 4 + 2] = 255; pixels.data[i * 4 + 3] = alpha[i]; }
-      matteContext.putImageData(pixels, 0, 0);
-      ctx.save(); ctx.globalCompositeOperation = 'destination-in'; ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(matte, 0, 0, picture.width, picture.height); ctx.restore();
-      return new Promise((resolve, reject) => picture.toBlob(blob => blob ? resolve(blob) : reject(new Error('تعذّر تجهيز الصورة المفرغة.')), 'image/png'));
-    } finally {
-      for (const mask of result.confidenceMasks || []) mask.close();
-      result.categoryMask?.close();
-    }
+    const pixels = imagePixels(image);
+    return pngBlob(await runWorker({ action: 'remove', width: pixels.width, height: pixels.height, rgba: pixels.data.buffer }, onStatus));
   }
-  return { alphaBounds, trimPhoto, confidenceAlpha, removePersonBackground };
+  async function refinePersonBackground(original, width, height, alpha, onStatus = () => {}) {
+    const pixels = imagePixels(original, width, height);
+    return pngBlob(await runWorker({ action: 'refine', width, height, rgba: pixels.data.buffer, alpha: new Float32Array(alpha).buffer }, onStatus));
+  }
+  return { alphaBounds, trimPhoto, confidenceAlpha, imagePixels, removePersonBackground, refinePersonBackground };
 });
