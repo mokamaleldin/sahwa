@@ -155,6 +155,23 @@ test('invalid dates, oversized bodies, unsupported status and malformed requests
   assert.equal((await handle(request('PUT', { id: '../x', revision: 1, person: person() }))).status, 400);
 });
 
+test('a lost update response never deletes a portrait already referenced by a committed record', async () => {
+  const blob = memoryBlob(), handle = createTeamHandler(createTeamStore(blob));
+  const saved = (await (await handle(request('POST', { person: person() }))).json()).person;
+  const originalPut = blob.put.bind(blob);
+  blob.put = async (...args) => {
+    const result = await originalPut(...args);
+    if (args[0].endsWith('volunteers.json')) throw new Error('Response lost after commit');
+    return result;
+  };
+  const image = `data:image/jpeg;base64,${Buffer.from([255, 216, 255, 0]).toString('base64')}`;
+  const response = await handle(request('PUT', { id: saved.id, revision: saved.revision, person: person(), photo: image }));
+  assert.equal(response.status, 503);
+  const listed = await (await handle(request())).json();
+  assert.ok(listed.volunteers[0].photoId);
+  assert.equal((await handle(request('GET', undefined, { query: `?photo=${listed.volunteers[0].photoId}` }))).status, 200);
+});
+
 test('Arabic search and all six exact filters combine, including custom university and role', () => {
   const people = [person({ fullName: 'أَحْمَد عَلِي', university: 'جامعة خاصة', role: 'منسق', studyStatus: 'خريج', status: PERSON_STATUSES[2], gender: 'شاب' }), person({ fullName: 'اسم آخر', gender: 'بنت' })];
   const filters = { query: 'احمد علي', university: 'جامعة خاصة', workArea: 'إعلام', role: 'منسق', studyStatus: 'خريج', status: PERSON_STATUSES[2], gender: 'شاب' };

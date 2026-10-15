@@ -63,12 +63,15 @@ export function createTeamHandler(store) {
       }
       return json({ person: result.person }, creating ? 201 : 200);
     } catch (error) {
-      if (newPhotoId && !committed) {
+      // An unexpected transport failure can occur after the directory write
+      // committed. Keep that portrait until the outcome is known, rather than
+      // deleting a file the saved record may already reference.
+      if (newPhotoId && !committed && error instanceof TeamError) {
         try { await store.deletePhoto(newPhotoId); } catch { console.error('Team photo cleanup unavailable'); }
       }
       if (error instanceof TeamError) return json({ error: error.message, code: error.code }, error.status);
       console.error('Team data request could not complete');
-      return json({ error: 'تعذر الاتصال ببيانات الفريق. حاول مجددًا بعد قليل.', code: 'UNAVAILABLE' }, 503);
+      return json({ error: request.method === 'GET' ? 'تعذر الاتصال ببيانات الفريق. حاول مجددًا بعد قليل.' : 'تعذر تأكيد التعديل. حدّث القائمة قبل إعادة المحاولة.', code: 'UNAVAILABLE' }, 503);
     }
   };
 }

@@ -27,7 +27,7 @@ Before a store is connected, the portal, three Drive folders, and Studio work. T
 - Reads bypass Blob's CDN cache (`useCache: false`) so another device sees the latest writes.
 - Directory writes use ETag conditional writes (`ifMatch`) and retry storage races. A per-person revision rejects stale edits with 409 instead of overwriting somebody else's work. Concurrent changes to different people merge.
 - A fresh directory is created with overwrite disabled, so simultaneous first additions are retried safely.
-- Replaced/deleted photo cleanup is best effort after a committed directory change. Failed writes remove the newly uploaded photo when possible.
+- Replaced/deleted photo cleanup is best effort after a committed directory change. Confirmed rejected writes remove the newly uploaded photo when possible. An ambiguous transport failure retains it because a committed record may already reference it; refresh before retrying. A failed cleanup can leave an orphaned private photo.
 - The shared team account gives every signed-in holder the same read/edit access. Individual permissions or audit attribution would need individual accounts later.
 
 The academic status and participation status are independent fields. Custom university names and custom roles are supported, and existing custom values appear in filters.
