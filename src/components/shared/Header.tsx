@@ -38,6 +38,7 @@ const Header: React.FC = () => {
   const navLinks = [
     { to: '/', label: 'الرئيسية' },
     { to: '/universities', label: 'الجامعات' },
+    { to: '/library', label: 'المكتبة' },
     { to: '/social', label: 'تابعنا' },
     isAuthenticated
       ? { to: '/studio', label: 'مساحة فريق صحوة', isExternal: true }

@@ -37,7 +37,7 @@ const SEO: React.FC<SEOProps> = ({
   articleData,
 }) => {
   const fullTitle = title.includes('صحوة') ? title : `${title} | ${SITE_NAME}`;
-  const fullCanonicalUrl = canonicalUrl ? `${BASE_URL}${canonicalUrl}` : BASE_URL;
+  const fullCanonicalUrl = canonicalUrl ? new URL(canonicalUrl, BASE_URL).href : BASE_URL;
   const fullKeywords = keywords ? `${keywords}, ${GLOBAL_KEYWORDS}` : GLOBAL_KEYWORDS;
   
   // Enhanced description with keyword variations
@@ -53,7 +53,7 @@ const SEO: React.FC<SEOProps> = ({
       "@type": "ListItem",
       "position": index + 1,
       "name": item.name,
-      "item": `${BASE_URL}${item.url}`
+      "item": new URL(item.url, BASE_URL).href
     }))
   } : null;
 

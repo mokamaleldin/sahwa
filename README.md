@@ -5,6 +5,7 @@ The public Sahwa website and Sahwa Studio share this repository and the existing
 - `/`: public homepage.
 - `/universities`: university pages.
 - `/social`: university groups, social links, and contact information.
+- `/library`: public image catalogue and the physical library's location.
 - `/login`: shared team login.
 - `/studio`: authenticated poster editor with the three existing templates.
 
@@ -17,6 +18,7 @@ npm ci
 npm run dev
 npm run build
 npm run test:auth
+npm run test:library
 ```
 
 Vite serves the public React pages locally. `/api/auth` and `/studio` require the Vercel Node.js function runtime; plain Vite does not serve API functions.
@@ -39,4 +41,13 @@ The HTTP-only, Secure, SameSite cookie remembers login for 30 days by default. U
 
 The existing local draft keys and rendering code are preserved. Drafts from the separate Studio hostname stay in that browser origin and are not automatically copied to the main site's origin. PNG export defaults to 3240 × 3900 pixels.
 
-Google Drive, the library, and volunteer registration are outside this change.
+## Library
+
+The library is a public page within the main site. Each book card displays its supplied template
+image; title, author, and category metadata power Arabic search, accessible labels, category filters,
+and pagination. A book's presence means it belongs to the physical collection; there is no lending
+status or reservation system. Register real artwork in `public/library/books.json` following
+`public/library/books/README.md`. The manifest starts empty until actual book images are supplied.
+The page includes the supplied opening artwork, address/map preview, and Google Maps directions.
+
+Google Drive and volunteer registration are outside this change.

@@ -7,6 +7,7 @@ import Universities from './pages/Universities.tsx';
 import UniversityPage from './pages/UniversityPage.tsx';
 import Login from './pages/Login.tsx';
 import SocialMedia from './pages/SocialMedia.tsx';
+import Library from './pages/Library.tsx';
 import NotFoundPage from './pages/NotFound.tsx';
 import ScrollToTop from './components/shared/ScrollToTop.tsx';
 import { Analytics } from "@vercel/analytics/react";
@@ -24,6 +25,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/login" element={<Login />} />
           <Route path="/contact" element={<Navigate to="/social" replace />} />
           <Route path="/social" element={<SocialMedia />} />
+          <Route path="/library" element={<Library />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
         <Analytics />

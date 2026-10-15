@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:auth": "node --test tests/auth.test.js"
+    "test:auth": "node --test tests/auth.test.js",
+    "test:library": "node --test tests/library.test.js"
   },
   "dependencies": {
     "@vercel/analytics": "^1.5.0",
