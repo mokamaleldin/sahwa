@@ -69,16 +69,6 @@
   color: #F2E9E2;
 }
 
-.studio-navigation button#logout-button {
-  border: 1px solid rgba(117, 32, 38, 0.2);
-  color: #752026;
-  background: transparent;
-}
-
-.studio-navigation button#logout-button:hover {
-  background: rgba(117, 32, 38, 0.08);
-}
-
 .studio-navigation button:disabled {
   opacity: 0.6;
   cursor: wait;
@@ -197,6 +187,10 @@
 }
 
 /* Shared Sahwa page identity. The decorative emblem stays outside the poster canvas. */
+.is-embedded .site-header, .is-embedded .site-footer { display:none !important; }
+body.is-embedded { background:transparent; }
+.is-embedded main { max-width:none; padding:0 0 20px; margin:0; }
+.is-embedded .page-intro { margin:0 auto 40px; }
 main { position: relative; isolation: isolate; overflow-x: clip; }
 main::before { content: ""; position: absolute; z-index: -1; top: 6rem; left: -4rem; width: 18rem; height: 18rem; background: url('/sahwa-icon.png') center / contain no-repeat; opacity: .05; pointer-events: none; }
 .workspace-heading-mark { display: flex; justify-content: center; margin-bottom: 12px; }

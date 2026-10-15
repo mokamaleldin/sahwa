@@ -1,34 +1,23 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { ArrowLeft, Eye, EyeOff, Loader2, LockKeyhole } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-import { Link } from 'react-router-dom';
-import Header from '../components/shared/Header';
-import Footer from '../components/shared/Footer';
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { useSession } from '../auth/useSession';
 import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 
 export default function Login() {
-  const requestedPath = new URLSearchParams(window.location.search).get('next');
+  const [search] = useSearchParams();
+  const requestedPath = search.get('next');
   const destination = requestedPath && ['/team', '/team/volunteers', '/team/files', '/studio'].includes(requestedPath) ? requestedPath : '/team';
+  const navigate = useNavigate();
+  const { status, error: sessionError, signIn, refresh } = useSession();
   const [email, setEmail] = useState('sahwaturkey@gmail.com');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
-  const [checking, setChecking] = useState(true);
+  const checking = status === 'loading';
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch('/api/auth', { cache: 'no-store', signal: controller.signal })
-      .then(async response => {
-        const result = await response.json();
-        if (result.authenticated) window.location.replace(destination);
-        else if (!response.ok) setError(result.error || 'الدخول غير متاح مؤقتًا.');
-      })
-      .catch(() => { if (!controller.signal.aborted) setError('تعذر الاتصال. حاول مرة أخرى.'); })
-      .finally(() => { if (!controller.signal.aborted) setChecking(false); });
-    return () => controller.abort();
-  }, [destination]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,25 +25,16 @@ export default function Login() {
     setSubmitting(true);
     setError('');
     try {
-      const response = await fetch('/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, remember }),
-      });
-      const result = await response.json();
-      if (!response.ok || !result.authenticated) {
-        setError(result.error || 'تعذر تسجيل الدخول. حاول مرة أخرى.');
-        setSubmitting(false);
-        return;
-      }
-      window.location.replace(destination);
-    } catch {
-      setError('تعذر الاتصال. تحقق من الإنترنت وحاول مرة أخرى.');
+      await signIn({ email, password, remember });
+      navigate(destination, { replace: true });
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'تعذر الاتصال. تحقق من الإنترنت وحاول مرة أخرى.');
       setSubmitting(false);
     }
   }
 
   const busy = checking || submitting;
+  if (status === 'authenticated') return <Navigate to={destination} replace />;
 
   return (
     <>
@@ -62,7 +42,6 @@ export default function Login() {
         <title>تسجيل الدخول | صحوة</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
-      <Header />
       <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-6 sm:pb-12">
         <PageEmblem />
 
@@ -104,7 +83,7 @@ export default function Login() {
                     disabled={busy} className="h-4 w-4 accent-[#752026]" />
                   تذكرني على هذا الجهاز
                 </label>
-                {error && <p id="login-error" role="alert" className="rounded-xl bg-red-50/80 border border-red-200 px-4 py-3 text-sm text-red-800">{error}</p>}
+                {(error || sessionError) && <p id="login-error" role="alert" className="rounded-xl bg-red-50/80 border border-red-200 px-4 py-3 text-sm text-red-800">{error || sessionError}{status === 'error' && <button type="button" onClick={() => void refresh({ force: true })} className="underline block mt-2">إعادة التحقق</button>}</p>}
                 <button type="submit" disabled={busy}
                   className="tap-target w-full flex items-center justify-center gap-3 rounded-xl bg-[#752026] px-5 py-3.5 text-[#F2E9E2] font-medium hover:bg-[#350E15] disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
                   {busy ? <Loader2 size={19} className="animate-spin" aria-hidden="true" /> : <ArrowLeft size={19} aria-hidden="true" />}
@@ -120,7 +99,6 @@ export default function Login() {
           </div>
         </div>
       </main>
-      <Footer />
     </>
   );
 }

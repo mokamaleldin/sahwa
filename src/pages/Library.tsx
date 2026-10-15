@@ -1,6 +1,4 @@
 import { ArrowDown, ArrowUpRight, MapPin, Navigation } from 'lucide-react';
-import Header from '../components/shared/Header';
-import Footer from '../components/shared/Footer';
 import SEO from '../components/SEO';
 import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 import BookCatalogue from '../components/Library/BookCatalogue';
@@ -10,7 +8,6 @@ export default function Library() {
   return (
     <>
       <SEO title="المكتبة | صحوة" description="تعرّف على مكتبة صحوة في إسطنبول، وتصفّح الفهرس المصوّر للكتب الموجودة ضمن مقتنياتها، واعرف عنوان المكتبة وطريقة الوصول إليها قبل زيارتك." canonicalUrl="https://sahwa.world/library" ogImage="https://sahwa.world/og-image.png" breadcrumbs={[{ name: 'الرئيسية', url: 'https://sahwa.world/' }, { name: 'المكتبة', url: 'https://sahwa.world/library' }]} />
-      <Header />
       <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-8">
         <PageEmblem />
         <div className="page-container max-w-5xl">
@@ -47,7 +44,6 @@ export default function Library() {
           </section>
         </div>
       </main>
-      <Footer />
     </>
   );
 }

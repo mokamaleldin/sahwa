@@ -1,8 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, ArrowLeft } from 'lucide-react';
-import Header from '../components/shared/Header';
-import Footer from '../components/shared/Footer';
 import SEO from '../components/SEO';
 import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 
@@ -89,7 +87,6 @@ const Universities: React.FC = () => {
         structuredData={universitiesStructuredData}
         breadcrumbs={breadcrumbs}
       />
-      <Header />
       
       <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-14 sm:pb-20">
         <PageEmblem />
@@ -135,7 +132,6 @@ const Universities: React.FC = () => {
         </div>
       </main>
 
-      <Footer />
     </>
   );
 };

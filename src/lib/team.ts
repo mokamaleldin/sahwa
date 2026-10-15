@@ -32,7 +32,7 @@ export const EMPTY_PERSON: VolunteerInput = {
 export async function teamRequest<T>(options: RequestInit = {}): Promise<T> {
   const response = await fetch('/api/team', { ...options, cache: 'no-store', credentials: 'same-origin' });
   if (response.status === 401) {
-    window.location.replace(`/login?next=${encodeURIComponent(window.location.pathname)}`);
+    window.dispatchEvent(new Event('sahwa:unauthorized'));
     throw new Error('انتهت الجلسة. سجّل الدخول مجددًا.');
   }
   let result;

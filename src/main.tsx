@@ -1,4 +1,4 @@
-import { StrictMode, Suspense, lazy } from 'react';
+import { StrictMode, lazy } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
@@ -12,6 +12,9 @@ import NotFoundPage from './pages/NotFound.tsx';
 import ScrollToTop from './components/shared/ScrollToTop.tsx';
 import TeamLayout from './components/Team/TeamLayout.tsx';
 import { SITE_FEATURES } from './config/features';
+import SessionProvider from './auth/SessionProvider';
+import SiteLayout from './components/shared/SiteLayout';
+import Studio from './pages/Studio';
 import { Analytics } from "@vercel/analytics/react";
 import './index.css';
 import './team.css';
@@ -23,9 +26,9 @@ const TeamVolunteers = lazy(() => import('./pages/TeamVolunteers.tsx'));
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HelmetProvider>
-      <BrowserRouter>
+      <BrowserRouter><SessionProvider>
         <ScrollToTop />
-        <Suspense fallback={<main className="app-shell team-loading" role="status">جارٍ تحميل الصفحة…</main>}><Routes>
+        <Routes><Route element={<SiteLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/universities" element={<Universities />} />
           <Route path="/universities/:universityId" element={<UniversityPage />} />
@@ -33,15 +36,16 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/contact" element={<Navigate to="/social" replace />} />
           <Route path="/social" element={<SocialMedia />} />
           <Route path="/library" element={SITE_FEATURES.library ? <Library /> : <Navigate to="/" replace />} />
+          <Route path="/studio" element={<Studio />} />
           <Route path="/team" element={<TeamLayout />}>
             <Route index element={<Team />} />
             <Route path="volunteers" element={SITE_FEATURES.volunteers ? <TeamVolunteers /> : <Navigate to="/team" replace />} />
             <Route path="files" element={<TeamFiles />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
-        </Routes></Suspense>
+        </Route></Routes>
         <Analytics />
-      </BrowserRouter>
+      </SessionProvider></BrowserRouter>
     </HelmetProvider>
   </StrictMode>
 );

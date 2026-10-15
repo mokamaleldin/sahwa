@@ -1,8 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Home } from 'lucide-react';
-import Header from '../components/shared/Header';
-import Footer from '../components/shared/Footer';
 import SEO from '../components/SEO';
 import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 
@@ -14,7 +12,6 @@ const NotFoundPage: React.FC = () => {
         description="عذراً، الصفحة التي تبحث عنها غير موجودة. يمكنك العودة للصفحة الرئيسية."
         noindex={true}
       />
-      <Header />
       <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-12" dir="rtl">
         <PageEmblem />
         <div className="text-center page-container max-w-3xl">
@@ -31,7 +28,6 @@ const NotFoundPage: React.FC = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </>
   );
 };

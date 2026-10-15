@@ -1,7 +1,5 @@
 import React from 'react';
 import { Instagram, Youtube, Send, MessageCircle, Mail, Phone } from 'lucide-react';
-import Header from '../components/shared/Header';
-import Footer from '../components/shared/Footer';
 import SEO from '../components/SEO';
 import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 
@@ -119,7 +117,6 @@ const SocialMedia: React.FC = () => {
         structuredData={socialStructuredData}
         breadcrumbs={breadcrumbs}
       />
-      <Header />
       
       <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-14 sm:pb-20">
         <PageEmblem />
@@ -252,7 +249,6 @@ const SocialMedia: React.FC = () => {
         </div>
       </main>
 
-      <Footer />
     </>
   );
 };

@@ -1,6 +1,4 @@
 import React from 'react';
-import Header from '../components/shared/Header';
-import Footer from '../components/shared/Footer';
 import SEO from '../components/SEO';
 import HeroSection from '../components/Home/HeroSection';
 import DefinitionSection from '../components/Home/DefinitionSection';
@@ -74,14 +72,12 @@ const Home: React.FC = () => {
         structuredData={homepageStructuredData}
         breadcrumbs={breadcrumbs}
       />
-      <Header />
       <main className="app-shell">
         <HeroSection />
         <DefinitionSection />
         <SloganSection />
         <VolunteerSection />
       </main>
-      <Footer />
     </>
   );
 };

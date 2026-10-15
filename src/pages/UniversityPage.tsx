@@ -1,8 +1,6 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { MessageCircle, ArrowRight, Users } from 'lucide-react';
-import Header from '../components/shared/Header';
-import Footer from '../components/shared/Footer';
 import SEO from '../components/SEO';
 import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 
@@ -53,7 +51,6 @@ const UniversityPage: React.FC = () => {
   if (!university) {
     return (
       <>
-        <Header />
         <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-16">
           <PageEmblem />
           <div className="page-container max-w-4xl text-center">
@@ -67,7 +64,6 @@ const UniversityPage: React.FC = () => {
             </Link>
           </div>
         </main>
-        <Footer />
       </>
     );
   }
@@ -130,7 +126,6 @@ const UniversityPage: React.FC = () => {
         structuredData={universityStructuredData}
         breadcrumbs={breadcrumbs}
       />
-      <Header />
       
       <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-12 sm:pb-16">
         <PageEmblem />
@@ -195,7 +190,6 @@ const UniversityPage: React.FC = () => {
         </section>
       </main>
 
-      <Footer />
     </>
   );
 };

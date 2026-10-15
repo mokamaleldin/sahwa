@@ -2,6 +2,14 @@
 
 Routes: `/team`, `/team/volunteers`, `/team/files`. Login opens `/team`. The existing `/studio` editor is preserved and links back to the portal.
 
+## Navigation and sessions
+
+`SiteLayout` owns one shared header and footer. `SessionProvider` shares a deduplicated session client across public pages, Login, and the private area. Navigation uses React Router, including entering/leaving Studio. A confirmed session is reused while navigating; visibility/focus rechecks are throttled, cross-tab changes trigger revalidation, and an outage preserves an already confirmed state. Server cookies and endpoint authorization remain authoritative. No password or session token is stored in browser storage; the storage event contains only a change timestamp.
+
+Studio is displayed at `/studio` inside the shared layout. Its unchanged editor runs in a same-origin private frame served by `/api/studio?embed=1`, with the legacy header/footer hidden. The frame stays mounted after its first visit until logout, retaining the canvas, inputs, and in-progress edits while visiting another page. Its size follows the document; native image-editor dialogs temporarily fill the browser viewport, and desktop preview follows outer-page scrolling. Frame messages validate both origin and source. Embedded content requires the same server session and permits framing only by the same origin. A failed load offers explicit retry instead of an endless spinner.
+
+The logout control lives in the shared team navigation below the main header, including Studio. The main header itself has no logout button.
+
 ## Temporary visibility
 
 The volunteer directory and public library are currently hidden using `src/config/features.ts`. Their implementations, data, and APIs remain in source. Their old page routes redirect to `/team` and `/` respectively, and the team portal currently shows Files and Studio. To restore either section, enable its flag. When restoring the library, also restore its Studio navigation link and sitemap entry.

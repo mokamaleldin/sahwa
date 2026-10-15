@@ -18,7 +18,7 @@ export default function Team() {
     <section className={`team-portal-grid${visibleCards.length === 2 ? ' team-portal-grid-two' : ''}`} aria-label="أقسام مساحة الفريق">
       {visibleCards.map(({ title, description, to, icon: Icon, action }, index) => {
         const content = <><div className="team-portal-top"><span className="team-icon"><Icon size={29} strokeWidth={1.5} aria-hidden="true" /></span><span className="team-card-number">0{index + 1}</span></div><h2 className="font-heading">{title}</h2><p>{description}</p><span className="team-card-action">{action}<ArrowUpLeft size={18} aria-hidden="true" /></span></>;
-        return to === '/studio' ? <a className="team-portal-card" href={to} key={to}>{content}</a> : <Link className="team-portal-card" to={to} key={to}>{content}</Link>;
+        return <Link className="team-portal-card" to={to} key={to}>{content}</Link>;
       })}
     </section>
   </>;

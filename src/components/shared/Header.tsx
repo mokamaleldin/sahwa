@@ -2,18 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { SITE_FEATURES } from '../../config/features';
+import { useSession } from '../../auth/useSession';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const { status } = useSession();
   const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 15);
     };
-
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -22,32 +23,19 @@ const Header: React.FC = () => {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    fetch('/api/auth', { cache: 'no-store', signal: controller.signal })
-      .then((res) => res.json())
-      .then((data) => {
-        setIsAuthenticated(Boolean(data?.authenticated));
-      })
-      .catch(() => {
-        setIsAuthenticated(false);
-      });
-    return () => controller.abort();
-  }, []);
-
   const navLinks = [
     { to: '/', label: 'الرئيسية' },
     { to: '/universities', label: 'الجامعات' },
     ...(SITE_FEATURES.library ? [{ to: '/library', label: 'المكتبة' }] : []),
     { to: '/social', label: 'تابعنا' },
-    isAuthenticated
-      ? { to: '/team', label: 'مساحة فريق صحوة', isExternal: false }
-      : { to: '/login', label: 'تسجيل الدخول' },
+    ...(status === 'authenticated' ? [{ to: '/team', label: 'مساحة فريق صحوة' }]
+      : status === 'anonymous' ? [{ to: '/login', label: 'تسجيل الدخول' }]
+        : status === 'error' ? [{ to: '/team', label: 'مساحة الفريق' }] : []),
   ];
 
   const isLinkActive = (to: string) => {
     if (to === '/') return location.pathname === '/';
-    return location.pathname.startsWith(to);
+    return location.pathname.startsWith(to) || (to === '/team' && location.pathname === '/studio');
   };
 
   return (
@@ -90,20 +78,13 @@ const Header: React.FC = () => {
                   : 'text-[#350E15] hover:text-[#752026] hover:bg-[#752026]/5'
               }`;
 
-              if (link.isExternal) {
-                return (
-                  <a key={link.to} href={link.to} className={classes}>
-                    {link.label}
-                  </a>
-                );
-              }
-
               return (
                 <Link key={link.to} to={link.to} className={classes}>
                   {link.label}
                 </Link>
               );
             })}
+            {status === 'loading' && <span className="session-nav-placeholder" aria-label="جارٍ التحقق من حالة الدخول" />}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -134,19 +115,6 @@ const Header: React.FC = () => {
                     : 'text-[#350E15] hover:text-[#752026] hover:bg-[#752026]/5'
                 }`;
 
-                if (link.isExternal) {
-                  return (
-                    <a
-                      key={link.to}
-                      href={link.to}
-                      onClick={() => setIsMenuOpen(false)}
-                      className={classes}
-                    >
-                      {link.label}
-                    </a>
-                  );
-                }
-
                 return (
                   <Link
                     key={link.to}
@@ -158,6 +126,7 @@ const Header: React.FC = () => {
                   </Link>
                 );
               })}
+              {status === 'loading' && <Link to="/team" className="tap-target flex px-4 py-3 text-brand-primary">مساحة الفريق</Link>}
             </div>
           </nav>
         )}

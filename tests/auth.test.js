@@ -38,8 +38,8 @@ function cookieRequest(token, path = '/api/auth') {
   return request(path, { headers: { Cookie: `${COOKIE_NAME}=${token}` } });
 }
 
-test('direct Studio access requires a session and is never publicly cached', async () => {
-  const result = await studio(request('/studio'));
+test('the editor HTML endpoint requires a session and is never publicly cached', async () => {
+  const result = await studio(request('/api/studio'));
   assert.equal(result.status, 303);
   assert.equal(result.headers.get('location'), '/login');
   assert.match(result.headers.get('cache-control'), /no-store/);
@@ -79,7 +79,7 @@ test('signed session opens the complete existing editor with rebased assets', as
   assert.equal(result.status, 200);
   const html = await result.text();
   assert.match(html, /id="template-options"/);
-  assert.match(html, /id="logout-button"/);
+  assert.doesNotMatch(html, /id="logout-button"/);
   assert.match(html, /\/studio-assets\/template-assets\.js/);
   assert.match(html, /3240 × 3900/);
   assert.match(result.headers.get('cache-control'), /no-store/);
@@ -95,6 +95,22 @@ test('tampered and expired cookies cannot open the editor', async () => {
     assert.equal(hasSession(cookieRequest(invalid)), false);
     assert.equal((await studio(cookieRequest(invalid, '/studio'))).status, 303);
   }
+});
+
+test('embedded editor is same-origin, private and session-protected; the shared site owns its navigation', async () => {
+  const anonymous = await studio(request('/api/studio?embed=1'));
+  assert.equal(anonymous.status, 401);
+  assert.match(await anonymous.text(), /sahwa:studio:expired/);
+  assert.equal(anonymous.headers.get('x-frame-options'), 'SAMEORIGIN');
+  assert.match(anonymous.headers.get('content-security-policy'), /frame-ancestors 'self'/);
+  const { token } = createSession();
+  const response = await studio(cookieRequest(token, '/api/studio?embed=1'));
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /has-brand-heading is-embedded/);
+  assert.doesNotMatch(html, /logout-button/);
+  assert.match(html, /integration\.js\?v=1\.7\.0/);
+  assert.match(response.headers.get('cache-control'), /no-store/);
 });
 
 test('changing the account password configuration invalidates existing sessions', () => {
