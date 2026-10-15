@@ -197,7 +197,7 @@
 }
 
 /* Shared Sahwa page identity. The decorative emblem stays outside the poster canvas. */
-main { position: relative; isolation: isolate; }
+main { position: relative; isolation: isolate; overflow-x: clip; }
 main::before { content: ""; position: absolute; z-index: -1; top: 6rem; left: -4rem; width: 18rem; height: 18rem; background: url('/sahwa-icon.png') center / contain no-repeat; opacity: .05; pointer-events: none; }
 .workspace-heading-mark { display: flex; justify-content: center; margin-bottom: 12px; }
 .workspace-heading-icon { width: 36px; height: 36px; object-fit: contain; }
