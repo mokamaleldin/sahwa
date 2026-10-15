@@ -1,8 +1,8 @@
 import { ArrowDown, ArrowUpRight, MapPin, Navigation } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import Header from '../components/shared/Header';
 import Footer from '../components/shared/Footer';
 import SEO from '../components/SEO';
+import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 import BookCatalogue from '../components/Library/BookCatalogue';
 import { LIBRARY_LOCATION } from '../data/library';
 
@@ -11,13 +11,12 @@ export default function Library() {
     <>
       <SEO title="المكتبة | صحوة" description="تعرّف على مكتبة صحوة في إسطنبول، وتصفّح الفهرس المصوّر للكتب الموجودة ضمن مقتنياتها، واعرف عنوان المكتبة وطريقة الوصول إليها قبل زيارتك." canonicalUrl="https://sahwa.world/library" ogImage="https://sahwa.world/og-image.png" breadcrumbs={[{ name: 'الرئيسية', url: 'https://sahwa.world/' }, { name: 'المكتبة', url: 'https://sahwa.world/library' }]} />
       <Header />
-      <main className="app-shell pt-28 sm:pt-32 pb-8">
+      <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-8">
+        <PageEmblem />
         <div className="page-container max-w-5xl">
-          <nav aria-label="مسار الصفحة" className="flex items-center gap-2 text-xs text-brand-muted mb-7"><Link to="/" className="hover:text-brand-primary">الرئيسية</Link><span aria-hidden="true">/</span><span aria-current="page">المكتبة</span></nav>
-          <section className="grid md:grid-cols-2 items-center gap-8 md:gap-14 pb-10 sm:pb-14 border-b border-brand-line" aria-labelledby="library-heading">
+          <PageHeading id="library-heading" title="المكتبة" description="اكتشف الكتب الموجودة في مكتبة صحوة وخطّط لزيارتك" />
+          <section className="grid md:grid-cols-2 items-center gap-8 md:gap-14 pb-10 sm:pb-14 border-b border-brand-line" aria-label="عن مكتبة صحوة">
             <div>
-              <span className="section-divider !mb-5" />
-              <h1 id="library-heading" className="font-heading text-4xl sm:text-5xl lg:text-6xl text-brand-primary mb-6">مكتبة صحوة</h1>
               <p className="text-brand-muted text-base sm:text-lg leading-loose mb-7 max-w-md">بين رفوف الكتب مساحة للقراءة والمعرفة. تعرّف على عناوين مكتبتنا، وتصفّح صور كتبها قبل زيارتك.</p>
               <div className="flex flex-wrap gap-3">
                 <a href="#books" className="library-primary-button">تصفّح الكتب <ArrowDown size={18} /></a>

@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import Header from '../components/shared/Header';
 import Footer from '../components/shared/Footer';
+import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 
 export default function Login() {
   const [email, setEmail] = useState('sahwaturkey@gmail.com');
@@ -60,37 +61,12 @@ export default function Login() {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <Header />
-      <main className="app-shell pt-32 sm:pt-40 pb-6 sm:pb-12 relative overflow-hidden">
-        {/* Subtle side decorative emblem */}
-        <div 
-          className="absolute top-24 -left-16 sm:-left-12 pointer-events-none opacity-5 select-none"
-          aria-hidden="true"
-        >
-          <img
-            src="/sahwa-icon.png"
-            alt=""
-            className="w-72 h-72 sm:w-80 sm:h-80 object-contain"
-          />
-        </div>
+      <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-6 sm:pb-12">
+        <PageEmblem />
 
         <div className="page-container relative z-10">
           <div className="mx-auto max-w-md">
-            <div className="text-center mb-8">
-              <div className="mb-3 flex justify-center">
-                <img
-                  src="/sahwa-icon.png"
-                  alt=""
-                  className="w-10 h-10 object-contain drop-shadow-sm"
-                />
-              </div>
-              <span className="section-divider" />
-              <h1 className="text-3xl sm:text-4xl font-heading font-bold text-[#752026] mb-3">
-                مساحة فريق صحوة
-              </h1>
-              <p className="text-sm sm:text-base text-[#765C5E]">
-                ادخل بحساب الفريق للوصول إلى أدوات ومساحة صحوة
-              </p>
-            </div>
+            <PageHeading title="مساحة فريق صحوة" description="ادخل بحساب الفريق للوصول إلى أدوات ومساحة صحوة" />
 
             <section className="section-card p-6 sm:p-9" aria-labelledby="login-heading">
               <div className="flex items-center gap-3 mb-7">

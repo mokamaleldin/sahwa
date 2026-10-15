@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+.sahwa-page-surface { position: relative; isolation: isolate; overflow-x: clip; }
+.sahwa-page-emblem { position: absolute; z-index: -1; top: 6rem; left: -4rem; width: 18rem; height: 18rem; opacity: .05; pointer-events: none; user-select: none; }
+.sahwa-page-emblem img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.sahwa-page-heading-icon { display: block; width: 36px; height: 36px; object-fit: contain; margin: 0 auto 12px; }
+.sahwa-page-heading-rule { display: block; width: 48px; height: 2px; background: var(--brand-gold); margin: 0 auto 24px; }
+.sahwa-page-heading h1 { font-size: 30px; line-height: 1.35; margin: 0 0 16px; overflow-wrap: break-word; }
+.sahwa-page-heading-description { max-width: 36rem; margin: 0 auto; font-size: 16px; line-height: 1.85; color: #350e15cc; }
+.sahwa-page-heading-home .sahwa-page-heading-icon { width: 80px; height: 80px; }
+.sahwa-page-heading-home h1 { font-size: 48px; }
+@media(min-width:640px) {
+  .sahwa-page-emblem { left: -3rem; width: 20rem; height: 20rem; }
+  .sahwa-page-heading-icon { width: 44px; height: 44px; }
+  .sahwa-page-heading h1 { font-size: 48px; }
+  .sahwa-page-heading-description { font-size: 18px; }
+  .sahwa-page-heading-home .sahwa-page-heading-icon { width: 112px; height: 112px; }
+  .sahwa-page-heading-home h1 { font-size: 72px; }
+}
+
 .library-primary-button,
 .library-secondary-button,
 .library-page-button {

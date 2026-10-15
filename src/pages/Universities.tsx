@@ -4,6 +4,7 @@ import { MapPin, ArrowLeft } from 'lucide-react';
 import Header from '../components/shared/Header';
 import Footer from '../components/shared/Footer';
 import SEO from '../components/SEO';
+import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 
 interface University {
   id: string;
@@ -90,37 +91,11 @@ const Universities: React.FC = () => {
       />
       <Header />
       
-      <main className="app-shell pt-24 sm:pt-28 pb-14 sm:pb-20 relative overflow-hidden">
-        {/* Subtle side decorative emblem */}
-        <div 
-          className="absolute top-24 -left-16 sm:-left-12 pointer-events-none opacity-5 select-none"
-          aria-hidden="true"
-        >
-          <img
-            src="/sahwa-icon.png"
-            alt=""
-            className="w-72 h-72 sm:w-80 sm:h-80 object-contain"
-          />
-        </div>
+      <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-14 sm:pb-20">
+        <PageEmblem />
 
         <div className="page-container max-w-5xl relative z-10">
-          {/* Page Header */}
-          <div className="text-center mb-10 sm:mb-16">
-            <div className="mb-3 flex justify-center">
-              <img
-                src="/sahwa-icon.png"
-                alt=""
-                className="w-9 h-9 sm:w-11 sm:h-11 object-contain drop-shadow-sm"
-              />
-            </div>
-            <span className="section-divider"></span>
-            <h1 className="text-3xl sm:text-5xl font-heading font-bold text-[#752026] mb-4">
-              الجامعات
-            </h1>
-            <p className="text-base sm:text-lg text-[#350E15]/80 max-w-xl mx-auto leading-relaxed">
-              اكتشف مجتمع صحوة في جامعتك
-            </p>
-          </div>
+          <PageHeading title="الجامعات" description="اكتشف مجتمع صحوة في جامعتك" />
 
           {/* Universities Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">

@@ -4,6 +4,7 @@ import { MessageCircle, ArrowRight, Users } from 'lucide-react';
 import Header from '../components/shared/Header';
 import Footer from '../components/shared/Footer';
 import SEO from '../components/SEO';
+import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 
 interface UniversityData {
   id: string;
@@ -53,10 +54,10 @@ const UniversityPage: React.FC = () => {
     return (
       <>
         <Header />
-        <main className="min-h-screen pt-32 pb-16 bg-[#FFFEFD]">
-          <div className="max-w-4xl mx-auto px-6 text-center">
-            <h1 className="text-4xl font-bold text-[#7F373B] mb-4">الجامعة غير موجودة</h1>
-            <p className="text-gray-600 mb-8">عذرًا، لم نجد هذه الجامعة</p>
+        <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-16">
+          <PageEmblem />
+          <div className="page-container max-w-4xl text-center">
+            <PageHeading title="الجامعة غير موجودة" description="عذرًا، لم نجد هذه الجامعة" />
             <Link
               to="/universities"
               className="inline-flex items-center gap-2 text-[#7F373B] font-medium hover:gap-3 transition-all"
@@ -131,21 +132,12 @@ const UniversityPage: React.FC = () => {
       />
       <Header />
       
-      <main className="app-shell pt-24 sm:pt-28 pb-12 sm:pb-16 relative overflow-hidden">
-        {/* Subtle side decorative emblem */}
-        <div 
-          className="absolute top-24 -left-16 sm:-left-12 pointer-events-none opacity-5 select-none"
-          aria-hidden="true"
-        >
-          <img
-            src="/sahwa-icon.png"
-            alt=""
-            className="w-72 h-72 sm:w-80 sm:h-80 object-contain"
-          />
-        </div>
+      <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-12 sm:pb-16">
+        <PageEmblem />
 
         {/* Header */}
-        <div className="page-container max-w-4xl mb-10 sm:mb-16 relative z-10">
+        <div className="page-container max-w-4xl relative z-10">
+          <PageHeading title={university.name} description={`${university.nameEn} • ${university.city}`} className="!mb-6 sm:!mb-8" />
           <Link
             to="/universities"
             className="tap-target inline-flex items-center gap-2 text-[#765C5E] hover:text-[#752026] mb-8 transition-colors text-sm"
@@ -153,21 +145,6 @@ const UniversityPage: React.FC = () => {
             <ArrowRight size={16} />
             جميع الجامعات
           </Link>
-          
-          <div className="text-center">
-            <div className="mb-3 flex justify-center">
-              <img
-                src="/sahwa-icon.png"
-                alt=""
-                className="w-9 h-9 sm:w-11 sm:h-11 object-contain drop-shadow-sm"
-              />
-            </div>
-            <span className="section-divider"></span>
-            <h1 className="text-3xl sm:text-5xl font-heading font-bold text-[#752026] mb-3">
-              {university.name}
-            </h1>
-            <p className="text-[#765C5E]">{university.nameEn} • {university.city}</p>
-          </div>
         </div>
 
         {/* Introduction */}
