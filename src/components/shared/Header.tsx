@@ -21,7 +21,6 @@ const Header: React.FC = () => {
     setIsMenuOpen(false);
   }, [location.pathname]);
 
-  // Check auth session to decide between "استوديو صحوة" and "تسجيل الدخول"
   useEffect(() => {
     const controller = new AbortController();
     fetch('/api/auth', { cache: 'no-store', signal: controller.signal })
@@ -41,7 +40,7 @@ const Header: React.FC = () => {
     { to: '/library', label: 'المكتبة' },
     { to: '/social', label: 'تابعنا' },
     isAuthenticated
-      ? { to: '/studio', label: 'مساحة فريق صحوة', isExternal: true }
+      ? { to: '/team', label: 'مساحة فريق صحوة', isExternal: false }
       : { to: '/login', label: 'تسجيل الدخول' },
   ];
 

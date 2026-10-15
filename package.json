@@ -9,10 +9,12 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:auth": "node --test tests/auth.test.js",
-    "test:library": "node --test tests/library.test.js"
+    "test:library": "node --test tests/library.test.js",
+    "test:team": "node --test tests/team.test.js tests/team-ui.test.js"
   },
   "dependencies": {
     "@vercel/analytics": "^1.5.0",
+    "@vercel/blob": "2.7.0",
     "lucide-react": "^0.344.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

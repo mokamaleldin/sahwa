@@ -7,6 +7,8 @@ import Footer from '../components/shared/Footer';
 import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 
 export default function Login() {
+  const requestedPath = new URLSearchParams(window.location.search).get('next');
+  const destination = requestedPath && ['/team', '/team/volunteers', '/team/files', '/studio'].includes(requestedPath) ? requestedPath : '/team';
   const [email, setEmail] = useState('sahwaturkey@gmail.com');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,13 +22,13 @@ export default function Login() {
     fetch('/api/auth', { cache: 'no-store', signal: controller.signal })
       .then(async response => {
         const result = await response.json();
-        if (result.authenticated) window.location.replace('/studio');
+        if (result.authenticated) window.location.replace(destination);
         else if (!response.ok) setError(result.error || 'الدخول غير متاح مؤقتًا.');
       })
       .catch(() => { if (!controller.signal.aborted) setError('تعذر الاتصال. حاول مرة أخرى.'); })
       .finally(() => { if (!controller.signal.aborted) setChecking(false); });
     return () => controller.abort();
-  }, []);
+  }, [destination]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -45,7 +47,7 @@ export default function Login() {
         setSubmitting(false);
         return;
       }
-      window.location.replace('/studio');
+      window.location.replace(destination);
     } catch {
       setError('تعذر الاتصال. تحقق من الإنترنت وحاول مرة أخرى.');
       setSubmitting(false);
@@ -106,7 +108,7 @@ export default function Login() {
                 <button type="submit" disabled={busy}
                   className="tap-target w-full flex items-center justify-center gap-3 rounded-xl bg-[#752026] px-5 py-3.5 text-[#F2E9E2] font-medium hover:bg-[#350E15] disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
                   {busy ? <Loader2 size={19} className="animate-spin" aria-hidden="true" /> : <ArrowLeft size={19} aria-hidden="true" />}
-                  {checking ? 'جارٍ التحقق…' : submitting ? 'جارٍ الدخول…' : 'الدخول إلى الاستوديو'}
+                  {checking ? 'جارٍ التحقق…' : submitting ? 'جارٍ الدخول…' : 'الدخول إلى مساحة الفريق'}
                 </button>
               </form>
             </section>

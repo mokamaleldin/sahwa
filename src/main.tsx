@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { StrictMode, Suspense, lazy } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
@@ -10,15 +10,21 @@ import SocialMedia from './pages/SocialMedia.tsx';
 import Library from './pages/Library.tsx';
 import NotFoundPage from './pages/NotFound.tsx';
 import ScrollToTop from './components/shared/ScrollToTop.tsx';
+import TeamLayout from './components/Team/TeamLayout.tsx';
 import { Analytics } from "@vercel/analytics/react";
 import './index.css';
+import './team.css';
+
+const Team = lazy(() => import('./pages/Team.tsx'));
+const TeamFiles = lazy(() => import('./pages/TeamFiles.tsx'));
+const TeamVolunteers = lazy(() => import('./pages/TeamVolunteers.tsx'));
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HelmetProvider>
       <BrowserRouter>
         <ScrollToTop />
-        <Routes>
+        <Suspense fallback={<main className="app-shell team-loading" role="status">جارٍ تحميل الصفحة…</main>}><Routes>
           <Route path="/" element={<Home />} />
           <Route path="/universities" element={<Universities />} />
           <Route path="/universities/:universityId" element={<UniversityPage />} />
@@ -26,8 +32,13 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/contact" element={<Navigate to="/social" replace />} />
           <Route path="/social" element={<SocialMedia />} />
           <Route path="/library" element={<Library />} />
+          <Route path="/team" element={<TeamLayout />}>
+            <Route index element={<Team />} />
+            <Route path="volunteers" element={<TeamVolunteers />} />
+            <Route path="files" element={<TeamFiles />} />
+          </Route>
           <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+        </Routes></Suspense>
         <Analytics />
       </BrowserRouter>
     </HelmetProvider>
