@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { SITE_FEATURES } from '../../config/features';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -37,7 +38,7 @@ const Header: React.FC = () => {
   const navLinks = [
     { to: '/', label: 'الرئيسية' },
     { to: '/universities', label: 'الجامعات' },
-    { to: '/library', label: 'المكتبة' },
+    ...(SITE_FEATURES.library ? [{ to: '/library', label: 'المكتبة' }] : []),
     { to: '/social', label: 'تابعنا' },
     isAuthenticated
       ? { to: '/team', label: 'مساحة فريق صحوة', isExternal: false }

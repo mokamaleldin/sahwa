@@ -12,6 +12,7 @@
 .team-button:disabled,.team-text-button:disabled,.team-icon-button:disabled { opacity:.5; cursor:not-allowed; }
 .team-button-danger { background:#8d2026; color:#fff; }
 .team-portal-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px; max-width:1100px; margin:0 auto 42px; }
+.team-portal-grid-two { grid-template-columns:repeat(2,minmax(0,1fr)); max-width:760px; }
 .team-portal-card { display:flex; flex-direction:column; min-width:0; min-height:315px; padding:30px; background:#fff8; border:1px solid var(--line); border-radius:24px; box-shadow:var(--card-shadow); transition:transform .2s,border-color .2s,background .2s; }
 .team-portal-card:hover { transform:translateY(-4px); border-color:var(--brand-gold); background:#fff9; }
 .team-portal-top { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:27px; }

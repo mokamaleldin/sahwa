@@ -5,6 +5,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import Header from '../shared/Header';
 import Footer from '../shared/Footer';
 import { PageEmblem } from '../shared/PageIdentity';
+import { SITE_FEATURES } from '../../config/features';
 
 export default function TeamLayout() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -64,7 +65,7 @@ export default function TeamLayout() {
             <div className="team-navigation-row">
               <nav className="team-navigation" aria-label="مساحة الفريق">
                 <NavLink to="/team" end>مساحة الفريق</NavLink>
-                <NavLink to="/team/volunteers">المتطوعون</NavLink>
+                {SITE_FEATURES.volunteers && <NavLink to="/team/volunteers">المتطوعون</NavLink>}
                 <NavLink to="/team/files">الملفات</NavLink>
                 <a href="/studio">الاستوديو</a>
               </nav>

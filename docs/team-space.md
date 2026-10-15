@@ -2,6 +2,10 @@
 
 Routes: `/team`, `/team/volunteers`, `/team/files`. Login opens `/team`. The existing `/studio` editor is preserved and links back to the portal.
 
+## Temporary visibility
+
+The volunteer directory and public library are currently hidden using `src/config/features.ts`. Their implementations, data, and APIs remain in source. Their old page routes redirect to `/team` and `/` respectively, and the team portal currently shows Files and Studio. To restore either section, enable its flag. When restoring the library, also restore its Studio navigation link and sitemap entry.
+
 ## Google Drive
 
 `src/data/teamFiles.ts` contains the three supplied folder links. Each card opens Drive in another tab. Files stay on Drive; its own sharing and upload permissions continue to apply. Add an entry to this file to add another card. No Drive account access, file migration, or permission changes are performed by the site.

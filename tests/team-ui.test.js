@@ -21,7 +21,7 @@ function compile(relative) {
 }
 fs.mkdirSync(path.join(output, 'shared'), { recursive: true });
 fs.copyFileSync('shared/team-options.js', path.join(output, 'shared/team-options.js'));
-for (const file of ['src/lib/team.ts', 'src/data/teamFiles.ts', 'src/components/shared/PageIdentity.tsx', 'src/components/Team/TeamDialog.tsx', 'src/components/Team/PersonForm.tsx', 'src/components/Team/PersonDetails.tsx']) compile(file);
+for (const file of ['src/config/features.ts', 'src/lib/team.ts', 'src/data/teamFiles.ts', 'src/components/shared/PageIdentity.tsx', 'src/components/Team/TeamDialog.tsx', 'src/components/Team/PersonForm.tsx', 'src/components/Team/PersonDetails.tsx']) compile(file);
 const directoryUrl = compile('src/pages/TeamVolunteers.tsx'), filesUrl = compile('src/pages/TeamFiles.tsx'), portalUrl = compile('src/pages/Team.tsx');
 
 test('directory UI: Arabic search, combined filters, pages, full details, custom fields, CRUD, errors and storage setup', async () => {
@@ -113,7 +113,7 @@ test('directory UI: Arabic search, combined filters, pages, full details, custom
   }
 });
 
-test('portal has precisely three destinations and files open the supplied Drive folders directly', async () => {
+test('portal shows the enabled destinations and files open the supplied Drive folders directly', async () => {
   const React = require('react'), { renderToStaticMarkup } = require('react-dom/server'), { HelmetProvider } = require('react-helmet-async');
   const { StaticRouter } = await import('react-router-dom');
   HelmetProvider.canUseDOM = false;
@@ -121,7 +121,7 @@ test('portal has precisely three destinations and files open the supplied Drive 
   const { default: Portal } = await import(portalUrl), { default: Files } = await import(filesUrl);
   const render = Component => renderToStaticMarkup(React.createElement(HelmetProvider, null, React.createElement(StaticRouter, { location: '/team' }, React.createElement(Component))));
   const portal = new JSDOM(render(Portal));
-  assert.deepEqual(Array.from(portal.window.document.querySelectorAll('.team-portal-card')).map(link => link.getAttribute('href')), ['/team/volunteers', '/team/files', '/studio']);
+  assert.deepEqual(Array.from(portal.window.document.querySelectorAll('.team-portal-card')).map(link => link.getAttribute('href')), ['/team/files', '/studio']);
   const files = new JSDOM(render(Files));
   const links = Array.from(files.window.document.querySelectorAll('.team-portal-card'));
   assert.deepEqual(links.map(link => new URL(link.href).pathname.split('/').at(-1)), ['185bYbrjTJZp_44ltvawuTh2aQtVNLx_E', '1J_qBqkNQz91a9GW_FMkfpChQwKzrGcBN', '1-FDPNZN0ztzNmsqYxzyBO6i7mLGNAYXt']);

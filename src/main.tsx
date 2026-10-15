@@ -11,6 +11,7 @@ import Library from './pages/Library.tsx';
 import NotFoundPage from './pages/NotFound.tsx';
 import ScrollToTop from './components/shared/ScrollToTop.tsx';
 import TeamLayout from './components/Team/TeamLayout.tsx';
+import { SITE_FEATURES } from './config/features';
 import { Analytics } from "@vercel/analytics/react";
 import './index.css';
 import './team.css';
@@ -31,10 +32,10 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/login" element={<Login />} />
           <Route path="/contact" element={<Navigate to="/social" replace />} />
           <Route path="/social" element={<SocialMedia />} />
-          <Route path="/library" element={<Library />} />
+          <Route path="/library" element={SITE_FEATURES.library ? <Library /> : <Navigate to="/" replace />} />
           <Route path="/team" element={<TeamLayout />}>
             <Route index element={<Team />} />
-            <Route path="volunteers" element={<TeamVolunteers />} />
+            <Route path="volunteers" element={SITE_FEATURES.volunteers ? <TeamVolunteers /> : <Navigate to="/team" replace />} />
             <Route path="files" element={<TeamFiles />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
