@@ -1,4 +1,4 @@
-import { ArrowUpLeft, FolderOpen, Palette, UsersRound } from 'lucide-react';
+import { ArrowUpLeft, ClipboardList, FolderOpen, Palette, UsersRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import PageHeading from '../components/shared/PageIdentity';
@@ -6,7 +6,8 @@ import { SITE_FEATURES } from '../config/features';
 
 const cards = [
   { title: 'معلومات المتطوعين', description: 'أهل صحوة، أدوارهم، ومجالات عملهم. ابحث عن شخص أو حدّث بيانات الفريق.', to: '/team/volunteers', icon: UsersRound, action: 'فتح دليل المتطوعين' },
-  { title: 'الملفات', description: 'مجلدات اللجنة الإعلامية، الاجتماعات، وتوثيق فعاليات صحوة في مكان واحد.', to: '/team/files', icon: FolderOpen, action: 'الوصول إلى الملفات' },
+  { title: 'الملفات', description: 'مجلدات الإعلام، الاجتماعات، توثيق الفعاليات، وأدلة العمل في صحوة.', to: '/team/files', icon: FolderOpen, action: 'الوصول إلى الملفات' },
+  { title: 'النماذج المهمة', description: 'شارك شكوى أو اقتراحًا، أو أضف فكرة لنشاط أو محتوى إعلامي إلى بنك أفكار صحوة.', to: '/team/forms', icon: ClipboardList, action: 'الوصول إلى النماذج' },
   { title: 'استوديو صحوة', description: 'القوالب وأدوات التصميم التي تعرفها. جهّز منشوراتك بهوية صحوة.', to: '/studio', icon: Palette, action: 'الدخول إلى الاستوديو' },
 ];
 

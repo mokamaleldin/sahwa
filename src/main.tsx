@@ -21,6 +21,7 @@ import './team.css';
 
 const Team = lazy(() => import('./pages/Team.tsx'));
 const TeamFiles = lazy(() => import('./pages/TeamFiles.tsx'));
+const TeamForms = lazy(() => import('./pages/TeamForms.tsx'));
 const TeamVolunteers = lazy(() => import('./pages/TeamVolunteers.tsx'));
 
 createRoot(document.getElementById('root')!).render(
@@ -41,6 +42,7 @@ createRoot(document.getElementById('root')!).render(
             <Route index element={<Team />} />
             <Route path="volunteers" element={SITE_FEATURES.volunteers ? <TeamVolunteers /> : <Navigate to="/team" replace />} />
             <Route path="files" element={<TeamFiles />} />
+            <Route path="forms" element={<TeamForms />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Route></Routes>

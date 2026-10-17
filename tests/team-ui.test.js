@@ -21,8 +21,8 @@ function compile(relative) {
 }
 fs.mkdirSync(path.join(output, 'shared'), { recursive: true });
 fs.copyFileSync('shared/team-options.js', path.join(output, 'shared/team-options.js'));
-for (const file of ['src/config/features.ts', 'src/lib/team.ts', 'src/data/teamFiles.ts', 'src/components/shared/PageIdentity.tsx', 'src/components/Team/TeamDialog.tsx', 'src/components/Team/PersonForm.tsx', 'src/components/Team/PersonDetails.tsx']) compile(file);
-const directoryUrl = compile('src/pages/TeamVolunteers.tsx'), filesUrl = compile('src/pages/TeamFiles.tsx'), portalUrl = compile('src/pages/Team.tsx');
+for (const file of ['src/config/features.ts', 'src/lib/team.ts', 'src/data/teamFiles.ts', 'src/data/teamForms.ts', 'src/components/shared/PageIdentity.tsx', 'src/components/Team/TeamDialog.tsx', 'src/components/Team/PersonForm.tsx', 'src/components/Team/PersonDetails.tsx']) compile(file);
+const directoryUrl = compile('src/pages/TeamVolunteers.tsx'), filesUrl = compile('src/pages/TeamFiles.tsx'), formsUrl = compile('src/pages/TeamForms.tsx'), portalUrl = compile('src/pages/Team.tsx');
 
 test('directory UI: Arabic search, combined filters, pages, full details, custom fields, CRUD, errors and storage setup', async () => {
   const { JSDOM } = require('jsdom');
@@ -113,19 +113,25 @@ test('directory UI: Arabic search, combined filters, pages, full details, custom
   }
 });
 
-test('portal shows the enabled destinations and files open the supplied Drive folders directly', async () => {
+test('portal shows the enabled destinations; files and forms open the supplied links directly', async () => {
   const React = require('react'), { renderToStaticMarkup } = require('react-dom/server'), { HelmetProvider } = require('react-helmet-async');
   const { StaticRouter } = await import('react-router-dom');
   HelmetProvider.canUseDOM = false;
   const { JSDOM } = require('jsdom');
-  const { default: Portal } = await import(portalUrl), { default: Files } = await import(filesUrl);
+  const { default: Portal } = await import(portalUrl), { default: Files } = await import(filesUrl), { default: Forms } = await import(formsUrl);
   const render = Component => renderToStaticMarkup(React.createElement(HelmetProvider, null, React.createElement(StaticRouter, { location: '/team' }, React.createElement(Component))));
   const portal = new JSDOM(render(Portal));
-  assert.deepEqual(Array.from(portal.window.document.querySelectorAll('.team-portal-card')).map(link => link.getAttribute('href')), ['/team/files', '/studio']);
+  assert.deepEqual(Array.from(portal.window.document.querySelectorAll('.team-portal-card')).map(link => link.getAttribute('href')), ['/team/files', '/team/forms', '/studio']);
   const files = new JSDOM(render(Files));
   const links = Array.from(files.window.document.querySelectorAll('.team-portal-card'));
-  assert.deepEqual(links.map(link => new URL(link.href).pathname.split('/').at(-1)), ['185bYbrjTJZp_44ltvawuTh2aQtVNLx_E', '1J_qBqkNQz91a9GW_FMkfpChQwKzrGcBN', '1-FDPNZN0ztzNmsqYxzyBO6i7mLGNAYXt']);
+  assert.deepEqual(links.map(link => new URL(link.href).pathname.split('/').at(-1)), ['185bYbrjTJZp_44ltvawuTh2aQtVNLx_E', '1J_qBqkNQz91a9GW_FMkfpChQwKzrGcBN', '1-FDPNZN0ztzNmsqYxzyBO6i7mLGNAYXt', '13hdhFYz8tCsAxo4cwFUd0lkY62jP75fA']);
   assert.ok(links.every(link => link.target === '_blank' && link.rel.includes('noopener')));
   assert.equal(files.window.document.querySelector('input[type=file]'), null);
-  portal.window.close(); files.window.close();
+  const forms = new JSDOM(render(Forms));
+  const formLinks = Array.from(forms.window.document.querySelectorAll('.team-portal-card'));
+  assert.deepEqual(formLinks.map(link => link.href), ['https://forms.gle/wUGnkyhK9t7PgfqT8', 'https://forms.gle/DsLcmgqmt88qe3VS6']);
+  assert.deepEqual(formLinks.map(link => link.querySelector('h2').textContent), ['الشكاوى والاقتراحات', 'بنك الأفكار']);
+  assert.ok(formLinks.every(link => link.target === '_blank' && link.rel.includes('noopener') && link.rel.includes('noreferrer') && link.querySelector('p').textContent));
+  assert.equal(forms.window.document.querySelector('form,input,textarea'), null);
+  portal.window.close(); files.window.close(); forms.window.close();
 });

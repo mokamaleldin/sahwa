@@ -1,6 +1,6 @@
 # مساحة فريق صحوة
 
-Routes: `/team`, `/team/volunteers`, `/team/files`. Login opens `/team`. The existing `/studio` editor is preserved and links back to the portal.
+Routes: `/team`, `/team/volunteers`, `/team/files`, `/team/forms`. Login opens `/team` or returns to the requested private page. The existing `/studio` editor is preserved and links back to the portal.
 
 ## Navigation and sessions
 
@@ -12,11 +12,15 @@ The logout control lives in the shared team navigation below the main header, in
 
 ## Temporary visibility
 
-The volunteer directory and public library are currently hidden using `src/config/features.ts`. Their implementations, data, and APIs remain in source. Their old page routes redirect to `/team` and `/` respectively, and the team portal currently shows Files and Studio. To restore either section, enable its flag. When restoring the library, also restore its Studio navigation link and sitemap entry.
+The volunteer directory and public library are currently hidden using `src/config/features.ts`. Their implementations, data, and APIs remain in source. Their old page routes redirect to `/team` and `/` respectively, and the team portal currently shows Files, Important Forms, and Studio. To restore either section, enable its flag. When restoring the library, also restore its Studio navigation link and sitemap entry.
 
 ## Google Drive
 
-`src/data/teamFiles.ts` contains the three supplied folder links. Each card opens Drive in another tab. Files stay on Drive; its own sharing and upload permissions continue to apply. Add an entry to this file to add another card. No Drive account access, file migration, or permission changes are performed by the site.
+`src/data/teamFiles.ts` contains the four supplied folder links: media, meetings, event documentation, and Sahwa documents (including group organization guides and the student journey). Each card opens Drive in another tab. Files stay on Drive; its own sharing and upload permissions continue to apply. Add an entry to this file to add another card. No Drive account access, file migration, or permission changes are performed by the site.
+
+## Important forms
+
+`/team/forms` is protected by the shared team layout and lists the two links in `src/data/teamForms.ts`: complaints and suggestions, and the ideas bank. Each card opens its Google Form in another tab. The site does not collect or store responses. The existing volunteer signup is not duplicated here. Add an entry to the data file to add a future form.
 
 ## Shared volunteer directory
 
@@ -30,7 +34,7 @@ The directory uses a **private Vercel Blob store**, accessed only through authen
 4. Redeploy the production project so the function receives the new environment configuration.
 5. Sign in, open `/team/volunteers`, add a test person, reload from a second session, then remove the test record. Check that `/api/team` and its photo URLs return 401 while logged out.
 
-Before a store is connected, the portal, three Drive folders, and Studio work. The directory explicitly says shared storage needs activation and disables saving; it never simulates successful persistence. An authentication/storage outage is shown as an error and must not be mistaken for an empty directory.
+Before a store is connected, the portal, Drive folders, important forms, and Studio work. The directory explicitly says shared storage needs activation and disables saving; it never simulates successful persistence. An authentication/storage outage is shown as an error and must not be mistaken for an empty directory.
 
 ### Data and concurrent edits
 

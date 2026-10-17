@@ -20,6 +20,7 @@ export default function TeamNavigation() {
         <NavLink to="/team" end>مساحة الفريق</NavLink>
         {SITE_FEATURES.volunteers && <NavLink to="/team/volunteers">المتطوعون</NavLink>}
         <NavLink to="/team/files">الملفات</NavLink>
+        <NavLink to="/team/forms">النماذج المهمة</NavLink>
         <NavLink to="/studio">الاستوديو</NavLink>
       </nav>
       <button className="team-text-button" onClick={logout} disabled={leaving}><LogOut size={16} aria-hidden="true" />{leaving ? 'جارٍ الخروج…' : 'تسجيل الخروج'}</button>

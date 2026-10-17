@@ -15,4 +15,9 @@ export const TEAM_FOLDERS = [
     description: 'صور الفعاليات وفيديوهاتها والمواد الخاصة بكل فعالية.',
     url: 'https://drive.google.com/drive/folders/1-FDPNZN0ztzNmsqYxzyBO6i7mLGNAYXt?usp=drive_link',
   },
+  {
+    id: 'sahwa', title: 'ملفات صحوة',
+    description: 'دليل تنظيم الجروبات، رحلة الطالب، وأدلة وملفات العمل المهمة.',
+    url: 'https://drive.google.com/drive/folders/13hdhFYz8tCsAxo4cwFUd0lkY62jP75fA?usp=sharing',
+  },
 ];

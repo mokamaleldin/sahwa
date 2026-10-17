@@ -9,7 +9,7 @@ export default function TeamFiles() {
   return <>
     <Helmet><title>ملفات الفريق | صحوة</title></Helmet>
     <PageHeading title="ملفات صحوة" description="افتح المجلد المناسب، وتابع العمل وارفع ملفاتك داخل Google Drive." />
-    <section className="team-portal-grid" aria-label="مجلدات ملفات صحوة">
+    <section className="team-portal-grid team-portal-grid-two" aria-label="مجلدات ملفات صحوة">
       {TEAM_FOLDERS.map((folder, index) => {
         const Icon = icons[index] || FolderOpen;
         return <a className="team-portal-card" key={folder.id} href={folder.url} target="_blank" rel="noopener noreferrer">

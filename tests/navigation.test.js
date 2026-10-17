@@ -17,8 +17,8 @@ function compile(relative) {
 for (const file of [
   'src/config/features.ts', 'src/lib/sessionClient.ts', 'src/auth/SessionContext.ts', 'src/auth/useSession.ts', 'src/auth/SessionProvider.tsx', 'src/auth/RequireSession.tsx',
   'src/components/shared/Header.tsx', 'src/components/shared/Footer.tsx', 'src/components/shared/PageIdentity.tsx', 'src/components/shared/SiteLayout.tsx',
-  'src/components/Team/TeamNavigation.tsx', 'src/components/Team/TeamLayout.tsx', 'src/components/Studio/StudioWorkspace.tsx', 'src/data/teamFiles.ts',
-  'src/pages/Team.tsx', 'src/pages/TeamFiles.tsx', 'src/pages/Studio.tsx', 'src/pages/Login.tsx',
+  'src/components/Team/TeamNavigation.tsx', 'src/components/Team/TeamLayout.tsx', 'src/components/Studio/StudioWorkspace.tsx', 'src/data/teamFiles.ts', 'src/data/teamForms.ts',
+  'src/pages/Team.tsx', 'src/pages/TeamFiles.tsx', 'src/pages/TeamForms.tsx', 'src/pages/Studio.tsx', 'src/pages/Login.tsx',
 ]) compile(file);
 const moduleAt = relative => import(pathToFileURL(path.join(output, relative)).href);
 
@@ -33,9 +33,9 @@ test('navigation keeps one header, one session check and the same editor; expira
   const React = require('react'), { createRoot } = require('react-dom/client'), { Simulate } = require('react-dom/test-utils'), { HelmetProvider } = require('react-helmet-async');
   HelmetProvider.canUseDOM = false;
   const { createMemoryRouter, RouterProvider } = await import('react-router-dom');
-  const [{ createSessionClient }, { default: SessionProvider }, { default: SiteLayout }, { default: TeamLayout }, { default: Team }, { default: Files }, { default: Studio }, { default: Login }] = await Promise.all([
+  const [{ createSessionClient }, { default: SessionProvider }, { default: SiteLayout }, { default: TeamLayout }, { default: Team }, { default: Files }, { default: Forms }, { default: Studio }, { default: Login }] = await Promise.all([
     moduleAt('src/lib/sessionClient.js'), moduleAt('src/auth/SessionProvider.js'), moduleAt('src/components/shared/SiteLayout.js'), moduleAt('src/components/Team/TeamLayout.js'),
-    moduleAt('src/pages/Team.js'), moduleAt('src/pages/TeamFiles.js'), moduleAt('src/pages/Studio.js'), moduleAt('src/pages/Login.js'),
+    moduleAt('src/pages/Team.js'), moduleAt('src/pages/TeamFiles.js'), moduleAt('src/pages/TeamForms.js'), moduleAt('src/pages/Studio.js'), moduleAt('src/pages/Login.js'),
   ]);
   let resolveFirst, checks = 0, failed = false, authenticated = true;
   const first = new Promise(resolve => { resolveFirst = resolve; });
@@ -52,7 +52,7 @@ test('navigation keeps one header, one session check and the same editor; expira
   const router = createMemoryRouter([{ element: e(SiteLayout), children: [
     { path: '/', element: e('main', null, 'الرئيسية التجريبية') }, { path: '/universities', element: e('main', null, 'الجامعات التجريبية') }, { path: '/social', element: e('main', null, 'تابعنا التجريبية') },
     { path: '/login', element: e(Login) }, { path: '/studio', element: e(Studio) },
-    { path: '/team', element: e(TeamLayout), children: [{ index: true, element: e(Team) }, { path: 'files', element: e(LazyFiles) }] },
+    { path: '/team', element: e(TeamLayout), children: [{ index: true, element: e(Team) }, { path: 'files', element: e(LazyFiles) }, { path: 'forms', element: e(Forms) }] },
   ] }], { initialEntries: ['/'] });
   const container = document.getElementById('root'), root = createRoot(container);
   const navigate = async path => React.act(async () => { await router.navigate(path); });
@@ -76,7 +76,12 @@ test('navigation keeps one header, one session check and the same editor; expira
     await navigate('/team/files');
     assert.equal(container.querySelector('header'), header, 'lazy route fallback must keep shared chrome');
     await React.act(async () => resolveFiles({ default: Files }));
-    assert.equal(container.querySelectorAll('.team-portal-card').length, 3);
+    assert.equal(container.querySelectorAll('.team-portal-card').length, 4);
+    const formsEvent = await click(container.querySelector('.team-navigation a[href="/team/forms"]'));
+    assert.equal(formsEvent.defaultPrevented, true, 'forms use client navigation');
+    assert.equal(router.state.location.pathname, '/team/forms');
+    assert.equal(container.querySelectorAll('.team-portal-card').length, 2);
+    assert.equal(container.querySelector('header'), header); assert.equal(checks, 1);
     const event = await click(container.querySelector('.team-navigation a[href="/studio"]'));
     assert.equal(event.defaultPrevented, true, 'Studio link uses client navigation');
     const frame = container.querySelector('iframe'); assert.ok(frame); assert.equal(checks, 1);
@@ -109,6 +114,14 @@ test('navigation keeps one header, one session check and the same editor; expira
     await click(logout);
     assert.equal(router.state.location.pathname, '/login'); assert.equal(container.querySelector('iframe'), null); assert.ok(header.querySelector('a[href="/login"]'));
     await navigate('/studio'); assert.equal(router.state.location.pathname, '/login'); assert.equal(container.querySelector('iframe'), null);
+    await navigate('/team/forms');
+    assert.equal(router.state.location.pathname, '/login');
+    assert.equal(new URLSearchParams(router.state.location.search).get('next'), '/team/forms');
+    const formsPassword = container.querySelector('#login-password');
+    await React.act(async () => { formsPassword.value = 'fixture-only'; Simulate.change(formsPassword); Simulate.submit(container.querySelector('form')); });
+    assert.equal(router.state.location.pathname, '/team/forms', 'sign-in returns to the requested forms page');
+    assert.equal(container.querySelectorAll('.team-portal-card').length, 2);
+    assert.equal(container.querySelector('header'), header);
   } finally {
     await React.act(async () => root.unmount()); router.dispose(); dom.window.close();
     globalThis.window = previous.window; globalThis.document = previous.document; globalThis.requestAnimationFrame = previous.requestAnimationFrame; globalThis.cancelAnimationFrame = previous.cancelAnimationFrame; globalThis.IS_REACT_ACT_ENVIRONMENT = previous.act;
