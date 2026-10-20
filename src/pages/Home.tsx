@@ -2,7 +2,8 @@ import React from 'react';
 import SEO from '../components/SEO';
 import HeroSection from '../components/Home/HeroSection';
 import DefinitionSection from '../components/Home/DefinitionSection';
-import SloganSection from '../components/Home/SloganSection';
+import VisionSection from '../components/Home/VisionSection';
+import PillarsSection from '../components/Home/PillarsSection';
 import VolunteerSection from '../components/Home/VolunteerSection';
 
 const Home: React.FC = () => {
@@ -66,8 +67,8 @@ const Home: React.FC = () => {
     <>
       <SEO
         title="صحوة | Sahwa - مجتمع طلابي شبابي في الجامعات التركية"
-        description="صحوة (Sahwa) مساحة شبابية لطلاب الجامعات في تركيا. نجتمع حول الصحبة الصالحة والوعي والعمل. انضم لمجتمع صحوة الطلابي في جامعات إسطنبول - جامعة استنيا وجامعة بلجي."
-        keywords="صحوة لشباب أمتنا, مجتمع طلابي تركيا, student community Istanbul, طلاب جامعات إسطنبول, صحوة جامعية, Sahwa youth, youth student community"
+        description="صحوة مساحة شبابية تجمع الشباب على الصحبة الصالحة، والقرآن، ومعنى الأمة الواحدة، وتساعدهم على النمو في إيمانهم ووعيهم ومسؤوليتهم، ليكونوا أنفع لأنفسهم ومجتمعهم وأمتهم."
+        keywords="صحوة, الركائز الأربع, مجتمع طلابي تركيا, student community Istanbul, طلاب جامعات إسطنبول, صحوة جامعية, Sahwa youth, youth student community"
         canonicalUrl="/"
         structuredData={homepageStructuredData}
         breadcrumbs={breadcrumbs}
@@ -75,7 +76,8 @@ const Home: React.FC = () => {
       <main className="app-shell">
         <HeroSection />
         <DefinitionSection />
-        <SloganSection />
+        <VisionSection />
+        <PillarsSection />
         <VolunteerSection />
       </main>
     </>

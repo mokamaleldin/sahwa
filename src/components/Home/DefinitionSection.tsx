@@ -2,48 +2,53 @@ import React from 'react';
 
 const DefinitionSection: React.FC = () => {
   return (
-    <section id="story" className="py-14 sm:py-20 lg:py-24 relative overflow-hidden">
+    <section id="story" className="py-16 sm:py-24 relative overflow-hidden bg-transparent">
       <div className="page-container max-w-4xl relative z-10">
-        <div className="text-center mb-8 sm:mb-12">
-          <span className="section-divider"></span>
-          <p className="text-xs tracking-[0.25em] uppercase text-[#D6AD63] font-bold mb-3">
+        <div className="text-center mb-10 sm:mb-14">
+          <span className="section-divider mb-4"></span>
+          <p className="text-xs sm:text-sm tracking-[0.25em] uppercase text-[#D6AD63] font-bold mb-3">
             كيف بدأت صحوة؟
           </p>
-          <h2 className="text-2xl sm:text-4xl font-heading font-bold text-[#752026]">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold text-[#752026]">
             من لاحظوا ولم يسكتوا
           </h2>
         </div>
 
-        <div className="section-card p-6 sm:p-10 text-right">
-          <div className="space-y-5 text-base sm:text-lg text-[#350E15]/90 leading-[2.2]">
+        <div className="section-card p-7 sm:p-12 text-right">
+          <div className="space-y-6 text-base sm:text-lg text-[#350E15]/90 leading-[2.2] font-normal">
             <p>
-              في السنة الأولى من الجامعة، بدأنا نلاحظ شيئاً يصعب تجاهله.
-              أصدقاء كنا نعرفهم — أصدقاء قريبون — بدأوا يتغيرون بهدوء.
-              واحد انجرف مع بيئة ما فيها خير، وثانٍ بدأ يبتعد عن دينه شيئاً فشيئاً، وثالث غرق في الفراغ — لا هدف، لا رفقة، ولا معنى.
+              في أول سنة لنا في الجامعة، بدأنا نلاحظ شيئًا يتكرر حولنا. شباب يدخلون بيئات جديدة، ولا يجدون الصحبة التي تعينهم، فيبتعد بعضهم بهدوء عن مبادئ كانوا يتمسكون بها، ويعيش آخرون بلا معنى واضح ولا اتجاه.
             </p>
             <p>
-              الجامعة مكان مفتوح ومليء بالاتجاهات — وبدون صحبة صالحة تحمل الإنسان، كثير من الشباب يضيع فيها بدون ما يدري.
-              لم يكن ذلك قضاءً لا يُرد — كان واقعاً يمكن تغييره.
-            </p>
-            <p>
-              في السنة الثانية قررنا أن نبدأ.
-              لا انتظار لمؤسسة تحل المشكلة، ولا كلام بدون عمل.
-              جلسنا مع بعض وقلنا: نبني صحبة صالحة حقيقية.
-              بدأنا بشيء بسيط — درس قرآني أسبوعي، ولقاء منتظم، وأناس نثق بهم.
-            </p>
-            <p>
-              ثم علمنا أن شباباً في جامعة بلجي كانوا يفعلون نفس الشيء تماماً — يقيمون درساً في القرآن، ويبنون دائرة من الأخوة.
-              تواصلنا معهم وكان السؤال واحداً:{' '}
+              لم نرد أن نكتفي بالملاحظة، فبدأنا بأنفسنا:{' '}
               <span className="font-bold text-[#752026]">
-                طالما الفكرة واحدة، لماذا لا نعمل معاً؟
+                صحبة صالحة وقراءة للقرآن
               </span>
+              . كان هدفنا في البداية أن نحافظ على أنفسنا ونصنع خيرًا بسيطًا حولنا.
             </p>
             <p>
-              من هنا بدأت صحوة.
-              كنا نريد أن نُصلح بعضنا ونُصلح من حولنا — فكان الاسم:{' '}
-              <span className="font-bold text-[#752026]">صحوة</span>.
-              واخترنا شعار «شباب أمتنا» لأننا نتكلم مع شباب المسلمين كلهم —
-              لا حدود ولا جنسيات تفصلنا.
+              ثم عرفنا شبابًا آخرين لديهم التوجه نفسه، فاجتمعنا وتشاركنا الأفكار، وانضم إلينا شباب من جامعات أخرى. ومع كل خطوة كانت الفكرة تكبر معنا.
+            </p>
+            <p>
+              لم نعد نريد مجرد نشاط داخل الجامعة، بل أن نبني بيئة يتقوّى فيها الشباب بعضهم ببعض، و
+              <span className="font-bold text-[#752026]">
+                تتجاوز اختلاف البلدان والجنسيات إلى معنى الأمة الواحدة
+              </span>
+              .
+            </p>
+            <p>
+              ومع الوقت اتضح لنا أكثر ما نريد؛ فقد اجتمعنا في البداية على القرآن،{' '}
+              <span className="font-bold text-[#752026]">
+                فجعلنا القرآن مرجعنا، والصحبة الصالحة سندنا، والأمة الواحدة تجمعنا، والنفع والأثر غايتنا
+              </span>
+              .
+            </p>
+            <p>
+              ومن هنا أخذت صحوة شكلها الذي نعرفه اليوم؛{' '}
+              <span className="font-bold text-[#752026]">
+                لتكون فعلًا صحوة لهذا الجيل، وبذرة خير وإصلاح في هذه الأمة
+              </span>
+              .
             </p>
           </div>
         </div>
@@ -53,4 +58,3 @@ const DefinitionSection: React.FC = () => {
 };
 
 export default DefinitionSection;
-
