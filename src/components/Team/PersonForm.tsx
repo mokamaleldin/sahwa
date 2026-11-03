@@ -12,6 +12,9 @@ import {
   UNIVERSITIES,
   VOLUNTEER_AREAS,
   RESPONSIBILITIES,
+  STUDY_YEARS,
+  MAJORS,
+  normalizeMajor,
   todayInIstanbul,
 } from "../../../shared/team-options.js";
 
@@ -40,7 +43,7 @@ export default function PersonForm({
     setBusy(true);
     setError("");
     try {
-      await onSave(input);
+      await onSave({ ...input, major: normalizeMajor(input.major) });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "تعذر حفظ البيانات.");
       setBusy(false);
@@ -54,6 +57,15 @@ export default function PersonForm({
       ...RESPONSIBILITIES,
       ...(input.responsibility ? [input.responsibility] : []),
     ]),
+  ];
+  const statuses = [
+    ...new Set([
+      ...PERSON_STATUSES,
+      ...(person?.status && !PERSON_STATUSES.includes(person.status) ? [person.status] : []),
+    ]),
+  ];
+  const studyYears = [
+    ...new Set([...STUDY_YEARS, ...(input.studyYear && !STUDY_YEARS.includes(input.studyYear) ? [input.studyYear] : [])]),
   ];
   return (
     <TeamDialog
@@ -99,7 +111,7 @@ export default function PersonForm({
                   value={input.status}
                   onChange={(e) => update("status", e.target.value)}
                 >
-                  {PERSON_STATUSES.map((status) => (
+                  {statuses.map((status) => (
                     <option key={status}>{status}</option>
                   ))}
                 </select>
@@ -184,20 +196,33 @@ export default function PersonForm({
                   التخصص <small>اختياري</small>
                 </span>
                 <input
+                  list="sahwa-majors"
                   maxLength={120}
                   value={input.major}
                   onChange={(e) => update("major", e.target.value)}
+                  onBlur={() => update("major", normalizeMajor(input.major))}
+                  placeholder="اختر تخصصًا أو اكتب تخصصًا جديدًا"
                 />
+                <datalist id="sahwa-majors">
+                  {MAJORS.map((major) => (
+                    <option key={major} value={major} />
+                  ))}
+                </datalist>
+                <small>اقتراحات عربية موحّدة، ويمكن إضافة تخصص غير موجود.</small>
               </label>
               <label className="team-field">
                 <span>
                   السنة الدراسية <small>اختياري</small>
                 </span>
-                <input
-                  maxLength={60}
+                <select
                   value={input.studyYear}
                   onChange={(e) => update("studyYear", e.target.value)}
-                />
+                >
+                  <option value="">غير محدد</option>
+                  {studyYears.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
               </label>
             </div>
           </div>
