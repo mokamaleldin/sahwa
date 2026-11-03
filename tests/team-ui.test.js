@@ -54,3 +54,10 @@ test('add volunteer opens a modal and saves a basic record without account field
   assert.equal(document.querySelector('dialog'),null);assert.ok(document.querySelector('.team-person-card'));assert.ok(document.querySelector('.team-age'));
  }finally{await React.act(async()=>root.unmount());dom.window.close();globalThis.window=previous.window;globalThis.document=previous.document;globalThis.fetch=previous.fetch;globalThis.IS_REACT_ACT_ENVIRONMENT=previous.act;}
 });
+
+test('directory exposes gender and academic year filters',async()=>{
+ const html=await at('src/views/TeamVolunteers.js');
+ assert.equal(typeof html,'function');
+ const source=await import('node:fs/promises').then(fs=>fs.readFile(new URL('../src/views/TeamVolunteers.tsx',import.meta.url),'utf8'));
+ for(const label of ['<span>النوع</span>','<span>السنة الدراسية</span>','كل الجامعات','كل الحالات','كل السنوات'])assert.ok(source.includes(label),label);
+});
