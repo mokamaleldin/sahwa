@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validatePerson} from '../server/team-data.js';
-import {filterVolunteers,ageFromBirthDate,todayInIstanbul} from '../shared/team-options.js';
+import {filterVolunteers,ageFromBirthDate,todayInIstanbul,normalizeMajor,PERSON_STATUSES,RESPONSIBILITIES,STUDY_YEARS} from '../shared/team-options.js';
 import {person} from './helpers/database.js';
 test('volunteers need only name, university, current status and gender',()=>{
  const value=validatePerson({fullName:'أحمد',university:'استنيا',status:'نشط',gender:'شاب'});
@@ -32,4 +32,25 @@ test('Arabic directory search combines with university and current-status filter
  assert.equal(filterVolunteers(people,{query:'احمد',university:'استنيا',status:'نشط'}).length,1);
  assert.equal(filterVolunteers(people,{query:'فاطمه',university:'',status:'خريج'}).length,1);
  assert.equal(filterVolunteers(people,{query:'',university:'بيلجي',status:'نشط'}).length,0);
+});
+
+test('three operational statuses and three responsibilities, separate from academic graduation',()=>{
+ assert.deepEqual(PERSON_STATUSES,['نشط','متوقف مؤقتًا','غير نشط']);
+ assert.deepEqual(RESPONSIBILITIES,['عضو','نائب مسؤول','مسؤول']);
+ assert.ok(STUDY_YEARS.includes('متخرج'));
+ assert.equal(validatePerson(person({status:'غير نشط',studyYear:'متخرج'})).status,'غير نشط');
+});
+test('known English, Turkish and Arabic aliases are normalized without rejecting new majors',()=>{
+ for(const [value,expected] of [
+  ['Software engineer','هندسة البرمجيات'],
+  ['Yazılım mühendisliği','هندسة البرمجيات'],
+  ['هندسة برمجه','هندسة البرمجيات'],
+  ['Physiotherapy','العلاج الطبيعي وإعادة التأهيل'],
+  ['Psikoloji','علم النفس'],
+  ['Business administration','إدارة الأعمال'],
+ ]) {
+  assert.equal(normalizeMajor(value),expected);
+  assert.equal(validatePerson(person({major:value})).major,expected);
+ }
+ assert.equal(validatePerson(person({major:'هندسة الطاقة النووية'})).major,'هندسة الطاقة النووية');
 });
