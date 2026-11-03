@@ -21,6 +21,7 @@ import PersonForm from "../components/Team/PersonForm";
 import PersonDetails from "../components/Team/PersonDetails";
 import { teamRequest, type Volunteer, type VolunteerInput } from "../lib/team";
 import { useSession } from "../auth/useSession";
+import { Link } from "../lib/navigation";
 
 const PAGE_SIZE = 12;
 export default function TeamVolunteers() {
@@ -36,7 +37,7 @@ export default function TeamVolunteers() {
     }),
     [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Volunteer | null>(null),
-    [editing, setEditing] = useState<Volunteer | null | undefined>(undefined);
+    [editing, setEditing] = useState<Volunteer | undefined>(undefined);
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setError("");
@@ -69,29 +70,19 @@ export default function TeamVolunteers() {
   const pages = Math.max(1, Math.ceil(results.length / PAGE_SIZE)),
     current = Math.min(page, pages);
   async function save(person: VolunteerInput) {
+    if (!editing) return;
     const data = await teamRequest<{ person: Volunteer }>({
-      method: editing ? "PUT" : "POST",
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         person,
-        ...(editing ? { id: editing.id, revision: editing.revision } : {}),
+        id: editing.id,
+        revision: editing.revision,
       }),
     });
-    setPeople((p) =>
-      editing
-        ? p.map((v) => (v.id === data.person.id ? data.person : v))
-        : [...p, data.person],
-    );
+    setPeople((p) => p.map((v) => (v.id === data.person.id ? data.person : v)));
     setEditing(undefined);
-    setNotice(
-      editing
-        ? "تم حفظ البيانات."
-        : "تم إنشاء المتطوع وحسابه. يمكنك تسليمه بيانات الدخول.",
-    );
-    if (!editing) {
-      setFilters({ query: "", university: "", status: "" });
-      setPage(1);
-    }
+    setNotice("تم حفظ البيانات الأساسية.");
     await refresh({ force: true });
   }
   const update = (key: keyof typeof filters, value: string) => {
@@ -101,11 +92,11 @@ export default function TeamVolunteers() {
   return (
     <>
       <Helmet>
-        <title>المتطوعون والحسابات | صحوة</title>
+        <title>المتطوعون | صحوة</title>
       </Helmet>
       <PageHeading
         title="أهل صحوة"
-        description="بيانات المتطوعين وحساباتهم، في مكان واحد وبخطوات بسيطة."
+        description="بيانات أهل صحوة الأساسية وفرقهم ومسؤولياتهم."
       />
       <section aria-label="دليل المتطوعين">
         <div className="team-directory-toolbar">
@@ -126,17 +117,10 @@ export default function TeamVolunteers() {
               <RefreshCw size={16} />
               تحديث
             </button>
-            <button
-              className="team-button"
-              onClick={() => {
-                setNotice("");
-                setEditing(null);
-              }}
-              disabled={loading || Boolean(error)}
-            >
+            <Link className="team-button" to="/team/accounts#account-form">
               <Plus size={18} />
-              إضافة متطوع
-            </button>
+              إنشاء حساب لمتطوع
+            </Link>
           </div>
         </div>
         {notice && (
@@ -214,7 +198,7 @@ export default function TeamVolunteers() {
                 ? "أعد المحاولة لعرض البيانات."
                 : people.length
                   ? "غيّر البحث أو الفلاتر."
-                  : "أضف أول متطوع وأنشئ له حسابًا من نفس النموذج."}
+                  : "أنشئ حساب المتطوع من صفحة إدارة الحسابات، ثم أكمل بياناته هنا."}
             </p>
           </div>
         ) : (
@@ -247,10 +231,7 @@ export default function TeamVolunteers() {
                   </p>
                   <div className="team-person-role">
                     <strong>{person.responsibility || "متطوع"}</strong>
-                    <span>
-                      {person.team || "الفريق العام"} ·{" "}
-                      {person.accessRole === "admin" ? "مسؤول" : "متطوع عادي"}
-                    </span>
+                    <span>{person.team || "الفريق العام"}</span>
                   </div>
                   <span className="team-person-open">
                     عرض الملف

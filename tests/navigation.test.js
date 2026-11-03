@@ -108,6 +108,10 @@ test("Next.js shell preserves the open Studio across team navigation and updates
       document.querySelectorAll('a[href="/team/volunteers"]').length,
       0,
     );
+    assert.equal(
+      document.querySelectorAll('a[href="/team/accounts"]').length,
+      0,
+    );
     assert.ok(document.querySelector('a[href="/team/files"]'));
     const header = document.querySelector("header");
     await React.act(async () => go("/studio"));
@@ -123,6 +127,7 @@ test("Next.js shell preserves the open Studio across team navigation and updates
     await React.act(async () => client.refresh({ force: true }));
     assert.ok(document.querySelector('a[href="/team/events"]'));
     assert.ok(document.querySelector('a[href="/team/volunteers"]'));
+    assert.ok(document.querySelector('a[href="/team/accounts"]'));
     await React.act(async () => client.anonymous());
     assert.equal(document.querySelector("iframe"), null);
   } finally {
