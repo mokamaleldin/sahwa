@@ -17,7 +17,12 @@ test('volunteer modal has exactly four required fields and no login controls',()
  for(const label of ['اسم المتطوع','الجامعة','الحالة الحالية','شاب أو بنت','تاريخ الميلاد','رقم الهاتف','المسؤولية','مجال التطوع'])assert.ok(html.includes(label),label);
  for(const excluded of ['البريد الإلكتروني','كلمة المرور','الصلاحيات','تاريخ الانضمام','المهارات'])assert.ok(!html.includes(excluded),excluded);
  assert.equal(document.querySelector('input[type=date]').required,false);assert.equal(document.querySelector('input[type=tel]').required,false);
- assert.ok([...document.querySelectorAll('select option')].some(option=>option.textContent==='مسؤول جامعة'));dom.window.close();
+ assert.ok(![...document.querySelectorAll('select option')].some(option=>option.textContent==='مسؤول جامعة'));
+ assert.ok([...document.querySelectorAll('select option')].some(option=>option.textContent==='السنة الخامسة فأعلى'));
+ assert.ok([...document.querySelectorAll('select option')].some(option=>option.textContent==='متخرج'));
+ assert.ok(document.querySelector('input[list="sahwa-majors"]'));
+ assert.ok([...document.querySelectorAll('#sahwa-majors option')].some(option=>option.value==='هندسة البرمجيات'));
+ assert.ok([...document.querySelectorAll('select option')].some(option=>option.textContent==='متوقف مؤقتًا'));dom.window.close();
 });
 test('event modal requires only its name and selects responsible people from volunteers',()=>{
  const volunteer={id:'00000000-0000-4000-8000-000000000001',fullName:'متطوع تجريبي',university:'استنيا',status:'نشط'};
