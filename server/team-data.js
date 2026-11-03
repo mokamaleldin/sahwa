@@ -1,4 +1,4 @@
-import { todayInIstanbul } from "../shared/team-options.js";
+import { todayInIstanbul, normalizeMajor } from "../shared/team-options.js";
 
 export class TeamError extends Error {
   constructor(message, status = 400, code = "INVALID_INPUT") {
@@ -48,7 +48,7 @@ export function validatePerson(input) {
     phone: text(input, "phone", "رقم الهاتف", 30).replace(/[٠-٩]/g, (digit) =>
       String(digit.charCodeAt(0) - 1632),
     ),
-    major: text(input, "major", "التخصص", 120),
+    major: normalizeMajor(text(input, "major", "التخصص", 120)),
     studyYear: text(input, "studyYear", "السنة الدراسية", 60),
   };
   if (
