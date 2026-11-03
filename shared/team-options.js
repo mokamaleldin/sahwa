@@ -47,6 +47,7 @@ export const MAJORS = [
   "تقنيات تعويضات الأسنان",
   "اللغة التركية وآدابها",
   "اللغة الإنجليزية وآدابها",
+  "السينما والتلفزيون",
 ];
 const MAJOR_ALIASES = [
   ["أحياء جزيئية وعلم الوراثة", "Molecular biology and genetics", "Genetics"],
@@ -77,6 +78,7 @@ const MAJOR_ALIASES = [
   ["تقنيات تعويضات الأسنان", "Diş protez teknolojisi", "diş protez"],
   ["اللغة التركية وآدابها", "Yeni türk dili/ yüksek lisans"],
   ["اللغة الإنجليزية وآدابها", "Phd in english language and Literature"],
+  ["السينما والتلفزيون", "Cinema and television"],
 ];
 export function normalizeMajor(value) {
   const clean = String(value || "").trim();
@@ -106,7 +108,9 @@ export function filterVolunteers(people, filters) {
             [p.fullName, p.university, p.major, p.team, p.phone].join(" "),
           ).includes(query)) &&
         (!filters.university || p.university === filters.university) &&
-        (!filters.status || p.status === filters.status),
+        (!filters.status || p.status === filters.status) &&
+        (!filters.gender || p.gender === filters.gender) &&
+        (!filters.studyYear || p.studyYear === filters.studyYear),
     )
     .sort((a, b) => a.fullName.localeCompare(b.fullName, "ar"));
 }
