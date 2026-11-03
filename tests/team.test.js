@@ -54,3 +54,14 @@ test('known English, Turkish and Arabic aliases are normalized without rejecting
  }
  assert.equal(validatePerson(person({major:'هندسة الطاقة النووية'})).major,'هندسة الطاقة النووية');
 });
+
+test('volunteer filters combine university, status, gender and academic year',()=>{
+ const people=[
+  person({fullName:'أحمد',university:'استنيا',gender:'شاب',status:'نشط',studyYear:'السنة الثانية'}),
+  person({fullName:'فاطمة',university:'استنيا',gender:'بنت',status:'نشط',studyYear:'متخرج'}),
+  person({fullName:'علي',university:'بيلجي',gender:'شاب',status:'غير نشط',studyYear:'متخرج'}),
+ ];
+ assert.deepEqual(filterVolunteers(people,{query:'',university:'استنيا',status:'نشط',gender:'بنت',studyYear:'متخرج'}).map(p=>p.fullName),['فاطمة']);
+ assert.equal(filterVolunteers(people,{query:'',university:'بيلجي',status:'',gender:'',studyYear:'السنة الثانية'}).length,0);
+ assert.equal(filterVolunteers(people,{query:'',university:'',status:'غير نشط',gender:'شاب',studyYear:''}).length,1);
+});
