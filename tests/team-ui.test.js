@@ -10,6 +10,7 @@ const at=compileUI('tmp/forms-tests',['shared/team-options.js','src/lib/team.ts'
 const{default:PersonForm}=await at('src/components/Team/PersonForm.js');
 const{default:EventForm}=await at('src/components/Team/EventForm.js');
 const{default:VolunteerCard}=await at('src/components/Team/VolunteerCard.js');
+const{default:PersonDetails}=await at('src/components/Team/PersonDetails.js');
 const noop=()=>{};
 test('volunteer modal has exactly four required fields and no login controls',()=>{
  const html=renderToStaticMarkup(h(PersonForm,{person:null,onSave:noop,onClose:noop}));const dom=new JSDOM(html),document=dom.window.document;
@@ -60,4 +61,11 @@ test('directory exposes gender and academic year filters',async()=>{
  assert.equal(typeof html,'function');
  const source=await import('node:fs/promises').then(fs=>fs.readFile(new URL('../src/views/TeamVolunteers.tsx',import.meta.url),'utf8'));
  for(const label of ['<span>النوع</span>','<span>السنة الدراسية</span>','كل الجامعات','كل الحالات','كل السنوات'])assert.ok(source.includes(label),label);
+});
+
+test('volunteer details offer an explicit delete action with no immediate deletion',()=>{
+ const value=person({fullName:'عاطف'});
+ const html=renderToStaticMarkup(h(PersonDetails,{person:value,onEdit:noop,onDelete:noop,onClose:noop}));
+ assert.ok(html.includes('حذف المتطوع'));
+ assert.ok(!html.includes('نعم، احذف المتطوع'));
 });
