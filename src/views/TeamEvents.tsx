@@ -95,13 +95,8 @@ export default function TeamEvents() {
       }
       yearly.set(year, group);
     }
-    const datedYears = [...yearly.values()]
-      .filter((year) => year.year !== "غير محددة")
-      .sort((a, b) => b.count - a.count);
     return {
       attendanceTotal,
-      mostActive: datedYears[0],
-      leastActive: datedYears[datedYears.length - 1],
       yearly: [...yearly.values()].sort((a, b) =>
         a.year === "غير محددة"
           ? 1
@@ -262,14 +257,6 @@ export default function TeamEvents() {
                   </tbody>
                 </table>
               </div>
-              {overview.mostActive && overview.leastActive &&
-                overview.mostActive.year !== overview.leastActive.year && (
-                  <p className="mt-3 text-sm leading-7 text-brand-muted">
-                    الأكثر نشاطًا: {overview.mostActive.year} ({overview.mostActive.count.toLocaleString("ar-EG")} فعالية)
-                    {" · "}
-                    الأقل نشاطًا: {overview.leastActive.year} ({overview.leastActive.count.toLocaleString("ar-EG")} فعالية)
-                  </p>
-                )}
             </details>
           </section>
         )}
