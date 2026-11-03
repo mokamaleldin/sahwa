@@ -10,7 +10,7 @@ import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 export default function Login() {
   const [search] = useSearchParams();
   const requestedPath = search.get('next');
-  const destination = requestedPath && ['/team', '/team/events', '/team/volunteers', '/team/files', '/team/forms', '/studio'].includes(requestedPath) ? requestedPath : '/team';
+  const destination = requestedPath && ['/team', '/team/events', '/team/volunteers', '/team/accounts', '/team/files', '/team/forms', '/studio'].includes(requestedPath) ? requestedPath : '/team';
   const navigate = useNavigate();
   const { status, error: sessionError, signIn, refresh } = useSession();
   const [email, setEmail] = useState('');

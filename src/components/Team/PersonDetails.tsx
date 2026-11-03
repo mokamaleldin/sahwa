@@ -26,8 +26,6 @@ export default function PersonDetails({
     ],
     ["الفريق", person.team],
     ["المسؤولية", person.responsibility],
-    ["الصلاحيات", person.accessRole === "admin" ? "مسؤول" : "متطوع عادي"],
-    ["البريد الإلكتروني", person.email],
   ];
   return (
     <TeamDialog title="ملف المتطوع" onClose={onClose}>
@@ -59,7 +57,7 @@ export default function PersonDetails({
       <div className="team-dialog-footer">
         <button className="team-button" onClick={onEdit}>
           <Pencil size={17} />
-          تعديل البيانات والحساب
+          تعديل البيانات الأساسية
         </button>
         <button className="team-button team-button-secondary" onClick={onClose}>
           إغلاق

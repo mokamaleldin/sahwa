@@ -1,35 +1,31 @@
 import { useState, type FormEvent } from "react";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import TeamDialog from "./TeamDialog";
 import {
   EMPTY_PERSON,
   type Volunteer,
   type VolunteerInput,
 } from "../../lib/team";
-import {
-  GENDERS,
-  PERSON_STATUSES,
-  UNIVERSITIES,
-} from "../../../shared/team-options.js";
+import { GENDERS, UNIVERSITIES } from "../../../shared/team-options.js";
 
 export default function PersonForm({
   person,
   onSave,
   onClose,
 }: {
-  person: Volunteer | null;
+  person: Volunteer;
   onSave: (input: VolunteerInput) => Promise<void>;
   onClose: () => void;
 }) {
+  // The API updates a complete record; preserve the existing account settings.
   const [input, setInput] = useState<VolunteerInput>({
     ...EMPTY_PERSON,
     ...person,
-    birthDate: person?.birthDate || "",
+    birthDate: person.birthDate || "",
     password: "",
   });
   const [busy, setBusy] = useState(false),
-    [error, setError] = useState(""),
-    [show, setShow] = useState(false);
+    [error, setError] = useState("");
   const update = (key: keyof VolunteerInput, value: string) =>
     setInput((p) => ({ ...p, [key]: value }));
   async function submit(event: FormEvent) {
@@ -40,16 +36,12 @@ export default function PersonForm({
     try {
       await onSave(input);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "تعذر حفظ الحساب.");
+      setError(reason instanceof Error ? reason.message : "تعذر حفظ البيانات.");
       setBusy(false);
     }
   }
   return (
-    <TeamDialog
-      title={person ? "تعديل ملف المتطوع" : "إضافة متطوع وحساب"}
-      onClose={onClose}
-      busy={busy}
-    >
+    <TeamDialog title="تعديل ملف المتطوع" onClose={onClose} busy={busy}>
       <form onSubmit={submit} aria-busy={busy}>
         <fieldset className="team-form-body" disabled={busy}>
           <div className="team-form-section">
@@ -154,81 +146,6 @@ export default function PersonForm({
               </label>
             </div>
           </div>
-          <div className="team-form-section">
-            <h3>حساب الدخول</h3>
-            <div className="team-form-grid">
-              <label className="team-field">
-                <span>البريد الإلكتروني *</span>
-                <input
-                  type="email"
-                  dir="ltr"
-                  value={input.email}
-                  onChange={(e) => update("email", e.target.value)}
-                  required
-                  maxLength={254}
-                  autoComplete="off"
-                />
-              </label>
-              <div className="team-field">
-                <label htmlFor="person-password">
-                  {person ? "كلمة مرور جديدة" : "كلمة المرور *"}
-                </label>
-                <div className="team-password-field">
-                  <input
-                    id="person-password"
-                    type={show ? "text" : "password"}
-                    dir="ltr"
-                    value={input.password}
-                    onChange={(e) => update("password", e.target.value)}
-                    required={!person}
-                    minLength={10}
-                    maxLength={256}
-                    autoComplete="new-password"
-                  />
-                  <button
-                    type="button"
-                    className="team-icon-button"
-                    aria-label={
-                      show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"
-                    }
-                    onClick={() => setShow((v) => !v)}
-                  >
-                    {show ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-                <small>
-                  {person
-                    ? "اتركها فارغة للاحتفاظ بالحالية."
-                    : "10 أحرف على الأقل. سلّمها لصاحب الحساب مباشرة."}
-                </small>
-              </div>
-              <label className="team-field">
-                <span>الصلاحيات</span>
-                <select
-                  value={input.accessRole}
-                  onChange={(e) => update("accessRole", e.target.value)}
-                >
-                  <option value="volunteer">متطوع عادي</option>
-                  <option value="admin">مسؤول</option>
-                </select>
-              </label>
-              <label className="team-field">
-                <span>الحالة</span>
-                <select
-                  value={input.status}
-                  onChange={(e) => update("status", e.target.value)}
-                >
-                  {PERSON_STATUSES.map((s) => (
-                    <option key={s}>{s}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <p className="team-form-note">
-              المتطوع يصل إلى الملفات والنماذج والاستوديو. المسؤول يدير أيضًا
-              الفعاليات والحسابات. إيقاف الحساب أو جعله غير نشط يمنع دخوله.
-            </p>
-          </div>
           {error && (
             <p role="alert" className="team-error mt-5">
               {error}
@@ -238,11 +155,7 @@ export default function PersonForm({
         <div className="team-dialog-footer">
           <button className="team-button" disabled={busy}>
             {busy && <Loader2 className="animate-spin" size={17} />}{" "}
-            {busy
-              ? "جارٍ الحفظ…"
-              : person
-                ? "حفظ التعديلات"
-                : "إنشاء المتطوع والحساب"}
+            {busy ? "جارٍ الحفظ…" : "حفظ التعديلات"}
           </button>
           <button
             type="button"
