@@ -1,53 +1,68 @@
 # صحوة
 
-The public Sahwa website and Sahwa Studio share this repository and the existing Vercel project.
+موقع صحوة ومساحة الفريق، مبنيان بـ **Next.js App Router** وReact، مع **PostgreSQL على Neon**. ألوان صحوة والخطوط والمكونات البصرية ومحتوى الصفحة الرئيسية محفوظة.
 
-- `/`: public homepage.
-- `/universities`: university pages.
-- `/social`: university groups, social links, and contact information.
-- `/library`: public image catalogue and the physical library's location.
-- `/login`: shared team login.
-- `/studio`: authenticated poster editor with the three existing templates.
+## مساحة الفريق
 
-The old contact page and its components have been removed. Existing `/contact` links redirect to `/social`.
+- `/team`: الأدوات المتاحة لحسابك.
+- `/team/events`: سجل الفعاليات للمسؤولين. خمسة حقول: الاسم، التاريخ، المسؤول، الحضور اختياري، والملاحظات اختيارية.
+- `/team/volunteers`: بيانات المتطوعين وحساباتهم للمسؤولين. الاسم والجامعة، والتخصص والسنة الدراسية والميلاد والفريق والمسؤولية عند توفرها. لا يُطلب تاريخ الانضمام أو المهارات أو سجل المشاركة.
+- `/team/files` و`/team/forms`: الروابط الحالية للملفات والنماذج.
+- `/studio`: الاستوديو الحالي وقوالبه ومحرره، مع الحفاظ على مسودة المحرر أثناء التنقل.
 
-## Development and validation
+| الصلاحية | الوصول |
+| --- | --- |
+| متطوع عادي | الملفات، النماذج، استوديو صحوة |
+| مسؤول | كل ما سبق، سجل الفعاليات، بيانات المتطوعين وإنشاء الحسابات وتعديلها |
+
+حساب المتطوع مستقل ببريده وكلمة مروره. الجامعة جزء من ملفه؛ المسؤولون يشاهدون جميع الجامعات حسب النطاق الحالي المطلوب. الحساب غير النشط أو المتوقف مؤقتًا لا يستطيع الدخول. حساب الخريج يظل متاحًا بصلاحيته المحددة.
+
+## التشغيل
 
 ```sh
 npm ci
+# Configure .env.local using .env.example, with development-only secrets.
+npm run db:migrate
 npm run dev
-npm run build
-npm run test:auth
-npm run test:library
 ```
 
-Vite serves the public React pages locally. `/api/auth` and `/studio` require the Vercel Node.js function runtime; plain Vite does not serve API functions.
+متغيرات الخادم:
 
-## Shared login
+- `DATABASE_URL`: اتصال Neon المجمّع لتشغيل التطبيق.
+- `DATABASE_URL_UNPOOLED`: الاتصال المباشر للترحيلات.
+- `SAHWA_SESSION_SECRET`: قيمة عشوائية بطول 32 حرفًا على الأقل.
+- `SAHWA_ACCOUNT_EMAIL` و`SAHWA_PASSWORD_HASH`: بيانات حساب الإدارة القديم لإنشاء أول مسؤول فقط.
 
-Set these server-only environment variables in the existing Vercel project before deployment:
+لا تضع القيم في Git أو متغيرات `NEXT_PUBLIC_`. في ملفات `.env.local` الخاصة بـNext.js اهرب كل علامة `$` في تجزئة كلمة المرور إلى `\$` لمنع تمدد متغيرات dotenv. في إعدادات Vercel تحفظ التجزئة الأصلية دون إضافة الشرطات.
 
-- `SAHWA_ACCOUNT_EMAIL`: the shared team email address.
-- `SAHWA_PASSWORD_HASH`: `scrypt$16384$<32-character salt hex>$<64-character derived key hex>` using Node's `scrypt`, a 32-byte key, `N=16384`, `r=8`, and `p=1`.
-- `SAHWA_SESSION_SECRET`: a random secret of at least 32 characters.
+## إعداد قاعدة البيانات والنشر
 
-Never prefix these with `VITE_` or commit their values. No database or Google sign-in is used. The email is a login identifier and does not provide access to the email account.
+مشروع Neon: `delicate-poetry-14573010`، وقاعدة البيانات `neondb`. ترحيل SQL محفوظ في `db/migrations/001-team.sql`. ينشئ جداول منفصلة باسم `sahwa_`، ويمكن إعادة تشغيله. لا ينفذ البناء ترحيلات تلقائيًا.
 
-The HTTP-only, Secure, SameSite cookie remembers login for 30 days by default. Unchecking “remember me” creates a browser-session cookie whose token expires after 24 hours. Logout clears the cookie on the current device. Changing the password hash or signing secret invalidates previously issued sessions. A shared account does not identify individual users or support individual access revocation. There is no custom persistent login rate limiter; the project uses the platform's default traffic protection.
+1. اختبر الترحيل على فرع Neon منفصل، واتصل به في Preview فقط.
+2. بعد نجاح الاختبارات، نفّذ نفس الترحيل على production بالاتصال المباشر.
+3. أضف اتصال production إلى `DATABASE_URL` في Vercel ضمن Production فقط، ثم انشر Next.js.
+4. ادخل ببيانات حساب الإدارة الحالي. إذا كانت قائمة المستخدمين فارغة، ينشئ تسجيل الدخول الصحيح أول حساب مسؤول. لا يعيد هذا المسار إنشاء الحساب بعد وجود أعضاء؛ بعدها الإدارة من قسم المتطوعين.
+5. أضف المتطوع ببياناته الأساسية وبريده وكلمة مرور من 10 أحرف على الأقل. سلّم بيانات الدخول لصاحب الحساب مباشرة.
 
-## Studio
+حساب Vercel الحالي ومشروع `sahwa` مستمران. قواعد إعادة كتابة Vite القديمة أزيلت لأن Next.js يدير الصفحات وواجهات API الآن. لا توجد صفحة تسجيل حساب عامة.
 
-`studio/index.html` is served by `api/studio.js` only after session verification. Its assets are in `public/studio-assets/` and load only when the editor opens. They include the existing embedded fonts, original template elements, editor, portrait tools, and PNG exporter. Template assets are public and contain no account secrets; access control applies to the editor page.
+## حماية الحسابات
 
-The existing local draft keys and rendering code are preserved. Drafts from the separate Studio hostname stay in that browser origin and are not automatically copied to the main site's origin. PNG export defaults to 3240 × 3900 pixels.
+كلمات المرور مجزأة بـscrypt مع salt عشوائي. رموز الجلسات عشوائية وتخزن في قاعدة البيانات كـHMAC فقط؛ cookie من نوع HttpOnly وSecure وSameSite على النشر، ولمدة 30 يومًا مع «تذكرني»، أو 24 ساعة دونها. الخروج يلغي الجلسة في الخادم. تغيير كلمة المرور يلغي كل جلسات الحساب. كل طلب محمي يتحقق من الدور والحالة الحاليين من قاعدة البيانات؛ إخفاء الروابط وحده ليس آلية الصلاحيات.
 
-## Library
+تعديل بيانات المسؤول لنفسه لا يسمح بإيقافه أو سحب صلاحياته. حماية إضافية تمنع تعطيل آخر مسؤول حتى في التعديلات المتزامنة. عمليات التعديل تتحقق من Origin ومن رقم مراجعة السجل. عداد محاولات الدخول مشترك في قاعدة البيانات: 10 محاولات للبريد و50 لعنوان الاتصال خلال 15 دقيقة، دون كشف وجود البريد.
 
-The library is a public page within the main site. Each book card displays its supplied template
-image; title, author, and category metadata power Arabic search, accessible labels, category filters,
-and pagination. A book's presence means it belongs to the physical collection; there is no lending
-status or reservation system. Register real artwork in `public/library/books.json` following
-`public/library/books/README.md`. The manifest starts empty until actual book images are supplied.
-The page includes the supplied opening artwork, address/map preview, and Google Maps directions.
+## التحقق
 
-Google Drive and volunteer registration are outside this change.
+```sh
+npm run typecheck
+npm test
+npm run build
+```
+
+اختبارات الحسابات والسجل تستخدم محرك PostgreSQL مدمجًا عبر PGlite. تشمل صلاحيات API، التحقق من البيانات، تعارض التعديلات، إيقاف الحسابات، إلغاء الجلسات بعد تغيير كلمة المرور، أول مسؤول، وحقول النماذج. اختبارات الاستوديو والمكتبة محفوظة ومحدّثة لـReact 19.
+
+## الصفحات العامة
+
+الرئيسية والجامعات والتواصل كما هي. المكتبة تظل تحت مفتاحها الحالي (`library: false`)؛ لم تُفعّل ضمن هذا التغيير. مواد الاستوديو العامة لا تحتوي بيانات المتطوعين. صلاحيات Google Drive وGoogle Forms مستقلة عن حسابات الموقع.

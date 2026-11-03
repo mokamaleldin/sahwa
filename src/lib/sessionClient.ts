@@ -1,6 +1,7 @@
 export type SessionStatus = 'loading' | 'authenticated' | 'anonymous' | 'error';
-export interface SessionSnapshot { status: SessionStatus; error: string }
-const INITIAL: SessionSnapshot = { status: 'loading', error: '' };
+export interface SessionUser { id: string; fullName: string; email: string; accessRole: 'admin' | 'volunteer'; university: string }
+export interface SessionSnapshot { status: SessionStatus; error: string; user: SessionUser | null }
+const INITIAL: SessionSnapshot = { status: 'loading', error: '', user: null };
 const RECHECK_MS = 30_000;
 
 export function createSessionClient(request: typeof fetch = (...args) => fetch(...args), notifyChange = () => {}) {
@@ -10,7 +11,7 @@ export function createSessionClient(request: typeof fetch = (...args) => fetch(.
   let pending: { version: number; promise: Promise<void> } | null = null;
   const listeners = new Set<() => void>();
   function publish(next: SessionSnapshot) {
-    if (snapshot.status === next.status && snapshot.error === next.error) return;
+    if (snapshot.status === next.status && snapshot.error === next.error && JSON.stringify(snapshot.user) === JSON.stringify(next.user)) return;
     snapshot = next;
     listeners.forEach(listener => listener());
   }
@@ -24,12 +25,13 @@ export function createSessionClient(request: typeof fetch = (...args) => fetch(.
   async function responseData(response: Response) {
     const data = await response.json().catch(() => null);
     if (!response.ok || typeof data?.authenticated !== 'boolean') throw new Error(data?.error || 'تعذر التحقق من الدخول. حاول مجددًا.');
-    return data as { authenticated: boolean };
+    if (data.authenticated && (!data.user || !['admin', 'volunteer'].includes(data.user.accessRole))) throw new Error('تعذر التحقق من بيانات الحساب.');
+    return data as { authenticated: boolean; user: SessionUser | null };
   }
   function anonymous() {
     version++;
     lastChecked = Date.now();
-    publish({ status: 'anonymous', error: '' });
+    publish({ status: 'anonymous', error: '', user: null });
   }
   function refresh({ force = false } = {}): Promise<void> {
     if (pending?.version === version) return pending.promise;
@@ -40,13 +42,13 @@ export function createSessionClient(request: typeof fetch = (...args) => fetch(.
         const data = await responseData(await authRequest());
         if (version === requestVersion) {
           lastChecked = Date.now();
-          publish({ status: data.authenticated ? 'authenticated' : 'anonymous', error: '' });
+          publish({ status: data.authenticated ? 'authenticated' : 'anonymous', error: '', user: data.user });
         }
       } catch (error) {
         if (version === requestVersion) {
           lastChecked = Date.now();
           // A connection failure must not sign somebody out or destroy their draft.
-          publish({ status: snapshot.status === 'loading' ? 'error' : snapshot.status, error: error instanceof Error ? error.message : 'تعذر الاتصال. حاول مجددًا.' });
+          publish({ status: snapshot.status === 'loading' ? 'error' : snapshot.status, error: error instanceof Error ? error.message : 'تعذر الاتصال. حاول مجددًا.', user: snapshot.user });
         }
       }
     })();
@@ -63,7 +65,7 @@ export function createSessionClient(request: typeof fetch = (...args) => fetch(.
     if (!data.authenticated) throw new Error('تعذر تسجيل الدخول. حاول مجددًا.');
     if (version !== requestVersion) return;
     lastChecked = Date.now();
-    publish({ status: 'authenticated', error: '' });
+    publish({ status: 'authenticated', error: '', user: data.user });
     notifyChange();
   }
   async function signOut() {

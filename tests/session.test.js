@@ -9,7 +9,7 @@ const target = path.resolve('tmp/session-tests/sessionClient.js');
 fs.mkdirSync(path.dirname(target), { recursive: true });
 fs.writeFileSync(target, ts.transpileModule(fs.readFileSync('src/lib/sessionClient.ts', 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.ESNext } }).outputText);
 const { createSessionClient } = await import(pathToFileURL(target).href);
-const data = authenticated => Response.json({ authenticated });
+const data = authenticated => Response.json({ authenticated, user: authenticated ? {id:'fixture', fullName:'أحمد', email:'fixture@example.invalid', university:'استنيا', accessRole:'volunteer'} : null });
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
 
 test('all consumers share one initial request and route changes reuse the confirmed session', async () => {
@@ -49,7 +49,7 @@ test('a delayed pre-login check cannot undo a successful login', async () => {
   await client.signIn({ email: 'fixture@example.com', password: 'fixture-only', remember: true });
   waiting.resolve(data(false)); await old;
   assert.equal(client.getSnapshot().status, 'authenticated'); assert.equal(notified, 1);
-  assert.deepEqual(Object.keys(client.getSnapshot()).sort(), ['error', 'status']);
+  assert.deepEqual(Object.keys(client.getSnapshot()).sort(), ['error', 'status', 'user']);
 });
 
 test('a delayed pre-logout check cannot sign somebody back in', async () => {
@@ -70,4 +70,9 @@ test('failed logout keeps the established session and remains retryable', async 
   await client.refresh(); await assert.rejects(client.signOut(), /تعذر الخروج/);
   assert.equal(client.getSnapshot().status, 'authenticated');
   fail = false; await client.signOut(); assert.equal(client.getSnapshot().status, 'anonymous');
+});
+
+test('role changes refresh the visible permissions and logout clears identity', async () => {
+ let role='admin'; const client=createSessionClient(async()=>Response.json({authenticated:true,user:{id:'fixture',fullName:'أحمد',email:'fixture@example.invalid',university:'استنيا',accessRole:role}}));
+ await client.refresh(); assert.equal(client.getSnapshot().user.accessRole,'admin'); role='volunteer'; await client.refresh({force:true}); assert.equal(client.getSnapshot().user.accessRole,'volunteer'); client.anonymous(); assert.equal(client.getSnapshot().user,null);
 });

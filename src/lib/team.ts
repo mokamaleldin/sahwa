@@ -1,68 +1,69 @@
 export interface VolunteerInput {
   fullName: string;
-  gender: string;
   university: string;
   major: string;
   studyYear: string;
-  studyStatus: string;
-  workArea: string;
-  workScope: string;
-  role: string;
-  joinedAt: string;
-  phone: string;
-  skills: string;
+  birthDate: string;
+  gender: string;
+  team: string;
+  responsibility: string;
   status: string;
+  email: string;
+  password: string;
+  accessRole: "admin" | "volunteer";
 }
-
-export interface Volunteer extends VolunteerInput {
+export interface Volunteer extends Omit<VolunteerInput, "password"> {
   id: string;
   revision: number;
-  photoId: string | null;
-  createdAt: string;
-  updatedAt: string;
 }
-
-export type VolunteerFilters = Pick<VolunteerInput, 'university' | 'workArea' | 'role' | 'studyStatus' | 'status' | 'gender'> & { query: string };
-export const EMPTY_FILTERS: VolunteerFilters = { query: '', university: '', workArea: '', role: '', studyStatus: '', status: '', gender: '' };
 export const EMPTY_PERSON: VolunteerInput = {
-  fullName: '', gender: '', university: '', major: '', studyYear: '', studyStatus: 'طالب',
-  workArea: 'متطوع عام', workScope: 'عام / مركزي', role: 'عضو', joinedAt: '', phone: '', skills: '', status: 'متطوع حاليًا',
+  fullName: "",
+  university: "",
+  major: "",
+  studyYear: "",
+  birthDate: "",
+  gender: "",
+  team: "",
+  responsibility: "",
+  status: "نشط",
+  email: "",
+  password: "",
+  accessRole: "volunteer",
 };
-
-export async function teamRequest<T>(options: RequestInit = {}): Promise<T> {
-  const response = await fetch('/api/team', { ...options, cache: 'no-store', credentials: 'same-origin' });
+export interface SahwaEventInput {
+  title: string;
+  eventDate: string;
+  responsible: string;
+  attendance: number | null;
+  notes: string;
+}
+export interface SahwaEvent extends SahwaEventInput {
+  id: string;
+  revision: number;
+}
+export async function teamRequest<T>(
+  options: RequestInit = {},
+  path = "/api/team",
+): Promise<T> {
+  const response = await fetch(path, {
+    ...options,
+    cache: "no-store",
+    credentials: "same-origin",
+  });
   if (response.status === 401) {
-    window.dispatchEvent(new Event('sahwa:unauthorized'));
-    throw new Error('انتهت الجلسة. سجّل الدخول مجددًا.');
+    window.dispatchEvent(new Event("sahwa:unauthorized"));
+    throw new Error("انتهت الجلسة. سجّل الدخول مجددًا.");
   }
-  let result;
-  try { result = await response.json(); } catch { throw new Error('تعذر الاتصال ببيانات الفريق. حاول مجددًا.'); }
-  if (!response.ok) throw new Error(result.error || 'تعذر حفظ التعديل. حاول مجددًا.');
+  const result = await response.json().catch(() => null);
+  if (!response.ok)
+    throw new Error(result?.error || "تعذر حفظ التعديل. حاول مجددًا.");
+  if (!result) throw new Error("تعذر قراءة البيانات. حاول مجددًا.");
   return result as T;
 }
-
-export function photoUrl(photoId: string) {
-  return `/api/team?photo=${encodeURIComponent(photoId)}`;
-}
-
-export async function preparePhoto(file: File): Promise<string> {
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('اختر صورة JPG أو PNG أو WebP.');
-  if (file.size > 10 * 1024 * 1024) throw new Error('اختر صورة أصغر من 10 ميجابايت.');
-  const url = URL.createObjectURL(file);
-  try {
-    const image = new Image();
-    image.src = url;
-    await image.decode();
-    if (!image.naturalWidth || image.naturalWidth * image.naturalHeight > 40_000_000) throw new Error('الصورة كبيرة جدًا. اختر نسخة أصغر.');
-    const scale = Math.min(1, 400 / Math.max(image.naturalWidth, image.naturalHeight));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-    const context = canvas.getContext('2d');
-    if (!context) throw new Error('تعذرت قراءة الصورة.');
-    context.fillStyle = '#f2e9e2';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg', 0.85);
-  } finally { URL.revokeObjectURL(url); }
-}
+export const displayDate = (value: string) =>
+  new Date(`${value}T12:00:00Z`).toLocaleDateString("ar-EG", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  });

@@ -1,138 +1,74 @@
-import { test, before, after } from 'node:test';
-import assert from 'node:assert/strict';
-import { scryptSync } from 'node:crypto';
-import { GET as authStatus, POST as login, DELETE as logout } from '../api/auth.js';
-import { GET as studio } from '../api/studio.js';
-import { COOKIE_NAME, createSession, hasSession, settings } from '../server/auth.js';
-
-const email = 'team@example.com';
-const password = 'fixture-only-password';
-const salt = '0123456789abcdef0123456789abcdef';
-const envKeys = ['SAHWA_ACCOUNT_EMAIL', 'SAHWA_PASSWORD_HASH', 'SAHWA_SESSION_SECRET'];
-const previous = Object.fromEntries(envKeys.map(key => [key, process.env[key]]));
-
-before(() => {
-  process.env.SAHWA_ACCOUNT_EMAIL = email;
-  process.env.SAHWA_PASSWORD_HASH = `scrypt$16384$${salt}$${scryptSync(password, salt, 32).toString('hex')}`;
-  process.env.SAHWA_SESSION_SECRET = 'fixture-only-signing-secret-32-characters-minimum';
+import test from "node:test";
+import assert from "node:assert/strict";
+import {
+  hashPassword,
+  verifyPassword,
+  sessionCookie,
+  expiredCookie,
+  readSessionToken,
+  sameOrigin,
+  requireUser,
+  tokenHash,
+} from "../server/auth.js";
+const request = (url = "https://sahwa.world/", headers = {}) =>
+  new Request(url, { headers });
+test("passwords are salted and verified without storing plaintext", async () => {
+  const hash = await hashPassword("fixture-password-only");
+  assert.ok(await verifyPassword("fixture-password-only", hash));
+  assert.equal(await verifyPassword("wrong", hash), false);
+  assert.notEqual(hash, await hashPassword("fixture-password-only"));
+  assert.ok(!hash.includes("fixture-password-only"));
 });
-
-after(() => {
-  for (const key of envKeys) {
-    if (previous[key] === undefined) delete process.env[key];
-    else process.env[key] = previous[key];
-  }
+test("production cookies are host scoped, HttpOnly, Secure and SameSite", () => {
+  const token = "a".repeat(43),
+    req = request();
+  const cookie = sessionCookie(token, 3600, true, req);
+  assert.match(cookie, /^__Host-sahwa_session=/);
+  assert.match(cookie, /HttpOnly; Secure; SameSite=Lax; Max-Age=3600/);
+  assert.ok(!cookie.includes("Domain="));
+  assert.equal(readSessionToken(request(undefined, { cookie })), token);
+  assert.match(expiredCookie(req), /Max-Age=0/);
+  assert.ok(!sessionCookie(token, 3600, false, req).includes("Max-Age"));
 });
-
-function request(path = '/api/auth', options = {}) {
-  return new Request(`https://sahwa.world${path}`, options);
-}
-
-function credentials(input = { email, password }, origin = 'https://sahwa.world') {
-  return request('/api/auth', {
-    method: 'POST', headers: { 'Content-Type': 'application/json', Origin: origin }, body: JSON.stringify(input),
-  });
-}
-
-function cookieRequest(token, path = '/api/auth') {
-  return request(path, { headers: { Cookie: `${COOKIE_NAME}=${token}` } });
-}
-
-test('the editor HTML endpoint requires a session and is never publicly cached', async () => {
-  const result = await studio(request('/api/studio'));
-  assert.equal(result.status, 303);
-  assert.equal(result.headers.get('location'), '/login');
-  assert.match(result.headers.get('cache-control'), /no-store/);
+test("local development cookies work over localhost; remote cookies remain secure", () => {
+  assert.match(
+    sessionCookie("a".repeat(43), 1, true, request("http://localhost:3000/")),
+    /^sahwa_session=/,
+  );
+  assert.match(
+    sessionCookie("a".repeat(43), 1, true, request("http://example.com/")),
+    /Secure/,
+  );
 });
-
-test('invalid credentials receive the same generic error and no cookie', async () => {
-  const wrongPassword = await login(credentials({ email, password: 'wrong' }));
-  const wrongEmail = await login(credentials({ email: 'someone@example.com', password }));
-  assert.equal(wrongPassword.status, 401);
-  assert.equal(wrongEmail.status, 401);
-  assert.deepEqual(await wrongPassword.json(), await wrongEmail.json());
-  assert.equal(wrongPassword.headers.get('set-cookie'), null);
+test("sessions and administrator access fail closed for invalid or inactive users", async () => {
+  process.env.SAHWA_SESSION_SECRET = "test-only-secret-at-least-32-characters";
+  const token = "a".repeat(43),
+    req = request(undefined, { cookie: `__Host-sahwa_session=${token}` });
+  assert.notEqual(tokenHash(token), token);
+  await assert.rejects(requireUser(request(), {}), (e) => e.status === 401);
+  await assert.rejects(
+    requireUser(req, {
+      sessionUser: async () => ({
+        status: "متوقف مؤقتًا",
+        accessRole: "admin",
+      }),
+    }),
+    (e) => e.status === 401,
+  );
+  await assert.rejects(
+    requireUser(
+      req,
+      { sessionUser: async () => ({ status: "نشط", accessRole: "volunteer" }) },
+      true,
+    ),
+    (e) => e.status === 403,
+  );
 });
-
-test('valid login issues a protected cookie remembered for 30 days', async () => {
-  const result = await login(credentials({ email: email.toUpperCase(), password, remember: true }));
-  assert.equal(result.status, 200);
-  const cookie = result.headers.get('set-cookie');
-  assert.match(cookie, /HttpOnly/);
-  assert.match(cookie, /Secure/);
-  assert.match(cookie, /SameSite=Lax/);
-  assert.match(cookie, /Max-Age=2592000/);
-  const token = cookie.split(';')[0].slice(COOKIE_NAME.length + 1);
-  assert.deepEqual(await authStatus(cookieRequest(token)).json(), { authenticated: true });
-  assert.doesNotMatch(cookie, new RegExp(password));
-});
-
-test('disabling remember-me creates a session cookie', async () => {
-  const result = await login(credentials({ email, password, remember: false }));
-  assert.equal(result.status, 200);
-  assert.doesNotMatch(result.headers.get('set-cookie'), /Max-Age/);
-});
-
-test('signed session opens the complete existing editor with rebased assets', async () => {
-  const { token } = createSession();
-  const result = await studio(cookieRequest(token, '/studio'));
-  assert.equal(result.status, 200);
-  const html = await result.text();
-  assert.match(html, /id="template-options"/);
-  assert.doesNotMatch(html, /id="logout-button"/);
-  assert.match(html, /\/studio-assets\/template-assets\.js/);
-  assert.match(html, /3240 × 3900/);
-  assert.match(result.headers.get('cache-control'), /no-store/);
-  assert.doesNotMatch(html, new RegExp(password));
-});
-
-test('tampered and expired cookies cannot open the editor', async () => {
-  const { token } = createSession();
-  const parts = token.split('.');
-  const tampered = `${parts[0]}.${parts[1][0] === 'a' ? 'b' : 'a'}${parts[1].slice(1)}`;
-  const expired = createSession(false, settings(), Date.now() - 25 * 60 * 60 * 1000).token;
-  for (const invalid of [tampered, expired, token + '.extra', 'bad-cookie']) {
-    assert.equal(hasSession(cookieRequest(invalid)), false);
-    assert.equal((await studio(cookieRequest(invalid, '/studio'))).status, 303);
-  }
-});
-
-test('embedded editor is same-origin, private and session-protected; the shared site owns its navigation', async () => {
-  const anonymous = await studio(request('/api/studio?embed=1'));
-  assert.equal(anonymous.status, 401);
-  assert.match(await anonymous.text(), /sahwa:studio:expired/);
-  assert.equal(anonymous.headers.get('x-frame-options'), 'SAMEORIGIN');
-  assert.match(anonymous.headers.get('content-security-policy'), /frame-ancestors 'self'/);
-  const { token } = createSession();
-  const response = await studio(cookieRequest(token, '/api/studio?embed=1'));
-  assert.equal(response.status, 200);
-  const html = await response.text();
-  assert.match(html, /has-brand-heading is-embedded/);
-  assert.doesNotMatch(html, /logout-button/);
-  assert.match(html, /integration\.js\?v=1\.7\.0/);
-  assert.match(response.headers.get('cache-control'), /no-store/);
-});
-
-test('changing the account password configuration invalidates existing sessions', () => {
-  const config = settings();
-  const { token } = createSession(true, config);
-  assert.equal(hasSession(cookieRequest(token), { ...config, passwordHash: config.passwordHash + 'changed' }), false);
-});
-
-test('cross-site login and logout are rejected', async () => {
-  assert.equal((await login(credentials({ email, password }, 'https://other.example'))).status, 403);
-  assert.equal(logout(request('/api/auth', { method: 'DELETE', headers: { Origin: 'https://other.example' } })).status, 403);
-});
-
-test('logout expires the current browser cookie', async () => {
-  const result = logout(request('/api/auth', { method: 'DELETE', headers: { Origin: 'https://sahwa.world' } }));
-  assert.equal(result.status, 200);
-  assert.match(result.headers.get('set-cookie'), /Max-Age=0/);
-  assert.deepEqual(await result.json(), { authenticated: false });
-});
-
-test('malformed and oversized login requests fail without issuing sessions', async () => {
-  assert.equal((await login(credentials(null))).status, 400);
-  assert.equal((await login(credentials({ email, password: 'x'.repeat(2500) }))).status, 413);
-  assert.equal((await login(request('/api/auth', { method: 'POST', headers: { Origin: 'https://sahwa.world' }, body: 'not-json' }))).status, 415);
+test("mutations require an exact matching origin", () => {
+  assert.ok(sameOrigin(request(undefined, { origin: "https://sahwa.world" })));
+  assert.equal(sameOrigin(request()), false);
+  assert.equal(
+    sameOrigin(request(undefined, { origin: "https://attacker.invalid" })),
+    false,
+  );
 });
