@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { LogOut } from 'lucide-react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { SITE_FEATURES } from '../../config/features';
+import { NavLink, useNavigate } from '../../lib/navigation';
 import { useSession } from '../../auth/useSession';
 
 export default function TeamNavigation() {
-  const { signOut } = useSession();
+  const { signOut, user } = useSession();
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [leaving, setLeaving] = useState(false);
@@ -18,7 +17,7 @@ export default function TeamNavigation() {
     <div className="team-navigation-row">
       <nav className="team-navigation" aria-label="مساحة الفريق">
         <NavLink to="/team" end>مساحة الفريق</NavLink>
-        {SITE_FEATURES.volunteers && <NavLink to="/team/volunteers">المتطوعون</NavLink>}
+        {user?.accessRole === 'admin' && <><NavLink to="/team/events">سجل الفعاليات</NavLink><NavLink to="/team/volunteers">المتطوعون والحسابات</NavLink></>}
         <NavLink to="/team/files">الملفات</NavLink>
         <NavLink to="/team/forms">النماذج المهمة</NavLink>
         <NavLink to="/studio">الاستوديو</NavLink>

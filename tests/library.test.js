@@ -72,7 +72,7 @@ test('image-only UI: search, categories, pagination, enlarged image, retry, and 
     if (failed) throw new Error('Network unavailable');
     return { ok: true, json: async () => data };
   };
-  const React = require('react'), { createRoot } = require('react-dom/client'), { Simulate } = require('react-dom/test-utils');
+  const React = require('react'), { createRoot } = require('react-dom/client');
   const { default: BookCatalogue } = await import(catalogueUrl);
   const container = document.getElementById('root'); let root;
   async function mount() { root = createRoot(container); await React.act(async () => root.render(React.createElement(BookCatalogue))); }
@@ -82,7 +82,7 @@ test('image-only UI: search, categories, pagination, enlarged image, retry, and 
     assert.equal(container.querySelectorAll('.library-book-card').length, 12);
     assert.equal(container.querySelector('.library-book-card').textContent.trim(), '', 'no duplicate title/author below artwork');
     const search = container.querySelector('input[type=search]');
-    await React.act(async () => { search.value = 'رياض الصالحين'; Simulate.change(search); });
+    await React.act(async () => { Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set.call(search, 'رياض الصالحين'); search.dispatchEvent(new dom.window.Event('input', { bubbles: true })); });
     assert.equal(container.querySelectorAll('.library-book-card').length, 1);
     await click(container.querySelector('.library-book-card'));
     const dialog = container.querySelector('dialog');

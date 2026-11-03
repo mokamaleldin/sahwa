@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from '../lib/navigation';
 import { useSession } from './useSession';
 
 export default function RequireSession({ children }: { children: ReactNode }) {
