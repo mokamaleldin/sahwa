@@ -25,6 +25,32 @@ test('a volunteer is an independent record, with no account creation or credenti
  assert.equal((await team(req('team','PUT',{id:saved.id,revision:1,person:person()},cookie))).status,409);
  assert.equal((await(await createAuthHandler(store)(req('auth','GET',undefined,cookie))).json()).authenticated,true,'profile changes do not change shared login');
 });
+test('volunteers can be deleted with an authorized, revision-checked request',async()=>{
+ const cookie=await session(),team=createTeamHandler(store),personRecord=await store.createVolunteer(person({fullName:'عاطف'}));
+ const badVersion=await team(req('team','DELETE',{id:personRecord.id,revision:personRecord.revision+1},cookie));
+ assert.equal(badVersion.status,409);
+ const stillPresent=await store.listVolunteers();
+ assert.equal(stillPresent.length,1);
+ const removed=await team(req('team','DELETE',{id:personRecord.id,revision:personRecord.revision},cookie));
+ assert.equal(removed.status,200);
+ assert.equal((await removed.json()).deleted,true);
+ assert.equal((await store.listVolunteers()).length,0);
+ assert.equal((await team(req('team','DELETE',{id:personRecord.id,revision:personRecord.revision},cookie))).status,409);
+ assert.equal((await team(req('team','DELETE',{id:randomUUID(),revision:1},cookie))).status,409);
+ assert.equal((await team(req('team','DELETE',{id:'bad',revision:1},cookie))).status,400);
+});
+test('deleting a volunteer preserves associated event history',async()=>{
+ const cookie=await session(),team=createTeamHandler(store);
+ const volunteer=await store.createVolunteer(person());
+ const savedEvent=await store.createEvent(event({responsibleId:volunteer.id,attendance:9}));
+ const response=await team(req('team','DELETE',{id:volunteer.id,revision:volunteer.revision},cookie));
+ assert.equal(response.status,200);
+ const events=await store.listEvents();
+ assert.equal(events.length,1);
+ assert.equal(events[0].id,savedEvent.id);
+ assert.equal(events[0].responsibleId,null);
+ assert.equal(events[0].attendance,9);
+});
 test('a title-only event has nullable optional fields and can later link a volunteer',async()=>{
  const cookie=await session(),handler=createEventsHandler(store);
  let response=await handler(req('events','POST',{event:{title:'فعالية فقط'}},cookie));assert.equal(response.status,201);let saved=(await response.json()).event;assert.equal(saved.eventDate,'');assert.equal(saved.responsibleId,null);assert.equal(saved.responsible,'');assert.equal(saved.attendance,null);

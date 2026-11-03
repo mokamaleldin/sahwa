@@ -85,6 +85,16 @@ export default function TeamVolunteers() {
     setFilters((previous) => ({ ...previous, [key]: value }));
     setPage(1);
   };
+  async function remove(person: Volunteer) {
+    await teamRequest<{ deleted: true }>({
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: person.id, revision: person.revision }),
+    });
+    setPeople((previous) => previous.filter((value) => value.id !== person.id));
+    setSelected(null);
+    setNotice(`تم حذف «${person.fullName}» من سجل المتطوعين.`);
+  }
   async function save(person: VolunteerInput) {
     const result = await teamRequest<{ person: Volunteer }>({
       method: editing ? "PUT" : "POST",
@@ -303,6 +313,7 @@ export default function TeamVolunteers() {
             setEditing(selected);
             setSelected(null);
           }}
+          onDelete={() => remove(selected)}
         />
       )}
     </>
