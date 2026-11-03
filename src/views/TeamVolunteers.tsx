@@ -13,6 +13,9 @@ import {
 import {
   filterVolunteers,
   PERSON_STATUSES,
+  GENDERS,
+  STUDY_YEARS,
+  UNIVERSITIES,
 } from "../../shared/team-options.js";
 import PageHeading from "../components/shared/PageIdentity";
 import PersonForm from "../components/Team/PersonForm";
@@ -29,6 +32,8 @@ export default function TeamVolunteers() {
       query: "",
       university: "",
       status: "",
+      gender: "",
+      studyYear: "",
     }),
     [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Volunteer | null>(null),
@@ -67,10 +72,11 @@ export default function TeamVolunteers() {
     [people],
   );
   const universities = useMemo(
-    () =>
-      [...new Set(people.map((person) => person.university))].sort((a, b) =>
-        a.localeCompare(b, "ar"),
-      ),
+    () => [...new Set([...UNIVERSITIES, ...people.map((person) => person.university).filter(Boolean)])],
+    [people],
+  );
+  const studyYears = useMemo(
+    () => [...new Set([...STUDY_YEARS, ...people.map((person) => person.studyYear).filter(Boolean)])],
     [people],
   );
   const pages = Math.max(1, Math.ceil(results.length / PAGE_SIZE)),
@@ -98,7 +104,7 @@ export default function TeamVolunteers() {
     setEditing(undefined);
     setNotice(editing ? "تم حفظ البيانات." : "تمت إضافة المتطوع إلى سجل صحوة.");
     if (!editing) {
-      setFilters({ query: "", university: "", status: "" });
+      setFilters({ query: "", university: "", status: "", gender: "", studyYear: "" });
       setPage(1);
     }
   }
@@ -156,7 +162,7 @@ export default function TeamVolunteers() {
             </button>
           </p>
         )}
-        <div className="team-filter-panel team-simple-filters">
+        <div className="team-filter-panel team-simple-filters team-volunteer-filters">
           <label className="team-search">
             <span className="sr-only">البحث في المتطوعين</span>
             <Search size={20} aria-hidden="true" />
@@ -164,7 +170,7 @@ export default function TeamVolunteers() {
               type="search"
               value={filters.query}
               onChange={(event) => update("query", event.target.value)}
-              placeholder="ابحث بالاسم أو الجامعة أو التخصص…"
+              placeholder="ابحث بالاسم…"
               maxLength={120}
             />
           </label>
@@ -189,6 +195,30 @@ export default function TeamVolunteers() {
               <option value="">كل الحالات</option>
               {statuses.map((status) => (
                 <option key={status}>{status}</option>
+              ))}
+            </select>
+          </label>
+          <label className="team-field">
+            <span>النوع</span>
+            <select
+              value={filters.gender}
+              onChange={(event) => update("gender", event.target.value)}
+            >
+              <option value="">الكل</option>
+              {GENDERS.map((gender) => (
+                <option key={gender} value={gender}>{gender}</option>
+              ))}
+            </select>
+          </label>
+          <label className="team-field">
+            <span>السنة الدراسية</span>
+            <select
+              value={filters.studyYear}
+              onChange={(event) => update("studyYear", event.target.value)}
+            >
+              <option value="">كل السنوات</option>
+              {studyYears.map((year) => (
+                <option key={year} value={year}>{year}</option>
               ))}
             </select>
           </label>
