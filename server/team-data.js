@@ -1,3 +1,5 @@
+import { todayInIstanbul } from "../shared/team-options.js";
+
 export class TeamError extends Error {
   constructor(message, status = 400, code = "INVALID_INPUT") {
     super(message);
@@ -29,47 +31,44 @@ export function date(value, label, required = false) {
     throw new TeamError(`أدخل ${label} صحيحًا.`);
   return value;
 }
-export function validatePerson(input, creating = true) {
+export function validatePerson(input) {
   if (!input || typeof input !== "object" || Array.isArray(input))
     throw new TeamError("بيانات المتطوع غير صالحة.");
   const person = {
     fullName: text(input, "fullName", "اسم المتطوع", 120, true),
-    email: text(input, "email", "البريد الإلكتروني", 254, true).toLowerCase(),
     university: text(input, "university", "الجامعة", 120, true),
-    major: text(input, "major", "التخصص", 120),
-    studyYear: text(input, "studyYear", "السنة الدراسية", 60),
+    gender: text(input, "gender", "شاب أو بنت", 20, true),
+    status: text(input, "status", "الحالة الحالية", 30, true),
     birthDate: date(
       text(input, "birthDate", "تاريخ الميلاد", 10),
       "تاريخ ميلاد",
     ),
-    gender: text(input, "gender", "شباب / طالبات", 20),
-    team: text(input, "team", "الفريق", 80),
+    team: text(input, "team", "مجال التطوع", 80),
     responsibility: text(input, "responsibility", "المسؤولية", 120),
-    status: text(input, "status", "الحالة", 30, true),
-    accessRole: text(input, "accessRole", "الصلاحيات", 20, true),
+    phone: text(input, "phone", "رقم الهاتف", 30).replace(/[٠-٩]/g, (digit) =>
+      String(digit.charCodeAt(0) - 1632),
+    ),
+    major: text(input, "major", "التخصص", 120),
+    studyYear: text(input, "studyYear", "السنة الدراسية", 60),
   };
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(person.email))
-    throw new TeamError("أدخل بريدًا إلكترونيًا صحيحًا.");
   if (
-    !["", "شاب", "طالبة"].includes(person.gender) ||
-    !["نشط", "غير نشط", "خريج", "متوقف مؤقتًا"].includes(person.status) ||
-    !["admin", "volunteer"].includes(person.accessRole)
+    !["شاب", "بنت"].includes(person.gender) ||
+    !["نشط", "غير نشط", "خريج", "متوقف مؤقتًا"].includes(person.status)
   )
     throw new TeamError("اختر قيمة صحيحة من القوائم.");
   if (
     person.birthDate &&
-    (person.birthDate > new Date().toISOString().slice(0, 10) ||
-      person.birthDate < "1900-01-01")
+    (person.birthDate > todayInIstanbul() || person.birthDate < "1900-01-01")
   )
     throw new TeamError("راجع تاريخ الميلاد.");
-  const password = input.password ?? "";
   if (
-    typeof password !== "string" ||
-    password.length > 256 ||
-    ((creating || password) && password.length < 10)
+    person.phone &&
+    (!/^[+\d\s()\-]+$/.test(person.phone) ||
+      person.phone.replace(/\D/g, "").length < 7 ||
+      person.phone.replace(/\D/g, "").length > 16)
   )
-    throw new TeamError("كلمة المرور يجب أن تكون من 10 إلى 256 حرفًا.");
-  return { ...person, password };
+    throw new TeamError("أدخل رقم هاتف صحيحًا، ويمكن إضافة رمز الدولة.");
+  return person;
 }
 export function validateEvent(input) {
   if (!input || typeof input !== "object" || Array.isArray(input))
@@ -89,6 +88,17 @@ export function validateEvent(input) {
     throw new TeamError(
       "عدد الحضور يجب أن يكون عددًا صحيحًا من صفر إلى مليون، أو اتركه فارغًا.",
     );
+  const responsibleId =
+    input.responsibleId === "" ||
+    input.responsibleId === undefined ||
+    input.responsibleId === null
+      ? null
+      : input.responsibleId;
+  if (
+    responsibleId !== null &&
+    (typeof responsibleId !== "string" || !UUID.test(responsibleId))
+  )
+    throw new TeamError("اختر المسؤول من قائمة المتطوعين.");
   const notes = input.notes ?? "";
   if (
     typeof notes !== "string" ||
@@ -99,13 +109,14 @@ export function validateEvent(input) {
   return {
     title: text(input, "title", "اسم الفعالية", 160, true),
     eventDate: date(
-      text(input, "eventDate", "تاريخ الفعالية", 10, true),
+      text(input, "eventDate", "تاريخ الفعالية", 10),
       "تاريخ فعالية",
-      true,
     ),
-    responsible: text(input, "responsible", "المسؤول عن الفعالية", 120, true),
+    responsibleId,
     attendance,
     notes: notes.trim(),
+    preserveLegacyResponsible:
+      input.preserveLegacyResponsible === true && responsibleId === null,
   };
 }
 export function recordVersion(input) {

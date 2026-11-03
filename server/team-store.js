@@ -1,11 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { getSql } from "./db.js";
 import { TeamError } from "./team-data.js";
-
-const USER_FIELDS = `id, full_name AS "fullName", email, access_role AS "accessRole", university, major,
-  study_year AS "studyYear", birth_date::text AS "birthDate", gender, team, responsibility, status, revision,
-  created_at AS "createdAt", updated_at AS "updatedAt"`;
-const EVENT_FIELDS = `id, title, event_date::text AS "eventDate", responsible, attendance, notes, revision`;
+const VOLUNTEER_FIELDS = `id, full_name AS "fullName", university, major, study_year AS "studyYear", COALESCE(birth_date::text,'') AS "birthDate", gender, team, responsibility, phone, status, revision`;
+const EVENT_FIELDS = `e.id, e.title, COALESCE(e.event_date::text,'') AS "eventDate", e.responsible_id AS "responsibleId", COALESCE(v.full_name,e.responsible,'') AS responsible, e.attendance, e.notes, e.revision`;
 const conflict = () =>
   new TeamError(
     "تم تعديل السجل من جهاز آخر، أو لم يعد موجودًا. حدّث القائمة وافتحه من جديد.",
@@ -14,102 +11,78 @@ const conflict = () =>
   );
 const values = (p) => [
   p.fullName,
-  p.email,
-  p.accessRole,
   p.university,
-  p.major,
-  p.studyYear,
   p.birthDate || null,
   p.gender,
+  p.status,
   p.team,
   p.responsibility,
-  p.status,
+  p.phone,
+  p.major,
+  p.studyYear,
 ];
-
 export function createTeamStore(getClient = getSql) {
   const query = (statement, params = []) =>
     getClient().query(statement, params);
+  async function eventById(id) {
+    return (
+      await query(
+        `SELECT ${EVENT_FIELDS} FROM sahwa_events e LEFT JOIN sahwa_volunteers v ON v.id=e.responsible_id WHERE e.id=$1`,
+        [id],
+      )
+    )[0];
+  }
   return {
     async listVolunteers() {
       return query(
-        `SELECT ${USER_FIELDS} FROM sahwa_users ORDER BY full_name, id`,
+        `SELECT ${VOLUNTEER_FIELDS} FROM sahwa_volunteers ORDER BY full_name,id`,
       );
     },
-    async credentials(email) {
+    async listResponsibleVolunteers() {
+      return query(
+        `SELECT id, full_name AS "fullName", university, status FROM sahwa_volunteers ORDER BY full_name,id`,
+      );
+    },
+    async createVolunteer(person) {
       return (
-        (
-          await query(
-            `SELECT ${USER_FIELDS}, password_hash AS "passwordHash" FROM sahwa_users WHERE email=$1`,
-            [email],
-          )
-        )[0] ?? null
-      );
+        await query(
+          `INSERT INTO sahwa_volunteers(id,full_name,university,birth_date,gender,status,team,responsibility,phone,major,study_year) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING ${VOLUNTEER_FIELDS}`,
+          [randomUUID(), ...values(person)],
+        )
+      )[0];
     },
-    async bootstrap(email, hash) {
-      // The legacy account becomes the first admin only while the directory is empty.
-      const sql = getClient();
-      await sql.transaction([
-        sql.query("SELECT pg_advisory_xact_lock(752026)"),
-        sql.query(
-          `INSERT INTO sahwa_users (id, full_name, email, password_hash, access_role, university)
-          SELECT $1, 'مسؤول صحوة', $2, $3, 'admin', 'عام / مركزي'
-          WHERE NOT EXISTS (SELECT 1 FROM sahwa_users)`,
-          [randomUUID(), email, hash],
-        ),
-      ]);
-    },
-    async createVolunteer(person, passwordHash) {
+    async updateVolunteer(id, revision, person) {
       const rows = await query(
-        `INSERT INTO sahwa_users
-        (id, full_name, email, access_role, university, major, study_year, birth_date, gender, team, responsibility, status, password_hash)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING ${USER_FIELDS}`,
-        [randomUUID(), ...values(person), passwordHash],
+        `UPDATE sahwa_volunteers SET full_name=$3,university=$4,birth_date=$5,gender=$6,status=$7,team=$8,responsibility=$9,phone=$10,major=$11,study_year=$12,revision=revision+1,updated_at=now() WHERE id=$1 AND revision=$2 RETURNING ${VOLUNTEER_FIELDS}`,
+        [id, revision, ...values(person)],
       );
+      if (!rows.length) throw conflict();
       return rows[0];
     },
-    async updateVolunteer(id, revision, person, passwordHash) {
-      const sql = getClient();
-      const results = await sql.transaction([
-        sql.query("SELECT pg_advisory_xact_lock(752026)"),
-        sql.query(
-          `WITH changed AS (UPDATE sahwa_users SET full_name=$3, email=$4, access_role=$5, university=$6, major=$7,
-          study_year=$8, birth_date=$9, gender=$10, team=$11, responsibility=$12, status=$13,
-          password_hash=COALESCE($14,password_hash), revision=revision+1, updated_at=now()
-          WHERE id=$1 AND revision=$2 AND (
-            access_role <> 'admin' OR status NOT IN ('نشط','خريج') OR ($5='admin' AND $13 IN ('نشط','خريج'))
-            OR (SELECT count(*) FROM sahwa_users WHERE access_role='admin' AND status IN ('نشط','خريج'))>1
-          ) RETURNING *), cleared AS (
-            DELETE FROM sahwa_sessions WHERE user_id IN (SELECT id FROM changed) AND $14::text IS NOT NULL
-          ) SELECT ${USER_FIELDS} FROM changed`,
-          [id, revision, ...values(person), passwordHash || null],
-        ),
-      ]);
-      if (!results[1].length) throw conflict();
-      return results[1][0];
-    },
-    async saveSession(hash, userId, expires) {
+    async saveSession(hash, version, expires) {
       const sql = getClient();
       await sql.transaction([
-        sql.query("DELETE FROM sahwa_sessions WHERE expires_at <= now()"),
+        sql.query("DELETE FROM sahwa_shared_sessions WHERE expires_at<=now()"),
         sql.query(
-          "INSERT INTO sahwa_sessions(token_hash,user_id,expires_at) VALUES ($1,$2,$3)",
-          [hash, userId, expires],
+          "INSERT INTO sahwa_shared_sessions(token_hash,account_version,expires_at) VALUES ($1,$2,$3)",
+          [hash, version, expires],
         ),
       ]);
     },
-    async sessionUser(hash) {
+    async hasSharedSession(hash, version) {
       return (
         (
           await query(
-            `SELECT ${USER_FIELDS} FROM sahwa_users WHERE id=(
-        SELECT user_id FROM sahwa_sessions WHERE token_hash=$1 AND expires_at>now())`,
-            [hash],
+            "SELECT 1 FROM sahwa_shared_sessions WHERE token_hash=$1 AND account_version=$2 AND expires_at>now()",
+            [hash, version],
           )
-        )[0] ?? null
+        ).length > 0
       );
     },
     async deleteSession(hash) {
-      await query("DELETE FROM sahwa_sessions WHERE token_hash=$1", [hash]);
+      await query("DELETE FROM sahwa_shared_sessions WHERE token_hash=$1", [
+        hash,
+      ]);
     },
     async consumeLoginLimit(keys) {
       const sql = getClient();
@@ -129,42 +102,40 @@ export function createTeamStore(getClient = getSql) {
     },
     async listEvents() {
       return query(
-        `SELECT ${EVENT_FIELDS} FROM sahwa_events ORDER BY event_date DESC, created_at DESC`,
+        `SELECT ${EVENT_FIELDS} FROM sahwa_events e LEFT JOIN sahwa_volunteers v ON v.id=e.responsible_id ORDER BY e.event_date DESC NULLS LAST,e.created_at DESC`,
       );
     },
-    async createEvent(event, userId) {
-      return (
-        await query(
-          `INSERT INTO sahwa_events(id,title,event_date,responsible,attendance,notes,created_by)
-        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING ${EVENT_FIELDS}`,
-          [
-            randomUUID(),
-            event.title,
-            event.eventDate,
-            event.responsible,
-            event.attendance,
-            event.notes,
-            userId,
-          ],
-        )
-      )[0];
-    },
-    async updateEvent(id, revision, event) {
-      const rows = await query(
-        `UPDATE sahwa_events SET title=$3,event_date=$4,responsible=$5,attendance=$6,notes=$7,
-        revision=revision+1,updated_at=now() WHERE id=$1 AND revision=$2 RETURNING ${EVENT_FIELDS}`,
+    async createEvent(event) {
+      const id = randomUUID();
+      await query(
+        `INSERT INTO sahwa_events(id,title,event_date,responsible_id,responsible,attendance,notes) VALUES ($1,$2,$3,$4,'',$5,$6)`,
         [
           id,
-          revision,
           event.title,
-          event.eventDate,
-          event.responsible,
+          event.eventDate || null,
+          event.responsibleId,
           event.attendance,
           event.notes,
         ],
       );
+      return eventById(id);
+    },
+    async updateEvent(id, revision, event) {
+      const rows = await query(
+        `UPDATE sahwa_events SET title=$3,event_date=$4,responsible_id=$5,responsible=CASE WHEN $8::boolean AND responsible_id IS NULL THEN responsible ELSE '' END,attendance=$6,notes=$7,revision=revision+1,updated_at=now() WHERE id=$1 AND revision=$2 RETURNING id`,
+        [
+          id,
+          revision,
+          event.title,
+          event.eventDate || null,
+          event.responsibleId,
+          event.attendance,
+          event.notes,
+          event.preserveLegacyResponsible,
+        ],
+      );
       if (!rows.length) throw conflict();
-      return rows[0];
+      return eventById(id);
     },
     async deleteEvent(id, revision) {
       const rows = await query(

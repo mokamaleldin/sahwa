@@ -1,4 +1,10 @@
-import { createHmac, scrypt, timingSafeEqual, randomBytes } from "node:crypto";
+import {
+  createHash,
+  createHmac,
+  scrypt,
+  timingSafeEqual,
+  randomBytes,
+} from "node:crypto";
 import { promisify } from "node:util";
 import { TeamError } from "./team-data.js";
 
@@ -12,8 +18,6 @@ export const privateHeaders = {
   Vary: "Cookie",
   "X-Robots-Tag": "noindex, nofollow",
 };
-export const canSignIn = (user) =>
-  user && ["نشط", "خريج"].includes(user.status);
 export const publicUser = (user) => ({
   id: user.id,
   fullName: user.fullName,
@@ -51,13 +55,31 @@ export async function verifyPassword(password, hash) {
   const actual = await deriveKey(password, salt, 32, { N: 16384, r: 8, p: 1 });
   return equal(actual.toString("hex"), expected);
 }
-const DUMMY_HASH = `scrypt$16384$${"0".repeat(32)}$${"0".repeat(64)}`;
-export async function verifyCredentials(email, password, user) {
-  const valid = await verifyPassword(
-    password,
-    user?.passwordHash || DUMMY_HASH,
+export function settings() {
+  const email = process.env.SAHWA_ACCOUNT_EMAIL?.trim().toLowerCase();
+  const passwordHash = process.env.SAHWA_PASSWORD_HASH;
+  if (!email || !passwordHash)
+    throw new Error("Shared account configuration unavailable");
+  return { email, passwordHash };
+}
+export const sharedUser = (config = settings()) => ({
+  id: "sahwa",
+  fullName: "فريق صحوة",
+  email: config.email,
+  accessRole: "admin",
+  university: "عام / مركزي",
+});
+export const accountVersion = (config = settings()) =>
+  createHash("sha256")
+    .update(`${config.email}\0${config.passwordHash}`)
+    .digest("hex");
+export async function verifyCredentials(email, password, config = settings()) {
+  const validPassword = await verifyPassword(password, config.passwordHash);
+  return (
+    validPassword &&
+    typeof email === "string" &&
+    equal(email.trim().toLowerCase(), config.email)
   );
-  return Boolean(valid && user && email === user.email && canSignIn(user));
 }
 export function tokenHash(token, secret = sessionSecret()) {
   return createHmac("sha256", secret).update(token).digest("hex");
@@ -84,12 +106,12 @@ export function sessionCookie(token, lifetime, remember, request) {
 export function expiredCookie(request) {
   return sessionCookie("", 0, true, request);
 }
-export async function createSession(userId, remember, request, store) {
+export async function createSession(remember, request, store) {
   const lifetime = remember ? REMEMBER_SECONDS : SESSION_SECONDS;
   const token = randomBytes(32).toString("base64url");
   await store.saveSession(
     tokenHash(token),
-    userId,
+    accountVersion(),
     new Date(Date.now() + lifetime * 1000).toISOString(),
   );
   return sessionCookie(token, lifetime, remember, request);
@@ -97,8 +119,13 @@ export async function createSession(userId, remember, request, store) {
 export async function currentUser(request, store) {
   const token = readSessionToken(request);
   if (!token) return null;
-  const user = await store.sessionUser(tokenHash(token));
-  return canSignIn(user) ? user : null;
+  const config = settings();
+  return (await store.hasSharedSession(
+    tokenHash(token),
+    accountVersion(config),
+  ))
+    ? sharedUser(config)
+    : null;
 }
 export async function requireUser(request, store, admin = false) {
   const user = await currentUser(request, store);

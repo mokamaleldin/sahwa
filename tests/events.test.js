@@ -1,29 +1,22 @@
-import test from "node:test";
-import assert from "node:assert/strict";
-import { validateEvent } from "../server/team-data.js";
-import { event } from "./helpers/database.js";
-test("optional attendance is distinct from zero attendance", () => {
-  for (const attendance of [undefined, null, ""])
-    assert.equal(validateEvent(event({ attendance })).attendance, null);
-  assert.equal(validateEvent(event({ attendance: 0 })).attendance, 0);
-  assert.equal(validateEvent(event({ attendance: 42 })).attendance, 42);
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {validateEvent} from '../server/team-data.js';
+import {event} from './helpers/database.js';
+test('an event can be saved with its name only',()=>{
+ const parsed=validateEvent({title:'فعالية جديدة'});assert.equal(parsed.eventDate,'');assert.equal(parsed.responsibleId,null);assert.equal(parsed.attendance,null);assert.equal(parsed.notes,'');
+ assert.throws(()=>validateEvent({title:'  '}));
 });
-test("invalid attendance, calendar dates and empty required fields are rejected", () => {
-  for (const attendance of [-1, 1.5, "12", Infinity, 1000001])
-    assert.throws(() => validateEvent(event({ attendance })));
-  for (const input of [
-    event({ eventDate: "2026-02-30" }),
-    event({ eventDate: "" }),
-    event({ title: " " }),
-    event({ responsible: "" }),
-    event({ notes: "x".repeat(1001) }),
-  ])
-    assert.throws(() => validateEvent(input));
+test('optional attendance is distinct from zero attendance',()=>{
+ for(const attendance of [null,undefined,''])assert.equal(validateEvent(event({attendance})).attendance,null);
+ assert.equal(validateEvent(event({attendance:0})).attendance,0);
+ for(const attendance of [-1,0.5,'12',Infinity,1000001])assert.throws(()=>validateEvent(event({attendance})));
 });
-test("notes accept line breaks and are bounded; extra fields are ignored", () => {
-  const parsed = validateEvent(
-    event({ notes: " سطر أول\nسطر ثانٍ ", unexpected: "ignored" }),
-  );
-  assert.equal(parsed.notes, "سطر أول\nسطر ثانٍ");
-  assert.equal(Object.keys(parsed).length, 5);
+test('responsible people are selected by volunteer ID and free text is ignored',()=>{
+ const id='00000000-0000-4000-8000-000000000001';assert.equal(validateEvent(event({responsibleId:id})).responsibleId,id);
+ assert.throws(()=>validateEvent(event({responsibleId:'أحمد'})));
+ const forged=validateEvent({...event(),responsible:'اسم حر'});assert.ok(!('responsible' in forged));assert.equal(forged.responsibleId,null);
+});
+test('dates and notes are optional but invalid supplied values are rejected',()=>{
+ assert.equal(validateEvent(event({notes:'سطر\nآخر'})).notes,'سطر\nآخر');
+ assert.throws(()=>validateEvent(event({eventDate:'2026-02-30'})));assert.throws(()=>validateEvent(event({notes:'x'.repeat(1001)})));
 });

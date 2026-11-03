@@ -25,7 +25,15 @@ export function errorResponse(error) {
   if (error instanceof TeamError)
     return json({ error: error.message, code: error.code }, error.status);
   if (error?.code === "23505")
-    return json({ error: "البريد الإلكتروني مستخدم بالفعل." }, 409);
+    return json({ error: "هذا السجل موجود بالفعل." }, 409);
+  if (error?.code === "23503")
+    return json(
+      {
+        error: "المتطوع المختار غير موجود. حدّث القائمة واختره من جديد.",
+        code: "INVALID_VOLUNTEER",
+      },
+      400,
+    );
   console.error("Sahwa data request unavailable");
   return json(
     {

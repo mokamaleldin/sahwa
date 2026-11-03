@@ -2,7 +2,7 @@ import {
   currentUser,
   publicUser,
   verifyCredentials,
-  verifyPassword,
+  sharedUser,
   createSession,
   expiredCookie,
   sameOrigin,
@@ -53,24 +53,13 @@ export function createAuthHandler(store) {
         return json({ error: "محاولات دخول كثيرة. حاول بعد 15 دقيقة." }, 429, {
           "Retry-After": "900",
         });
-      let user = await store.credentials(email);
-      const bootstrapEmail =
-        process.env.SAHWA_ACCOUNT_EMAIL?.trim().toLowerCase();
-      if (
-        !user &&
-        email === bootstrapEmail &&
-        (await verifyPassword(input.password, process.env.SAHWA_PASSWORD_HASH))
-      ) {
-        await store.bootstrap(email, process.env.SAHWA_PASSWORD_HASH);
-        user = await store.credentials(email);
-      }
-      if (!(await verifyCredentials(email, input.password, user)))
+      if (!(await verifyCredentials(email, input.password)))
         return json(
           { error: "البريد الإلكتروني أو كلمة المرور غير صحيحة." },
           401,
         );
+      const user = sharedUser();
       const cookie = await createSession(
-        user.id,
         input.remember !== false,
         request,
         store,

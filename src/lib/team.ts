@@ -8,11 +8,9 @@ export interface VolunteerInput {
   team: string;
   responsibility: string;
   status: string;
-  email: string;
-  password: string;
-  accessRole: "admin" | "volunteer";
+  phone: string;
 }
-export interface Volunteer extends Omit<VolunteerInput, "password"> {
+export interface Volunteer extends VolunteerInput {
   id: string;
   revision: number;
 }
@@ -26,18 +24,24 @@ export const EMPTY_PERSON: VolunteerInput = {
   team: "",
   responsibility: "",
   status: "نشط",
-  email: "",
-  password: "",
-  accessRole: "volunteer",
+  phone: "",
 };
 export interface SahwaEventInput {
   title: string;
   eventDate: string;
-  responsible: string;
+  responsibleId: string | null;
+  preserveLegacyResponsible?: boolean;
   attendance: number | null;
   notes: string;
 }
+export interface ResponsibleVolunteer {
+  id: string;
+  fullName: string;
+  university: string;
+  status: string;
+}
 export interface SahwaEvent extends SahwaEventInput {
+  responsible: string;
   id: string;
   revision: number;
 }

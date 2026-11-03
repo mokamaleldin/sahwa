@@ -7,7 +7,6 @@ import {
   FolderOpen,
   Palette,
   UsersRound,
-  UserCog,
 } from "lucide-react";
 import { Link } from "../lib/navigation";
 import { Helmet } from "react-helmet-async";
@@ -30,15 +29,6 @@ const cards = [
     to: "/team/volunteers",
     icon: UsersRound,
     action: "فتح دليل المتطوعين",
-    admin: true,
-  },
-  {
-    title: "إدارة الحسابات",
-    description:
-      "أنشئ حسابات الفريق وحدّد صلاحياتها وبيانات دخولها من صفحة خاصة بالأدمن.",
-    to: "/team/accounts",
-    icon: UserCog,
-    action: "إدارة حسابات الفريق",
     admin: true,
   },
   {
