@@ -229,10 +229,6 @@ export default function TeamEvents() {
                 </div>
               ))}
             </div>
-            <p className="mt-3 text-sm leading-7 text-brand-muted">
-              مجموع الأعداد ليس عدد أشخاص مختلفين؛ قد تشمل بعض السجلات أرقامًا
-              تقديرية أو أعداد مسجلين وزوار.
-            </p>
             <details className="group mt-5">
               <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg py-2 font-heading text-base text-brand-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
                 <ChevronDown
