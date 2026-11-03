@@ -72,6 +72,43 @@ export default function TeamEvents() {
         .sort((a, b) => b.eventDate.localeCompare(a.eventDate)),
     [events, query],
   );
+  const overview = useMemo(() => {
+    let recorded = 0;
+    let attendanceTotal = 0;
+    const yearly = new Map<
+      string,
+      { year: string; count: number; recorded: number; total: number }
+    >();
+    for (const event of events) {
+      const year = event.eventDate ? event.eventDate.slice(0, 4) : "غير محددة";
+      const group = yearly.get(year) ?? {
+        year,
+        count: 0,
+        recorded: 0,
+        total: 0,
+      };
+      group.count += 1;
+      if (event.attendance !== null) {
+        recorded += 1;
+        attendanceTotal += event.attendance;
+        group.recorded += 1;
+        group.total += event.attendance;
+      }
+      yearly.set(year, group);
+    }
+    return {
+      recorded,
+      attendanceTotal,
+      missing: events.length - recorded,
+      yearly: [...yearly.values()].sort((a, b) =>
+        a.year === "غير محددة"
+          ? 1
+          : b.year === "غير محددة"
+            ? -1
+            : Number(b.year) - Number(a.year),
+      ),
+    };
+  }, [events]);
   const pages = Math.max(1, Math.ceil(results.length / PAGE_SIZE)),
     current = Math.min(page, pages);
   async function save(event: SahwaEventInput) {
@@ -165,6 +202,78 @@ export default function TeamEvents() {
               إعادة المحاولة
             </button>
           </p>
+        )}
+        {!loading && !error && events.length > 0 && (
+          <section
+            aria-labelledby="events-overview-title"
+            className="mb-6 rounded-2xl border border-brand-primary/10 bg-brand-background p-4 sm:p-6"
+          >
+            <h2
+              id="events-overview-title"
+              className="mb-4 font-heading text-xl text-brand-primary"
+            >
+              ملخص الفعاليات والحضور
+            </h2>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {[
+                { title: "إجمالي الفعاليات", value: events.length, icon: CalendarDays },
+                { title: "مجموع الأعداد المسجلة", value: overview.attendanceTotal, icon: UsersRound },
+                { title: "فعاليات لها عدد", value: overview.recorded, icon: UserRound },
+                { title: "فعاليات دون عدد", value: overview.missing, icon: Search },
+              ].map(({ title, value, icon: Icon }) => (
+                <div
+                  key={title}
+                  className="rounded-xl border border-brand-primary/10 bg-white/70 p-3 sm:p-4"
+                >
+                  <p className="flex items-center gap-2 text-xs text-brand-muted sm:text-sm">
+                    <Icon size={16} aria-hidden="true" />
+                    {title}
+                  </p>
+                  <p className="mt-2 text-2xl font-bold tabular-nums text-brand-primary sm:text-3xl">
+                    {value.toLocaleString("ar-EG")}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-sm leading-7 text-brand-muted">
+              مجموع الأعداد هو جمع القيم المسجلة لكل فعالية، وليس عدد أشخاص
+              مختلفين. بعض الأرقام تقديرية، وقد تعبّر عن مسجلين أو زوار وفق
+              ملاحظات الفعالية.
+            </p>
+            <div className="mt-5">
+              <h3 className="mb-2 font-heading text-base text-brand-primary">
+                تفصيل السجل حسب السنة
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[420px] text-right text-sm">
+                  <thead>
+                    <tr className="border-b border-brand-primary/15 text-brand-muted">
+                      <th scope="col" className="px-2 py-2 font-medium">السنة</th>
+                      <th scope="col" className="px-2 py-2 font-medium">الفعاليات</th>
+                      <th scope="col" className="px-2 py-2 font-medium">لها عدد</th>
+                      <th scope="col" className="px-2 py-2 font-medium">دون عدد</th>
+                      <th scope="col" className="px-2 py-2 font-medium">مجموع الأعداد</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {overview.yearly.map((year) => (
+                      <tr key={year.year} className="border-b border-brand-primary/10 last:border-0">
+                        <th scope="row" className="px-2 py-2 font-medium text-brand-primary">
+                          {year.year === "غير محددة" ? "غير محددة" : Number(year.year).toLocaleString("ar-EG", { useGrouping: false })}
+                        </th>
+                        <td className="px-2 py-2">{year.count.toLocaleString("ar-EG")}</td>
+                        <td className="px-2 py-2">{year.recorded.toLocaleString("ar-EG")}</td>
+                        <td className="px-2 py-2">{(year.count - year.recorded).toLocaleString("ar-EG")}</td>
+                        <td className="px-2 py-2">
+                          {year.recorded ? year.total.toLocaleString("ar-EG") : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
         )}
         <label className="team-search">
           <span className="sr-only">البحث في الفعاليات</span>
