@@ -59,6 +59,13 @@ export function createTeamStore(getClient = getSql) {
       if (!rows.length) throw conflict();
       return rows[0];
     },
+    async deleteVolunteer(id, revision) {
+      const rows = await query(
+        "DELETE FROM sahwa_volunteers WHERE id=$1 AND revision=$2 RETURNING id",
+        [id, revision],
+      );
+      if (!rows.length) throw conflict();
+    },
     async saveSession(hash, version, expires) {
       const sql = getClient();
       await sql.transaction([
