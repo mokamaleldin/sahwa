@@ -34,7 +34,6 @@ export default function TeamNavigation() {
             <>
               <NavLink to="/team/events">سجل الفعاليات</NavLink>
               <NavLink to="/team/volunteers">المتطوعون</NavLink>
-              <NavLink to="/team/accounts">إدارة الحسابات</NavLink>
             </>
           )}
           <NavLink to="/team/files">الملفات</NavLink>

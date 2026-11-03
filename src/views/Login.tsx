@@ -10,7 +10,7 @@ import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 export default function Login() {
   const [search] = useSearchParams();
   const requestedPath = search.get('next');
-  const destination = requestedPath && ['/team', '/team/events', '/team/volunteers', '/team/accounts', '/team/files', '/team/forms', '/studio'].includes(requestedPath) ? requestedPath : '/team';
+  const destination = requestedPath && ['/team', '/team/events', '/team/volunteers', '/team/files', '/team/forms', '/studio'].includes(requestedPath) ? requestedPath : '/team';
   const navigate = useNavigate();
   const { status, error: sessionError, signIn, refresh } = useSession();
   const [email, setEmail] = useState('');
@@ -49,7 +49,7 @@ export default function Login() {
 
         <div className="page-container relative z-10">
           <div className="mx-auto max-w-md">
-            <PageHeading title="مساحة فريق صحوة" description="ادخل بحسابك للوصول إلى أدوات الفريق. ينشئ المسؤول حسابك وبيانات دخولك." />
+            <PageHeading title="مساحة فريق صحوة" description="للمسؤولين: ادخل بحساب صحوة الأساسي للوصول إلى أدوات الفريق." />
 
             <section className="section-card p-6 sm:p-9" aria-labelledby="login-heading">
               <div className="flex items-center gap-3 mb-7">

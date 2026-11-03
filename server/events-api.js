@@ -5,9 +5,14 @@ import { json, readInput, errorResponse } from "./http.js";
 export function createEventsHandler(store) {
   return async (request) => {
     try {
-      const user = await requireUser(request, store, true);
-      if (request.method === "GET")
-        return json({ events: await store.listEvents() });
+      await requireUser(request, store, true);
+      if (request.method === "GET") {
+        const [events, volunteers] = await Promise.all([
+          store.listEvents(),
+          store.listResponsibleVolunteers(),
+        ]);
+        return json({ events, volunteers });
+      }
       if (!["POST", "PUT", "DELETE"].includes(request.method))
         return json({ error: "طريقة طلب غير متاحة." }, 405);
       const input = await readInput(request);
@@ -19,7 +24,7 @@ export function createEventsHandler(store) {
       const event = validateEvent(input.event);
       const saved =
         request.method === "POST"
-          ? await store.createEvent(event, user.id)
+          ? await store.createEvent(event)
           : await store.updateEvent(input.id, input.revision, event);
       return json({ event: saved }, request.method === "POST" ? 201 : 200);
     } catch (error) {

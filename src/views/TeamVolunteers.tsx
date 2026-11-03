@@ -1,5 +1,4 @@
 "use client";
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import {
@@ -9,7 +8,6 @@ import {
   Plus,
   RefreshCw,
   Search,
-  UserRound,
   UsersRound,
 } from "lucide-react";
 import {
@@ -19,13 +17,10 @@ import {
 import PageHeading from "../components/shared/PageIdentity";
 import PersonForm from "../components/Team/PersonForm";
 import PersonDetails from "../components/Team/PersonDetails";
+import VolunteerCard from "../components/Team/VolunteerCard";
 import { teamRequest, type Volunteer, type VolunteerInput } from "../lib/team";
-import { useSession } from "../auth/useSession";
-import { Link } from "../lib/navigation";
-
 const PAGE_SIZE = 12;
 export default function TeamVolunteers() {
-  const { refresh } = useSession();
   const [people, setPeople] = useState<Volunteer[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
@@ -37,16 +32,18 @@ export default function TeamVolunteers() {
     }),
     [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Volunteer | null>(null),
-    [editing, setEditing] = useState<Volunteer | undefined>(undefined);
+    [editing, setEditing] = useState<Volunteer | null | undefined>(undefined);
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setError("");
     try {
-      const data = await teamRequest<{ volunteers: Volunteer[] }>({ signal });
-      if (!signal?.aborted) setPeople(data.volunteers);
-    } catch (e) {
+      const result = await teamRequest<{ volunteers: Volunteer[] }>({ signal });
+      if (!signal?.aborted) setPeople(result.volunteers);
+    } catch (reason) {
       if (!signal?.aborted)
-        setError(e instanceof Error ? e.message : "تعذر تحميل الدليل.");
+        setError(
+          reason instanceof Error ? reason.message : "تعذر تحميل المتطوعين.",
+        );
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
@@ -62,33 +59,40 @@ export default function TeamVolunteers() {
   );
   const universities = useMemo(
     () =>
-      [...new Set(people.map((p) => p.university))].sort((a, b) =>
+      [...new Set(people.map((person) => person.university))].sort((a, b) =>
         a.localeCompare(b, "ar"),
       ),
     [people],
   );
   const pages = Math.max(1, Math.ceil(results.length / PAGE_SIZE)),
     current = Math.min(page, pages);
+  const update = (key: keyof typeof filters, value: string) => {
+    setFilters((previous) => ({ ...previous, [key]: value }));
+    setPage(1);
+  };
   async function save(person: VolunteerInput) {
-    if (!editing) return;
-    const data = await teamRequest<{ person: Volunteer }>({
-      method: "PUT",
+    const result = await teamRequest<{ person: Volunteer }>({
+      method: editing ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         person,
-        id: editing.id,
-        revision: editing.revision,
+        ...(editing ? { id: editing.id, revision: editing.revision } : {}),
       }),
     });
-    setPeople((p) => p.map((v) => (v.id === data.person.id ? data.person : v)));
+    setPeople((previous) =>
+      editing
+        ? previous.map((value) =>
+            value.id === result.person.id ? result.person : value,
+          )
+        : [...previous, result.person],
+    );
     setEditing(undefined);
-    setNotice("تم حفظ البيانات الأساسية.");
-    await refresh({ force: true });
+    setNotice(editing ? "تم حفظ البيانات." : "تمت إضافة المتطوع إلى سجل صحوة.");
+    if (!editing) {
+      setFilters({ query: "", university: "", status: "" });
+      setPage(1);
+    }
   }
-  const update = (key: keyof typeof filters, value: string) => {
-    setFilters((f) => ({ ...f, [key]: value }));
-    setPage(1);
-  };
   return (
     <>
       <Helmet>
@@ -96,16 +100,16 @@ export default function TeamVolunteers() {
       </Helmet>
       <PageHeading
         title="أهل صحوة"
-        description="بيانات أهل صحوة الأساسية وفرقهم ومسؤولياتهم."
+        description="سجل المتطوعين وبياناتهم ومجالات مشاركتهم في صحوة."
       />
       <section aria-label="دليل المتطوعين">
         <div className="team-directory-toolbar">
           <div className="flex items-center gap-3">
             <span className="team-icon team-icon-small">
-              <UsersRound size={24} />
+              <UsersRound size={24} aria-hidden="true" />
             </span>
             <span className="text-sm text-brand-muted">
-              {people.length.toLocaleString("ar-EG")} متطوع في الدليل
+              {people.length.toLocaleString("ar-EG")} متطوع في السجل
             </span>
           </div>
           <div className="flex gap-2">
@@ -114,13 +118,20 @@ export default function TeamVolunteers() {
               onClick={() => void load()}
               disabled={loading}
             >
-              <RefreshCw size={16} />
+              <RefreshCw size={16} aria-hidden="true" />
               تحديث
             </button>
-            <Link className="team-button" to="/team/accounts#account-form">
-              <Plus size={18} />
-              إنشاء حساب لمتطوع
-            </Link>
+            <button
+              className="team-button"
+              disabled={loading || Boolean(error)}
+              onClick={() => {
+                setNotice("");
+                setEditing(null);
+              }}
+            >
+              <Plus size={18} aria-hidden="true" />
+              إضافة متطوع
+            </button>
           </div>
         </div>
         {notice && (
@@ -131,7 +142,7 @@ export default function TeamVolunteers() {
         {error && (
           <p className="team-error mb-5" role="alert">
             {error}{" "}
-            <button onClick={() => void load()} className="underline">
+            <button className="underline" onClick={() => void load()}>
               إعادة المحاولة
             </button>
           </p>
@@ -139,12 +150,12 @@ export default function TeamVolunteers() {
         <div className="team-filter-panel team-simple-filters">
           <label className="team-search">
             <span className="sr-only">البحث في المتطوعين</span>
-            <Search size={20} />
+            <Search size={20} aria-hidden="true" />
             <input
               type="search"
-              placeholder="ابحث بالاسم أو الجامعة أو التخصص…"
               value={filters.query}
-              onChange={(e) => update("query", e.target.value)}
+              onChange={(event) => update("query", event.target.value)}
+              placeholder="ابحث بالاسم أو الجامعة أو التخصص…"
               maxLength={120}
             />
           </label>
@@ -152,11 +163,11 @@ export default function TeamVolunteers() {
             <span>الجامعة</span>
             <select
               value={filters.university}
-              onChange={(e) => update("university", e.target.value)}
+              onChange={(event) => update("university", event.target.value)}
             >
               <option value="">كل الجامعات</option>
-              {universities.map((u) => (
-                <option key={u}>{u}</option>
+              {universities.map((university) => (
+                <option key={university}>{university}</option>
               ))}
             </select>
           </label>
@@ -164,41 +175,41 @@ export default function TeamVolunteers() {
             <span>الحالة</span>
             <select
               value={filters.status}
-              onChange={(e) => update("status", e.target.value)}
+              onChange={(event) => update("status", event.target.value)}
             >
               <option value="">كل الحالات</option>
-              {PERSON_STATUSES.map((s) => (
-                <option key={s}>{s}</option>
+              {PERSON_STATUSES.map((status) => (
+                <option key={status}>{status}</option>
               ))}
             </select>
           </label>
         </div>
         <p className="team-results-count" role="status">
           {loading
-            ? "جارٍ تحميل الدليل…"
+            ? "جارٍ تحميل السجل…"
             : `${results.length.toLocaleString("ar-EG")} نتيجة`}
         </p>
         {loading ? (
           <div className="team-loading">
-            <Loader2 className="animate-spin" />
-            <p>جارٍ تحميل بيانات الفريق…</p>
+            <Loader2 className="animate-spin" aria-hidden="true" />
+            <p>جارٍ تحميل بيانات المتطوعين…</p>
           </div>
         ) : !results.length ? (
           <div className="team-empty">
-            <UsersRound size={38} />
+            <UsersRound size={38} aria-hidden="true" />
             <h3>
               {error
-                ? "تعذر تحميل الدليل"
+                ? "تعذر تحميل السجل"
                 : people.length
                   ? "لا توجد نتائج مطابقة"
-                  : "هنا يبدأ دليل أهل صحوة"}
+                  : "هنا يبدأ سجل أهل صحوة"}
             </h3>
             <p>
               {error
                 ? "أعد المحاولة لعرض البيانات."
                 : people.length
                   ? "غيّر البحث أو الفلاتر."
-                  : "أنشئ حساب المتطوع من صفحة إدارة الحسابات، ثم أكمل بياناته هنا."}
+                  : "أضف أول متطوع وسجّل بياناته الأساسية من هنا."}
             </p>
           </div>
         ) : (
@@ -206,38 +217,11 @@ export default function TeamVolunteers() {
             {results
               .slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)
               .map((person) => (
-                <button
+                <VolunteerCard
                   key={person.id}
-                  className="team-person-card"
-                  onClick={() => setSelected(person)}
-                  aria-label={`عرض بيانات ${person.fullName}`}
-                >
-                  <div className="team-person-card-top">
-                    <span className="team-avatar">
-                      <UserRound size={26} />
-                    </span>
-                    <span
-                      className={`team-status${person.status === "نشط" ? " team-status-active" : ""}`}
-                    >
-                      {person.status}
-                    </span>
-                  </div>
-                  <h3>{person.fullName}</h3>
-                  <p className="team-person-university">{person.university}</p>
-                  <p className="team-person-major">
-                    {[person.major, person.studyYear]
-                      .filter(Boolean)
-                      .join(" · ") || "—"}
-                  </p>
-                  <div className="team-person-role">
-                    <strong>{person.responsibility || "متطوع"}</strong>
-                    <span>{person.team || "الفريق العام"}</span>
-                  </div>
-                  <span className="team-person-open">
-                    عرض الملف
-                    <ChevronLeft size={16} />
-                  </span>
-                </button>
+                  person={person}
+                  onOpen={() => setSelected(person)}
+                />
               ))}
           </div>
         )}
@@ -245,10 +229,10 @@ export default function TeamVolunteers() {
           <nav className="team-pagination" aria-label="صفحات المتطوعين">
             <button
               className="team-button team-button-secondary"
-              disabled={current === 1}
+              disabled={current <= 1}
               onClick={() => setPage(current - 1)}
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={16} aria-hidden="true" />
               السابق
             </button>
             <span>
@@ -256,11 +240,11 @@ export default function TeamVolunteers() {
             </span>
             <button
               className="team-button team-button-secondary"
-              disabled={current === pages}
+              disabled={current >= pages}
               onClick={() => setPage(current + 1)}
             >
               التالي
-              <ChevronLeft size={16} />
+              <ChevronLeft size={16} aria-hidden="true" />
             </button>
           </nav>
         )}

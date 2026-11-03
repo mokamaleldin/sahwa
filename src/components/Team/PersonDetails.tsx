@@ -1,5 +1,6 @@
-import { Pencil, UserRound } from "lucide-react";
+import { Pencil, UserRound, Phone } from "lucide-react";
 import TeamDialog from "./TeamDialog";
+import { ageFromBirthDate } from "../../../shared/team-options.js";
 import { displayDate, type Volunteer } from "../../lib/team";
 
 export default function PersonDetails({
@@ -11,20 +12,19 @@ export default function PersonDetails({
   onClose: () => void;
   onEdit: () => void;
 }) {
+  const age = ageFromBirthDate(person.birthDate);
   const fields = [
     ["الجامعة", person.university],
     ["التخصص", person.major],
     ["السنة الدراسية", person.studyYear],
     ["تاريخ الميلاد", person.birthDate ? displayDate(person.birthDate) : ""],
     [
-      "شباب / طالبات",
-      person.gender === "شاب"
-        ? "شباب"
-        : person.gender === "طالبة"
-          ? "طالبات"
-          : "",
+      "شاب أو بنت",
+      person.gender === "شاب" ? "شاب" : person.gender === "بنت" ? "بنت" : "",
     ],
-    ["الفريق", person.team],
+    ["العمر", age === null ? "" : `${age.toLocaleString("ar-EG")} سنة`],
+    ["مجال التطوع", person.team],
+    ["رقم الهاتف", person.phone],
     ["المسؤولية", person.responsibility],
   ];
   return (
@@ -47,8 +47,18 @@ export default function PersonDetails({
           {fields.map(([label, value]) => (
             <div key={label}>
               <dt>{label}</dt>
-              <dd dir={label === "البريد الإلكتروني" ? "ltr" : undefined}>
-                {value || "—"}
+              <dd>
+                {label === "رقم الهاتف" && value ? (
+                  <a
+                    className="team-phone"
+                    href={`tel:${value.replace(/[^+\d]/g, "")}`}
+                  >
+                    <Phone size={15} aria-hidden="true" />
+                    <span dir="ltr">{value}</span>
+                  </a>
+                ) : (
+                  value || "—"
+                )}
               </dd>
             </div>
           ))}

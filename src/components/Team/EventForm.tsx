@@ -1,15 +1,21 @@
 import { useState, type FormEvent } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import TeamDialog from "./TeamDialog";
-import type { SahwaEvent, SahwaEventInput } from "../../lib/team";
+import type {
+  SahwaEvent,
+  SahwaEventInput,
+  ResponsibleVolunteer,
+} from "../../lib/team";
 
 export default function EventForm({
   event,
+  volunteers,
   onSave,
   onDelete,
   onClose,
 }: {
   event: SahwaEvent | null;
+  volunteers: ResponsibleVolunteer[];
   onSave: (input: SahwaEventInput) => Promise<void>;
   onDelete: () => Promise<void>;
   onClose: () => void;
@@ -19,13 +25,14 @@ export default function EventForm({
       ? { ...event }
       : {
           title: "",
-          eventDate: new Date().toLocaleDateString("en-CA", {
-            timeZone: "Europe/Istanbul",
-          }),
-          responsible: "",
+          eventDate: "",
+          responsibleId: null,
           attendance: null,
           notes: "",
         },
+  );
+  const [responsible, setResponsible] = useState(
+    event?.responsibleId || (event?.responsible ? "__legacy__" : ""),
   );
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -36,9 +43,15 @@ export default function EventForm({
     setError("");
     try {
       if (remove) await onDelete();
-      else await onSave(input);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "تعذر حفظ التعديل.");
+      else
+        await onSave({
+          ...input,
+          responsibleId:
+            responsible === "__legacy__" ? null : responsible || null,
+          preserveLegacyResponsible: responsible === "__legacy__",
+        });
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "تعذر حفظ التعديل.");
       setBusy(false);
     }
   }
@@ -69,10 +82,11 @@ export default function EventForm({
               />
             </label>
             <label className="team-field">
-              <span>تاريخ الفعالية *</span>
+              <span>
+                تاريخ الفعالية <small>اختياري</small>
+              </span>
               <input
                 type="date"
-                required
                 value={input.eventDate}
                 onChange={(e) =>
                   setInput((p) => ({ ...p, eventDate: e.target.value }))
@@ -80,15 +94,28 @@ export default function EventForm({
               />
             </label>
             <label className="team-field">
-              <span>المسؤول عنها *</span>
-              <input
-                required
-                maxLength={120}
-                value={input.responsible}
-                onChange={(e) =>
-                  setInput((p) => ({ ...p, responsible: e.target.value }))
-                }
-              />
+              <span>
+                المسؤول عنها <small>اختياري</small>
+              </span>
+              <select
+                value={responsible}
+                onChange={(e) => setResponsible(e.target.value)}
+              >
+                <option value="">بدون مسؤول محدد</option>
+                {event?.responsible && !event.responsibleId && (
+                  <option value="__legacy__">
+                    {event.responsible} — مسجل سابقًا
+                  </option>
+                )}
+                {volunteers.map((person) => (
+                  <option key={person.id} value={person.id}>
+                    {person.fullName} — {person.university}
+                  </option>
+                ))}
+              </select>
+              {!volunteers.length && (
+                <small>يمكن تحديد المسؤول بعد إضافة المتطوعين إلى السجل.</small>
+              )}
             </label>
             <label className="team-field">
               <span>
@@ -145,8 +172,8 @@ export default function EventForm({
                 <button
                   type="button"
                   className="team-button team-button-secondary"
-                  onClick={() => setConfirm(false)}
                   disabled={busy}
+                  onClick={() => setConfirm(false)}
                 >
                   تراجع
                 </button>
@@ -156,14 +183,16 @@ export default function EventForm({
         </fieldset>
         <div className="team-dialog-footer">
           <button className="team-button" disabled={busy || confirm}>
-            {busy && <Loader2 className="animate-spin" size={17} />}{" "}
+            {busy && (
+              <Loader2 className="animate-spin" size={17} aria-hidden="true" />
+            )}
             {busy ? "جارٍ الحفظ…" : "حفظ الفعالية"}
           </button>
           <button
             type="button"
             className="team-button team-button-secondary"
-            onClick={onClose}
             disabled={busy}
+            onClick={onClose}
           >
             إلغاء
           </button>
@@ -174,7 +203,7 @@ export default function EventForm({
               onClick={() => setConfirm(true)}
               disabled={busy || confirm}
             >
-              <Trash2 size={16} />
+              <Trash2 size={16} aria-hidden="true" />
               حذف الفعالية
             </button>
           )}

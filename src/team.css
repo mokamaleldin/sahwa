@@ -88,15 +88,12 @@
 .team-delete-confirm { padding:17px; border:1px solid #b0484840; background:#fff1ed; border-radius:12px; font-size:13px; margin-top:28px; }
 .team-welcome { display:flex; justify-content:space-between; align-items:center; gap:18px; padding:20px 24px; border:1px solid var(--line); border-radius:18px; background:#fff6; max-width:1100px; margin:0 auto 24px; }
 .team-welcome > div { display:flex; flex-direction:column; gap:5px; }.team-welcome strong { color:var(--brand-primary); font-weight:500; }.team-welcome div span,.team-form-note { font-size:13px; color:var(--text-muted); line-height:1.9; }
-.team-form-note { margin:20px 0 0; }.team-password-field { display:flex; position:relative; }.team-password-field input { padding-right:48px; }.team-password-field button { position:absolute; right:0; top:0; }
+.team-form-note { margin:20px 0 0; }
 .team-simple-filters { display:grid; grid-template-columns:2fr 1fr 1fr; gap:18px; align-items:end; }.team-simple-filters .team-search { min-height:45px; }.team-simple-filters .team-search input { height:43px; }
 .team-events-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; }.team-event-card { border:1px solid var(--line); border-radius:22px; padding:24px; background:#fff8; min-width:0; box-shadow:var(--card-shadow); }
 .team-event-top,.team-event-date { display:flex; align-items:center; gap:9px; }.team-event-top { justify-content:space-between; margin-bottom:15px; }.team-event-date { font-size:12px; color:var(--brand-primary); }.team-event-card h2 { font-size:28px; color:var(--brand-primary); line-height:1.6; overflow-wrap:anywhere; }
 .team-event-meta { display:flex; flex-wrap:wrap; gap:10px 24px; margin-top:17px; color:var(--text-muted); font-size:13px; }.team-event-meta p { display:flex; align-items:center; gap:8px; overflow-wrap:anywhere; }.team-event-meta svg { flex-shrink:0; }.team-event-notes { border-top:1px solid var(--line); padding-top:17px; margin-top:19px; font-size:14px; line-height:1.9; color:var(--text-muted); white-space:pre-wrap; overflow-wrap:anywhere; }
 .team-field-full { grid-column:1 / -1; }.team-delete-action { margin-inline-start:auto; color:#8d2026; }
-.team-account-editor { max-width:860px; margin:0 auto; overflow:hidden; scroll-margin-top:120px; }.team-account-anchor { scroll-margin-top:120px; }
-.team-account-heading { display:flex; align-items:center; gap:15px; padding:24px 24px 0; }.team-account-heading h2 { color:var(--brand-primary); font-size:28px; }.team-account-heading p { font-size:13px; color:var(--text-muted); line-height:1.8; margin-top:5px; }
-.team-accounts-directory { margin-top:44px; }.team-account-email { margin-top:12px; text-align:right; font-size:13px; color:var(--text-muted); overflow-wrap:anywhere; }
 @media(max-width:640px) { .team-simple-filters { grid-template-columns:1fr 1fr; gap:14px; }.team-simple-filters .team-search { grid-column:1 / -1; }.team-events-grid { grid-template-columns:1fr; gap:16px; }.team-event-card { padding:20px; }.team-welcome { padding:17px; }.team-event-card h2 { font-size:25px; } }
 @media(max-width:900px) { .team-portal-grid { gap:16px; }.team-portal-card { padding:23px; }.team-portal-card h2 { font-size:23px; }.team-people-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:640px) {
@@ -108,3 +105,4 @@
   .team-form-grid { grid-template-columns:1fr; }.team-dialog-heading { padding:12px 17px; }.team-dialog-heading h2 { font-size:23px; }.team-form-body { padding:20px 17px; }.team-dialog-footer { padding:14px 17px; }.team-detail-grid { gap:18px 12px; }.team-person-intro { gap:15px; }.team-person-intro h3 { font-size:20px; }.team-pagination { gap:10px; }
 }
 @media(prefers-reduced-motion:reduce) { .team-portal-card { transition:none; }.team-portal-card:hover { transform:none; } }
+.team-person-tags { display:flex; flex-direction:column; align-items:flex-end; gap:7px; }.team-age { color:var(--brand-primary); font-size:12px; font-weight:500; }

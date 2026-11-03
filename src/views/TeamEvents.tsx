@@ -21,11 +21,13 @@ import {
   teamRequest,
   type SahwaEvent,
   type SahwaEventInput,
+  type ResponsibleVolunteer,
 } from "../lib/team";
 import { normalizeSearch } from "../../shared/team-options.js";
 
 const PAGE_SIZE = 12;
 export default function TeamEvents() {
+  const [volunteers, setVolunteers] = useState<ResponsibleVolunteer[]>([]);
   const [events, setEvents] = useState<SahwaEvent[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
@@ -39,11 +41,14 @@ export default function TeamEvents() {
     setLoading(true);
     setError("");
     try {
-      const data = await teamRequest<{ events: SahwaEvent[] }>(
-        { signal },
-        "/api/events",
-      );
-      if (!signal?.aborted) setEvents(data.events);
+      const data = await teamRequest<{
+        events: SahwaEvent[];
+        volunteers: ResponsibleVolunteer[];
+      }>({ signal }, "/api/events");
+      if (!signal?.aborted) {
+        setEvents(data.events);
+        setVolunteers(data.volunteers);
+      }
     } catch (e) {
       if (!signal?.aborted)
         setError(e instanceof Error ? e.message : "تعذر تحميل السجل.");
@@ -212,9 +217,13 @@ export default function TeamEvents() {
                   <div className="team-event-top">
                     <span className="team-event-date">
                       <CalendarDays size={16} />
-                      <time dateTime={event.eventDate}>
-                        {displayDate(event.eventDate)}
-                      </time>
+                      {event.eventDate ? (
+                        <time dateTime={event.eventDate}>
+                          {displayDate(event.eventDate)}
+                        </time>
+                      ) : (
+                        <span>التاريخ غير محدد</span>
+                      )}
                     </span>
                     <button
                       className="team-icon-button"
@@ -228,7 +237,7 @@ export default function TeamEvents() {
                   <div className="team-event-meta">
                     <p>
                       <UserRound size={16} />
-                      <span>{event.responsible}</span>
+                      <span>{event.responsible || "بدون مسؤول محدد"}</span>
                     </p>
                     <p>
                       <UsersRound size={16} />
@@ -273,6 +282,7 @@ export default function TeamEvents() {
       {editing !== undefined && (
         <EventForm
           event={editing}
+          volunteers={volunteers}
           onSave={save}
           onDelete={remove}
           onClose={() => setEditing(undefined)}
