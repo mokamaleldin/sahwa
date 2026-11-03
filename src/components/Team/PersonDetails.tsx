@@ -1,4 +1,5 @@
-import { Pencil, UserRound, Phone } from "lucide-react";
+import { useState } from "react";
+import { Pencil, UserRound, Phone, Trash2, Loader2 } from "lucide-react";
 import TeamDialog from "./TeamDialog";
 import { ageFromBirthDate } from "../../../shared/team-options.js";
 import { displayDate, type Volunteer } from "../../lib/team";
@@ -7,11 +8,27 @@ export default function PersonDetails({
   person,
   onClose,
   onEdit,
+  onDelete,
 }: {
   person: Volunteer;
   onClose: () => void;
   onEdit: () => void;
+  onDelete: () => Promise<void>;
 }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
+  async function remove() {
+    if (deleting || !confirmDelete) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await onDelete();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "تعذر حذف المتطوع.");
+      setDeleting(false);
+    }
+  }
   const age = ageFromBirthDate(person.birthDate);
   const fields = [
     ["الجامعة", person.university],
@@ -28,7 +45,7 @@ export default function PersonDetails({
     ["المسؤولية", person.responsibility],
   ];
   return (
-    <TeamDialog title="ملف المتطوع" onClose={onClose}>
+    <TeamDialog title="ملف المتطوع" onClose={onClose} busy={deleting}>
       <div className="team-form-body">
         <div className="team-person-intro">
           <span className="team-avatar team-avatar-large">
@@ -63,14 +80,51 @@ export default function PersonDetails({
             </div>
           ))}
         </dl>
+        {error && (
+          <p className="team-error mt-5" role="alert">{error}</p>
+        )}
+        {confirmDelete && (
+          <div className="team-delete-confirm" role="alert">
+            <p>هل تريد حذف «{person.fullName}» نهائيًا من سجل المتطوعين؟</p>
+            <p className="mt-2 text-sm">لن تُحذف الفعاليات المرتبطة به، لكن سيُزال اسمه من حقل المسؤول عنها إذا كان مرتبطًا بها.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="team-button team-button-danger"
+                onClick={() => void remove()}
+                disabled={deleting}
+              >
+                {deleting && <Loader2 size={17} className="animate-spin" aria-hidden="true" />}
+                {deleting ? "جارٍ الحذف…" : "نعم، احذف المتطوع"}
+              </button>
+              <button
+                type="button"
+                className="team-button team-button-secondary"
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleting}
+              >
+                تراجع
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       <div className="team-dialog-footer">
-        <button className="team-button" onClick={onEdit}>
+        <button className="team-button" onClick={onEdit} disabled={deleting || confirmDelete}>
           <Pencil size={17} />
           تعديل البيانات الأساسية
         </button>
-        <button className="team-button team-button-secondary" onClick={onClose}>
+        <button className="team-button team-button-secondary" onClick={onClose} disabled={deleting}>
           إغلاق
+        </button>
+        <button
+          type="button"
+          className="team-text-button team-delete-action"
+          onClick={() => setConfirmDelete(true)}
+          disabled={deleting || confirmDelete}
+        >
+          <Trash2 size={16} aria-hidden="true" />
+          حذف المتطوع
         </button>
       </div>
     </TeamDialog>
