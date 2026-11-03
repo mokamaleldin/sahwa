@@ -57,6 +57,15 @@ export default function TeamVolunteers() {
     () => filterVolunteers(people, filters),
     [people, filters],
   );
+  const statuses = useMemo(
+    () => [
+      ...new Set([
+        ...PERSON_STATUSES,
+        ...people.map((person) => person.status).filter((status) => status && !PERSON_STATUSES.includes(status)),
+      ]),
+    ],
+    [people],
+  );
   const universities = useMemo(
     () =>
       [...new Set(people.map((person) => person.university))].sort((a, b) =>
@@ -178,7 +187,7 @@ export default function TeamVolunteers() {
               onChange={(event) => update("status", event.target.value)}
             >
               <option value="">كل الحالات</option>
-              {PERSON_STATUSES.map((status) => (
+              {statuses.map((status) => (
                 <option key={status}>{status}</option>
               ))}
             </select>
