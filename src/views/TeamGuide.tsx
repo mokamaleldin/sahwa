@@ -6,7 +6,6 @@ import {
   ArrowUpLeft,
   BadgeCheck,
   Building2,
-  Check,
   Clock3,
   FileText,
   GitBranch,
@@ -526,27 +525,6 @@ export default function TeamGuide() {
             </article>
           </div>
 
-          <div className="guide-map-collaboration-link" aria-hidden="true">
-            <span />
-            <span />
-          </div>
-
-          <div className="guide-map-contribution">
-            <UnitButton unitId="participation" onSelect={openUnit} />
-            <div className="guide-map-contribution-link" aria-hidden="true" />
-            <div className="guide-map-contribution-roles">
-              {["volunteer", "event-lead", "event-member"].map((roleId) => (
-                <div className="guide-map-contribution-role" key={roleId}>
-                  <RoleButton roleId={roleId} onSelect={openRole} />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="guide-map-equality">
-            <Check size={17} aria-hidden="true" />
-            <p>العمل الجامعي والمركزي مساران متكاملان؛ لكل منهما قراراته وأنشطته وأعضاؤه. لا يلغي أحدهما دور الآخر، ويمكن للمتطوعين المشاركة في كليهما.</p>
-          </div>
         </div>
       </section>
 

@@ -31,7 +31,7 @@ test("organizational chart replaces duplicate sections and unwanted phrases", ()
   ]) {
     assert.ok(!view.includes(removed), removed);
   }
-  for (const node of ["guide-map-board-trigger", "guide-map-branches", "guide-map-contribution", "UnitDialog", "RoleDialog"]) {
+  for (const node of ["guide-map-board-trigger", "guide-map-branches", "UnitDialog", "RoleDialog"]) {
     assert.ok(view.includes(node), node);
   }
 });
@@ -74,11 +74,11 @@ test("all six council roles branch below the board, not inside its card", () => 
 });
 
 
-test("every operational branch connects its units, members and shared volunteers", () => {
+test("every active university and central branch connects its units and members", () => {
   assert.equal((view.match(/<OrganizationTeam\b/g) || []).length, 8);
   for (const id of [
     "universities", "university-youth", "university-women", "university-media", "university-relations",
-    "central", "central-youth", "central-women", "central-media", "central-relations", "participation",
+    "central", "central-youth", "central-women", "central-media", "central-relations",
   ]) {
     assert.ok(view.includes('unitId="' + id + '"'), "unreachable unit: " + id);
   }
@@ -88,9 +88,6 @@ test("every operational branch connects its units, members and shared volunteers
     "guide-map-tree-tier",
     "guide-map-team-link",
     "guide-map-team-role",
-    "guide-map-collaboration-link",
-    "guide-map-contribution-link",
-    "guide-map-contribution-role",
   ]) {
     assert.ok(view.includes(connector), "missing chart node: " + connector);
     assert.ok(css.includes("." + connector), "missing styling: " + connector);
@@ -102,11 +99,24 @@ test("every operational branch connects its units, members and shared volunteers
     ".guide-map-team-roles::before",
     ".guide-map-team-role::before",
     ".guide-map-planned-item:nth-child(-n+2)::after",
-    ".guide-map-contribution-roles::before",
   ]) {
     assert.ok(css.includes(diagramRule), "unconnected descendant: " + diagramRule);
   }
   assert.ok(css.includes(".guide-map-pair::before { display: none; }"), "mobile tree needs side-spine variant");
   assert.ok(view.includes("المسار المشترك بين الجامعات"));
   assert.ok(view.includes("فريقا الشباب والطالبات"));
+});
+
+test("guide ends at organizational branches without the volunteering footer", () => {
+  for (const removed of [
+    "guide-map-collaboration-link",
+    "guide-map-contribution",
+    "guide-map-equality",
+    "المتطوعون وفرق الفعاليات",
+    "العمل الجامعي والمركزي مساران متكاملان",
+  ]) {
+    assert.ok(!view.includes(removed), "old footer still visible: " + removed);
+  }
+  assert.ok(view.includes('unitId="universities"'));
+  assert.ok(view.includes('unitId="central"'));
 });
