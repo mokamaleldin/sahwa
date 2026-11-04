@@ -60,8 +60,8 @@
 .guide-chapter-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; color: var(--brand-primary); }
 .guide-chapter-card-soon .guide-chapter-top { color: #765c5e80; }
 .guide-chapter-number { font-size: 20px; color: #7520264a; font-variant-numeric: tabular-nums; }
-.guide-chapter-card h3 { margin: 0 0 10px; color: var(--brand-primary); font-size: 20px; font-weight: 650; }
-.guide-chapter-card p { margin: 0 0 22px; color: var(--text-muted); font-size: 13px; line-height: 1.85; }
+.guide-chapter-card .guide-chapter-title { display: block; margin: 0 0 10px; color: var(--brand-primary); font-size: 20px; font-weight: 650; }
+.guide-chapter-card .guide-chapter-description { display: block; margin: 0 0 22px; color: var(--text-muted); font-size: 13px; line-height: 1.85; }
 .guide-chapter-status {
   width: fit-content;
   margin-top: auto;
@@ -104,15 +104,15 @@
   }
   .guide-chapter-card { min-height: 167px; padding: 15px; border-radius: 16px; }
   .guide-chapter-top { margin-bottom: 9px; }
-  .guide-chapter-card h3 { font-size: 16px; margin-bottom: 6px; }
-  .guide-chapter-card p { font-size: 11px; line-height: 1.65; margin-bottom: 12px; }
+  .guide-chapter-card .guide-chapter-title { font-size: 16px; margin-bottom: 6px; }
+  .guide-chapter-card .guide-chapter-description { font-size: 11px; line-height: 1.65; margin-bottom: 12px; }
   .guide-chapter-status { font-size: 10px; }
   .guide-chapter-panel { padding-top: 11px; }
 }
 @media(max-width:370px) {
   .guide-chapter-card { min-height: 152px; padding: 11px; }
-  .guide-chapter-card h3 { font-size: 14px; }
-  .guide-chapter-card p { font-size: 10px; }
+  .guide-chapter-card .guide-chapter-title { font-size: 14px; }
+  .guide-chapter-card .guide-chapter-description { font-size: 10px; }
 }
 
 .guide-structure { scroll-margin-top: 120px; }
@@ -700,4 +700,19 @@
     height: 2px;
     transform: none;
   }
+}
+
+
+/* Final mobile overrides: chapter navigation stays compact above the active panel. */
+@media(max-width:640px) {
+  .guide-chapter-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+  .guide-chapter-card { min-height: 167px; padding: 15px; border-radius: 16px; }
+  .guide-chapter-top { margin-bottom: 9px; }
+  .guide-chapter-card .guide-chapter-title { font-size: 16px; margin-bottom: 6px; }
+  .guide-chapter-card .guide-chapter-description { font-size: 11px; line-height: 1.65; margin-bottom: 12px; }
+}
+@media(max-width:370px) {
+  .guide-chapter-card { min-height: 152px; padding: 11px; }
+  .guide-chapter-card .guide-chapter-title { font-size: 14px; }
+  .guide-chapter-card .guide-chapter-description { font-size: 10px; }
 }
