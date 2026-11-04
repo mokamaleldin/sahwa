@@ -358,12 +358,12 @@ export default function TeamGuide() {
             const Icon = chapter.icon;
             const content = (
               <>
-                <div className="guide-chapter-top">
+                <span className="guide-chapter-top">
                   <span className="guide-chapter-number">{chapter.number}</span>
                   <Icon size={23} aria-hidden="true" />
-                </div>
-                <h3>{chapter.title}</h3>
-                <p>{chapter.description}</p>
+                </span>
+                <span className="guide-chapter-title">{chapter.title}</span>
+                <span className="guide-chapter-description">{chapter.description}</span>
                 <span className="guide-chapter-status">
                   {chapter.available ? activeChapter === chapter.number ? "القسم المعروض" : "اضغط للعرض" : "قريبًا"}
                 </span>
@@ -376,6 +376,7 @@ export default function TeamGuide() {
                 type="button"
                 role="tab"
                 aria-selected={activeChapter === chapter.number}
+                tabIndex={activeChapter === chapter.number ? 0 : -1}
                 aria-controls="guide-chapter-panel"
                 className={`guide-chapter-card guide-chapter-card-active${activeChapter === chapter.number ? " guide-chapter-card-selected" : ""}`}
                 onClick={() => changeChapter(chapter.number)}
