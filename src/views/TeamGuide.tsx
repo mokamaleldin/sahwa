@@ -347,7 +347,7 @@ export default function TeamGuide() {
 
         <div className="guide-map" aria-label="الهيكل التنظيمي التفاعلي لصحوة">
           <div className="guide-map-board-wrap">
-            <article className="guide-map-board" aria-label="مجلس إدارة صحوة وأعضاؤه">
+            <article className="guide-map-board" aria-label="مجلس إدارة صحوة">
               <button
                 type="button"
                 className="guide-map-board-trigger"
@@ -362,12 +362,19 @@ export default function TeamGuide() {
                 </span>
                 <ArrowUpLeft size={20} aria-hidden="true" />
               </button>
-              <div className="guide-map-board-members" aria-label="أعضاء المجلس">
+            </article>
+
+            <div className="guide-map-council-link" aria-hidden="true" />
+            <section className="guide-map-council-members" aria-label="الأعضاء الستة لمجلس إدارة صحوة">
+              <div className="guide-map-council-heading">أعضاء مجلس الإدارة</div>
+              <div className="guide-map-board-members">
                 {councilRoles.map((roleId) => (
-                  <RoleButton key={roleId} roleId={roleId} onSelect={openRole} compact />
+                  <div className="guide-map-council-member" key={roleId}>
+                    <RoleButton roleId={roleId} onSelect={openRole} compact />
+                  </div>
                 ))}
               </div>
-            </article>
+            </section>
           </div>
 
           <div className="guide-map-stem" aria-hidden="true"><span /></div>
