@@ -322,16 +322,6 @@ export default function TeamGuide() {
         description="تعرف إلى هوية صحوة وقصتها ورؤيتها وأهدافها، ثم اكتشف كيف يتكوّن فريقها وتُوزّع المسؤوليات."
       />
 
-      <div className="guide-draft-notice" role="note">
-        <span className="guide-draft-icon" aria-hidden="true">
-          <Clock3 size={22} />
-        </span>
-        <div>
-          <strong>نسخة أولية — غير معتمدة نهائيًا</strong>
-          <p>تُراجع ثم تُعتمد.</p>
-        </div>
-      </div>
-
       <section className="guide-chapters" aria-labelledby="guide-chapters-title">
         <div className="guide-section-heading">
           <span>محتويات الدليل</span>
@@ -415,6 +405,15 @@ export default function TeamGuide() {
         className="guide-structure"
         aria-labelledby="guide-structure-title"
       >
+      <div className="guide-draft-notice" role="note">
+        <span className="guide-draft-icon" aria-hidden="true">
+          <Clock3 size={22} />
+        </span>
+        <div>
+          <strong>نسخة أولية — غير معتمدة نهائيًا</strong>
+          <p>تُراجع ثم تُعتمد.</p>
+        </div>
+      </div>
         <div className="guide-section-heading guide-section-heading-center">
           <span>03 — الهيكل والصلاحيات</span>
           <h2 id="guide-structure-title">كيف يتكوّن فريق صحوة؟</h2>
