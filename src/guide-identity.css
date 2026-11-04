@@ -101,19 +101,6 @@
   color: var(--brand-primary);
   font-weight: 700;
 }
-.guide-identity-hero-quote {
-  position: relative;
-  max-width: 800px;
-  margin: 27px 0 0;
-  padding: 19px 24px;
-  border-inline-start: 3px solid var(--brand-gold);
-  border-radius: 10px;
-  background: #fffaf9cf;
-  color: var(--brand-primary-dark);
-  font-size: 18px;
-  line-height: 1.95;
-  font-weight: 650;
-}
 .guide-identity-hero-decoration {
   position: absolute;
   top: -80px;
@@ -308,15 +295,6 @@
   color: #4e2932;
   font-size: 15px;
   font-weight: 550;
-}
-.guide-identity-vision-card strong {
-  display: block;
-  margin-top: 22px;
-  padding-top: 15px;
-  border-top: 1px solid #d6ad6366;
-  color: var(--brand-primary);
-  font-size: 15px;
-  line-height: 1.9;
 }
 .guide-identity-goal-grid {
   display: grid;
@@ -531,14 +509,6 @@
   font-size: 14px;
   line-height: 1.95;
 }
-.guide-identity-closing .guide-identity-closing-statement {
-  margin: 22px auto 0;
-  padding-top: 20px;
-  border-top: 1px solid #fff5ef42;
-  color: #fff8f3;
-  font-size: 16px;
-  font-weight: 700;
-}
 @media (max-width: 900px) {
   .guide-identity-story-intro,
   .guide-identity-vision-grid { grid-template-columns: 1fr; }
@@ -558,7 +528,6 @@
   .guide-identity-hero h3 { font-size: 34px; }
   .guide-identity-hero h3 em { display: block; font-size: .67em; }
   .guide-identity-hero p { font-size: 13px; line-height: 2; }
-  .guide-identity-hero-quote { padding: 14px 16px; font-size: 15px; }
   .guide-identity-nav {
     flex-wrap: nowrap;
     overflow-x: auto;

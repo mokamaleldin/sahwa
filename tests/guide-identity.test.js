@@ -59,7 +59,6 @@ test("identity has valid TSX syntax and all major text sections", () => {
     "الأخوة",
     "التعاون",
     "المبادرة",
-    "المسؤولية",
     "التعلم والتطور",
     "الاستمرارية",
     "نحو 90",
@@ -89,4 +88,36 @@ test("identity navigation and layouts work at tablet and mobile breakpoints", ()
   assert.ok(css.includes(".guide-identity-timeline::before"));
   assert.ok(css.includes(".guide-identity-goal-grid"));
   assert.ok(css.includes(".guide-identity-stats-grid"));
+});
+
+test("identity language emphasizes the family and omits removed statements", () => {
+  for (const removed of [
+    "صحوة ليست مجرد فعاليات أو لجان إدارية",
+    "فنجاح صحوة الحقيقي",
+    "لا نسعى إلى احتواء كل شيء داخل صحوة",
+    'name: "المسؤولية"',
+    "متطوعًا حاليًا وسابقًا ومن الخريجين",
+  ]) {
+    assert.ok(!chapter.includes(removed), "removed passage remains: " + removed);
+  }
+
+  for (const expected of [
+    "يكونون لك عونًا وصحبةً وأخوة",
+    "ما يجمعنا أكبر من مجرد العمل، فنحن عائلة",
+    "نصنع أثرًا سويًا في كل مكان تصل إليه أيدينا",
+    "فردًا في عائلة صحوة",
+  ]) {
+    assert.ok(chapter.includes(expected), "family copy missing: " + expected);
+  }
+});
+
+test("preliminary status applies only to the structure chapter", () => {
+  const contentStart = view.indexOf('{activeChapter === "01" && <GuideIdentity />}');
+  const structureStart = view.indexOf('{activeChapter === "03" && <section');
+  const noticeStart = view.indexOf('className="guide-draft-notice"');
+  const structureEnd = view.indexOf('</section>}', structureStart);
+  assert.ok(contentStart >= 0 && structureStart > contentStart);
+  assert.ok(noticeStart > structureStart && noticeStart < structureEnd);
+  assert.equal((view.match(/className="guide-draft-notice"/g) || []).length, 1);
+  assert.ok(view.includes("نسخة أولية — غير معتمدة نهائيًا"));
 });
