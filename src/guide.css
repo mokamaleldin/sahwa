@@ -698,6 +698,25 @@
   .guide-map-collaboration-link::after { top: 0; }
 }
 @media(max-width:640px) {
+  .guide-map-branch-root-link {
+    position: relative;
+    width: calc(50% - 7px);
+    height: 25px;
+    margin-inline-start: 7px;
+    margin-inline-end: auto;
+    border-inline-start: 2px solid #d6ad63a6;
+    border-bottom: 2px solid #d6ad63a6;
+    background: transparent;
+  }
+  .guide-map-branch-root-link::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 2px;
+    background: #d6ad63a6;
+  }
   .guide-map-branch-tree::before {
     left: auto;
     right: 7px;
