@@ -30,6 +30,7 @@ export default function TeamNavigation() {
           <NavLink to="/team" end>
             مساحة الفريق
           </NavLink>
+          <NavLink to="/team/guide">دليل صحوة</NavLink>
           {user?.accessRole === "admin" && (
             <>
               <NavLink to="/team/events">سجل الفعاليات</NavLink>
