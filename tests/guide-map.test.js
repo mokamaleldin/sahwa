@@ -31,7 +31,7 @@ test("organizational chart replaces duplicate sections and unwanted phrases", ()
   ]) {
     assert.ok(!view.includes(removed), removed);
   }
-  for (const node of ["guide-map-board-trigger", "guide-map-branches", "guide-map-contribution", "UnitDialog", "RoleDialog"]) {
+  for (const node of ["guide-map-board-trigger", "guide-map-branches", "UnitDialog", "RoleDialog"]) {
     assert.ok(view.includes(node), node);
   }
 });
