@@ -72,3 +72,41 @@ test("all six council roles branch below the board, not inside its card", () => 
   assert.ok(css.includes(".guide-map-council-member::before"));
   assert.ok(css.includes("grid-template-columns: repeat(2,minmax(0,1fr))"));
 });
+
+
+test("every operational branch connects its units, members and shared volunteers", () => {
+  assert.equal((view.match(/<OrganizationTeam\b/g) || []).length, 8);
+  for (const id of [
+    "universities", "university-youth", "university-women", "university-media", "university-relations",
+    "central", "central-youth", "central-women", "central-media", "central-relations", "participation",
+  ]) {
+    assert.ok(view.includes('unitId="' + id + '"'), "unreachable unit: " + id);
+  }
+  for (const connector of [
+    "guide-map-branch-root-link",
+    "guide-map-branch-tree",
+    "guide-map-tree-tier",
+    "guide-map-team-link",
+    "guide-map-team-role",
+    "guide-map-collaboration-link",
+    "guide-map-contribution-link",
+    "guide-map-contribution-role",
+  ]) {
+    assert.ok(view.includes(connector), "missing chart node: " + connector);
+    assert.ok(css.includes("." + connector), "missing styling: " + connector);
+  }
+  for (const diagramRule of [
+    ".guide-map-branch-tree::before",
+    ".guide-map-pair::before",
+    ".guide-map-team::before",
+    ".guide-map-team-roles::before",
+    ".guide-map-team-role::before",
+    ".guide-map-planned-item:nth-child(-n+2)::after",
+    ".guide-map-contribution-roles::before",
+  ]) {
+    assert.ok(css.includes(diagramRule), "unconnected descendant: " + diagramRule);
+  }
+  assert.ok(css.includes(".guide-map-pair::before { display: none; }"), "mobile tree needs side-spine variant");
+  assert.ok(view.includes("المسار المشترك بين الجامعات"));
+  assert.ok(view.includes("فريقا الشباب والطالبات"));
+});
