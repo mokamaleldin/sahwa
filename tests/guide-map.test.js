@@ -57,3 +57,18 @@ test("mobile layout and keyboard focus are supported", () => {
   assert.ok(css.includes("@media(max-width:640px)"));
   assert.ok(css.includes(".guide-map-unit-trigger:focus-visible"));
 });
+
+test("all six council roles branch below the board, not inside its card", () => {
+  const boardEnd = view.indexOf("</article>", view.indexOf('className="guide-map-board"'));
+  const membersStart = view.indexOf('className="guide-map-council-members"');
+  const membersEnd = view.indexOf("</section>", membersStart);
+  const branch = view.slice(membersStart, membersEnd);
+  assert.ok(boardEnd > 0 && membersStart > boardEnd, "members should be siblings below the board");
+  assert.ok(view.slice(boardEnd, membersStart).includes('className="guide-map-council-link"'));
+  assert.ok(branch.includes('councilRoles.map((roleId)'));
+  assert.equal((branch.match(/className="guide-map-council-member"/g) || []).length, 1);
+  assert.ok(css.includes("grid-template-columns: repeat(6,minmax(0,1fr))"));
+  assert.ok(css.includes(".guide-map-board-members::before"));
+  assert.ok(css.includes(".guide-map-council-member::before"));
+  assert.ok(css.includes("grid-template-columns: repeat(2,minmax(0,1fr))"));
+});
