@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import {
   BookOpen,
   Compass,
@@ -145,29 +148,82 @@ const numbers = [
   { value: "2025", label: "سنة تأسيس صحوة" },
 ];
 
-const sectionLinks = [
-  { href: "#guide-identity-story", title: "قصتنا" },
-  { href: "#guide-identity-vision", title: "الرؤية والرسالة" },
-  { href: "#guide-identity-goals", title: "أهدافنا الأربعة" },
-  { href: "#guide-identity-principles", title: "مبادئنا" },
-  { href: "#guide-identity-community", title: "الانضمام إلينا" },
-  { href: "#guide-identity-numbers", title: "صحوة بالأرقام" },
+const identityTabs = [
+  { key: "about", label: "من نحن؟" },
+  { key: "story", label: "قصتنا" },
+  { key: "vision", label: "الرؤية والرسالة" },
+  { key: "goals", label: "أهدافنا الأربعة" },
+  { key: "principles", label: "مبادئنا" },
+  { key: "community", label: "عائلة صحوة" },
+  { key: "numbers", label: "صحوة بالأرقام" },
 ];
 
 export default function GuideIdentity() {
+  const [activeSection, setActiveSection] = useState("about");
+
+  useEffect(() => {
+    const syncSectionFromHash = () => {
+      const hash = window.location.hash;
+      if (hash === "#guide-identity") {
+        setActiveSection("about");
+        return;
+      }
+      const tab = identityTabs.find((item) => hash === `#guide-identity-${item.key}`);
+      if (tab) setActiveSection(tab.key);
+    };
+    syncSectionFromHash();
+    window.addEventListener("hashchange", syncSectionFromHash);
+    return () => window.removeEventListener("hashchange", syncSectionFromHash);
+  }, []);
+
+  const changeSection = (key: string) => {
+    setActiveSection(key);
+    const hash = key === "about" ? "#guide-identity" : `#guide-identity-${key}`;
+    window.history.replaceState(null, "", window.location.pathname + window.location.search + hash);
+  };
+
   return (
     <section
       id="guide-identity"
       className="guide-identity"
       aria-labelledby="guide-identity-title"
     >
+      <header className="guide-identity-chapter-heading">
+        <span className="guide-identity-eyebrow">01 / هوية صحوة</span>
+        <h2 id="guide-identity-title">تعرف على صحوة</h2>
+        <p>اختر القسم الذي تريد قراءته، وسيظهر محتواه هنا دون عرض بقية الأقسام في نفس الصفحة.</p>
+      </header>
+      <div className="guide-identity-nav" role="tablist" aria-label="أقسام هوية صحوة">
+        {identityTabs.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            id={`guide-identity-tab-${key}`}
+            role="tab"
+            aria-selected={activeSection === key}
+            aria-controls="guide-identity-tab-panel"
+            className={`guide-identity-tab${activeSection === key ? " guide-identity-tab-selected" : ""}`}
+            onClick={() => changeSection(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div
+        id="guide-identity-tab-panel"
+        role="tabpanel"
+        tabIndex={0}
+        aria-labelledby={`guide-identity-tab-${activeSection}`}
+        className="guide-identity-tab-panel"
+      >
+        {activeSection === "about" && (
       <header className="guide-identity-hero">
         <div className="guide-identity-hero-decoration" aria-hidden="true">
           <span /><span /><span />
         </div>
         <div className="guide-identity-hero-content">
           <span className="guide-identity-eyebrow">01 / هوية صحوة</span>
-          <h2 id="guide-identity-title">صحوة <em>من نحن؟</em></h2>
+          <h3 id="guide-identity-about-title">صحوة <em>من نحن؟</em></h3>
           <p className="guide-identity-hero-meta">
             مبادرة طلابية إسلامية تأسست عام 2025 في تركيا
           </p>
@@ -186,13 +242,11 @@ export default function GuideIdentity() {
           </div>
         </div>
       </header>
+        )}
 
-      <nav className="guide-identity-nav" aria-label="انتقل إلى أقسام هوية صحوة">
-        {sectionLinks.map(({ href, title }) => (
-          <a href={href} key={href}>{title}</a>
-        ))}
-      </nav>
 
+
+      {activeSection === "story" && (
       <section
         id="guide-identity-story"
         className="guide-identity-section"
@@ -225,7 +279,9 @@ export default function GuideIdentity() {
           ))}
         </ol>
       </section>
+      )}
 
+      {activeSection === "vision" && (
       <section
         id="guide-identity-vision"
         className="guide-identity-section"
@@ -258,7 +314,9 @@ export default function GuideIdentity() {
           </article>
         </div>
       </section>
+      )}
 
+      {activeSection === "goals" && (
       <section
         id="guide-identity-goals"
         className="guide-identity-section"
@@ -285,7 +343,9 @@ export default function GuideIdentity() {
           ))}
         </div>
       </section>
+      )}
 
+      {activeSection === "principles" && (
       <section
         id="guide-identity-principles"
         className="guide-identity-section"
@@ -307,7 +367,9 @@ export default function GuideIdentity() {
           ))}
         </div>
       </section>
+      )}
 
+      {activeSection === "community" && (
       <section
         id="guide-identity-community"
         className="guide-identity-section guide-identity-community"
@@ -334,7 +396,9 @@ export default function GuideIdentity() {
           </div>
         </div>
       </section>
+      )}
 
+      {activeSection === "numbers" && (
       <section
         id="guide-identity-numbers"
         className="guide-identity-section guide-identity-statistics"
@@ -354,7 +418,9 @@ export default function GuideIdentity() {
           ))}
         </div>
       </section>
+      )}
 
+      {activeSection === "numbers" && (
       <footer className="guide-identity-closing">
         <span>صحوة في كلمات</span>
         <div className="guide-identity-motto">
@@ -370,6 +436,8 @@ export default function GuideIdentity() {
           لا نسعى إلى احتواء كل شيء داخل صحوة، بل إلى أن يخرج منها أشخاص يستطيعون بناء أشياء أكبر منها.
         </p>
       </footer>
+      )}
+      </div>
     </section>
   );
 }
