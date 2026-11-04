@@ -301,7 +301,7 @@ export default function TeamGuide() {
       </Helmet>
       <PageHeading
         title="دليل صحوة"
-        description="مرجع بسيط يوضح كيف نعمل، ومن يقرر ماذا، وكيف يستطيع كل متطوع أن يبادر ويقود."
+        description="تعرف إلى هوية صحوة وقصتها ورؤيتها وأهدافها، ثم اكتشف كيف يتكوّن فريقها وتُوزّع المسؤوليات."
       />
 
       <div className="guide-draft-notice" role="note">
