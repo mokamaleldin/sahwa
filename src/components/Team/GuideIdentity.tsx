@@ -216,6 +216,7 @@ export default function GuideIdentity() {
             id={`guide-identity-tab-${key}`}
             role="tab"
             aria-selected={activeSection === key}
+            tabIndex={activeSection === key ? 0 : -1}
             aria-controls="guide-identity-tab-panel"
             className={`guide-identity-tab${activeSection === key ? " guide-identity-tab-selected" : ""}`}
             onClick={() => changeSection(key)}
@@ -237,7 +238,7 @@ export default function GuideIdentity() {
           <span /><span /><span />
         </div>
         <div className="guide-identity-hero-content">
-          <span className="guide-identity-eyebrow">01 / هوية صحوة</span>
+          <span className="guide-identity-eyebrow">من نحن؟</span>
           <h3 id="guide-identity-about-title">صحوة <em>من نحن؟</em></h3>
           <p className="guide-identity-hero-meta">
             مبادرة طلابية إسلامية تأسست عام 2025 في تركيا
