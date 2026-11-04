@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import {
   ArrowUpLeft,
@@ -279,6 +279,24 @@ function OrganizationTeam({
 }
 
 export default function TeamGuide() {
+  const [activeChapter, setActiveChapter] = useState("01");
+  useEffect(() => {
+    const syncChapterFromHash = () => {
+      const hash = window.location.hash;
+      if (hash === "#guide-structure") setActiveChapter("03");
+      else if (hash === "#guide-identity" || hash.startsWith("#guide-identity-")) setActiveChapter("01");
+    };
+    syncChapterFromHash();
+    window.addEventListener("hashchange", syncChapterFromHash);
+    return () => window.removeEventListener("hashchange", syncChapterFromHash);
+  }, []);
+
+  const changeChapter = (chapter: string) => {
+    setActiveChapter(chapter);
+    const hash = chapter === "03" ? "#guide-structure" : "#guide-identity";
+    window.history.replaceState(null, "", window.location.pathname + window.location.search + hash);
+  };
+
   const [selectedRole, setSelectedRole] = useState<ResponsibilityCard | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<StructureUnit | null>(null);
   const openRole = (role: ResponsibilityCard) => {
@@ -319,7 +337,7 @@ export default function TeamGuide() {
           <span>محتويات الدليل</span>
           <h2 id="guide-chapters-title">خريطة دليل صحوة</h2>
         </div>
-        <div className="guide-chapter-grid">
+        <div className="guide-chapter-grid" role="tablist" aria-label="أبواب دليل صحوة">
           {guideChapters.map((chapter) => {
             const Icon = chapter.icon;
             const content = (
@@ -331,22 +349,28 @@ export default function TeamGuide() {
                 <h3>{chapter.title}</h3>
                 <p>{chapter.description}</p>
                 <span className="guide-chapter-status">
-                  {chapter.available ? "مفتوح الآن" : "قريبًا"}
+                  {chapter.available ? activeChapter === chapter.number ? "القسم المعروض" : "اضغط للعرض" : "قريبًا"}
                 </span>
               </>
             );
             return chapter.available ? (
-              <a
+              <button
                 key={chapter.number}
-                href={chapter.number === "01" ? "#guide-identity" : "#guide-structure"}
-                className="guide-chapter-card guide-chapter-card-active"
+                id={`guide-chapter-tab-${chapter.number}`}
+                type="button"
+                role="tab"
+                aria-selected={activeChapter === chapter.number}
+                aria-controls="guide-chapter-panel"
+                className={`guide-chapter-card guide-chapter-card-active${activeChapter === chapter.number ? " guide-chapter-card-selected" : ""}`}
+                onClick={() => changeChapter(chapter.number)}
               >
                 {content}
-              </a>
+              </button>
             ) : (
               <article
                 key={chapter.number}
                 className="guide-chapter-card guide-chapter-card-soon"
+                aria-label={`${chapter.title} — قريبًا`}
               >
                 {content}
               </article>
@@ -355,9 +379,16 @@ export default function TeamGuide() {
         </div>
       </section>
 
-      <GuideIdentity />
+      <div
+        id="guide-chapter-panel"
+        role="tabpanel"
+        tabIndex={0}
+        aria-labelledby={`guide-chapter-tab-${activeChapter}`}
+        className="guide-chapter-panel"
+      >
+      {activeChapter === "01" && <GuideIdentity />}
 
-      <section
+      {activeChapter === "03" && <section
         id="guide-structure"
         className="guide-structure"
         aria-labelledby="guide-structure-title"
@@ -526,7 +557,8 @@ export default function TeamGuide() {
           </div>
 
         </div>
-      </section>
+      </section>}
+      </div>
 
       {selectedRole && (
         <RoleDialog role={selectedRole} onClose={() => setSelectedRole(null)} />
