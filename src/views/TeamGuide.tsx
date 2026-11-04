@@ -5,7 +5,6 @@ import { Helmet } from "react-helmet-async";
 import {
   ArrowUpLeft,
   BadgeCheck,
-  BookOpenCheck,
   Building2,
   Check,
   Clock3,
