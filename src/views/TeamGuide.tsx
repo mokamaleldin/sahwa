@@ -251,6 +251,33 @@ function UnitDialog({
   );
 }
 
+
+function OrganizationTeam({
+  unitId,
+  roles,
+  onSelectUnit,
+  onSelectRole,
+}: {
+  unitId: string;
+  roles: string[];
+  onSelectUnit: (unit: StructureUnit) => void;
+  onSelectRole: (role: ResponsibilityCard) => void;
+}) {
+  return (
+    <section className="guide-map-team">
+      <UnitButton unitId={unitId} onSelect={onSelectUnit} small />
+      <div className="guide-map-team-link" aria-hidden="true" />
+      <div className="guide-map-team-roles">
+        {roles.map((roleId) => (
+          <div className="guide-map-team-role" key={roleId}>
+            <RoleButton roleId={roleId} onSelect={onSelectRole} compact />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function TeamGuide() {
   const [selectedRole, setSelectedRole] = useState<ResponsibilityCard | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<StructureUnit | null>(null);
@@ -379,6 +406,7 @@ export default function TeamGuide() {
 
           <div className="guide-map-stem" aria-hidden="true"><span /></div>
 
+
           <div className="guide-map-branches">
             <article className="guide-map-branch guide-map-branch-university">
               <div className="guide-map-branch-head">
@@ -386,119 +414,138 @@ export default function TeamGuide() {
                 <span>مسار الجامعة</span>
               </div>
               <UnitButton unitId="universities" onSelect={openUnit} />
-              <div className="guide-map-branch-line" aria-hidden="true" />
+              <div className="guide-map-branch-root-link" aria-hidden="true" />
 
-              <div className="guide-map-pair">
-                <section className="guide-map-team">
-                  <UnitButton unitId="university-youth" onSelect={openUnit} small />
-                  <div className="guide-map-team-roles">
-                    <RoleButton roleId="university-youth-coordinator" onSelect={openRole} compact />
-                    <RoleButton roleId="internal-youth-activities" onSelect={openRole} compact />
-                    <RoleButton roleId="university-activities-member" onSelect={openRole} compact />
+              <div className="guide-map-branch-tree">
+                <div className="guide-map-tree-tier">
+                  <div className="guide-map-subheading"><span>فريقا الشباب والطالبات</span></div>
+                  <div className="guide-map-pair">
+                    <OrganizationTeam
+                      unitId="university-youth"
+                      roles={["university-youth-coordinator", "internal-youth-activities", "university-activities-member"]}
+                      onSelectUnit={openUnit}
+                      onSelectRole={openRole}
+                    />
+                    <OrganizationTeam
+                      unitId="university-women"
+                      roles={["university-women-coordinator", "internal-women-activities", "university-activities-member"]}
+                      onSelectUnit={openUnit}
+                      onSelectRole={openRole}
+                    />
                   </div>
-                </section>
-                <section className="guide-map-team">
-                  <UnitButton unitId="university-women" onSelect={openUnit} small />
-                  <div className="guide-map-team-roles">
-                    <RoleButton roleId="university-women-coordinator" onSelect={openRole} compact />
-                    <RoleButton roleId="internal-women-activities" onSelect={openRole} compact />
-                    <RoleButton roleId="university-activities-member" onSelect={openRole} compact />
-                  </div>
-                </section>
-              </div>
+                </div>
 
-              <div className="guide-map-subheading"><span>فرق مساندة داخل الجامعة</span></div>
-              <div className="guide-map-pair">
-                <section className="guide-map-team">
-                  <UnitButton unitId="university-media" onSelect={openUnit} small />
-                  <div className="guide-map-team-roles">
-                    <RoleButton roleId="field-media-lead" onSelect={openRole} compact />
-                    <RoleButton roleId="field-media-member" onSelect={openRole} compact />
+                <div className="guide-map-tree-tier">
+                  <div className="guide-map-subheading"><span>فرق مساندة داخل الجامعة</span></div>
+                  <div className="guide-map-pair">
+                    <OrganizationTeam
+                      unitId="university-media"
+                      roles={["field-media-lead", "field-media-member"]}
+                      onSelectUnit={openUnit}
+                      onSelectRole={openRole}
+                    />
+                    <OrganizationTeam
+                      unitId="university-relations"
+                      roles={["university-relations-lead", "university-relations-member"]}
+                      onSelectUnit={openUnit}
+                      onSelectRole={openRole}
+                    />
                   </div>
-                </section>
-                <section className="guide-map-team">
-                  <UnitButton unitId="university-relations" onSelect={openUnit} small />
-                  <div className="guide-map-team-roles">
-                    <RoleButton roleId="university-relations-lead" onSelect={openRole} compact />
-                    <RoleButton roleId="university-relations-member" onSelect={openRole} compact />
+                </div>
+
+                <div className="guide-map-tree-tier guide-map-tree-tier-optional">
+                  <div className="guide-map-flex-role">
+                    <span>لجنة إضافية عند الحاجة</span>
+                    <RoleButton roleId="additional-committee-lead" onSelect={openRole} compact />
                   </div>
-                </section>
-              </div>
-              <div className="guide-map-flex-role">
-                <span>لجنة أخرى عند الحاجة</span>
-                <RoleButton roleId="additional-committee-lead" onSelect={openRole} compact />
+                </div>
               </div>
             </article>
 
             <article className="guide-map-branch guide-map-branch-central">
               <div className="guide-map-branch-head">
                 <GitBranch size={23} aria-hidden="true" />
-                <span>المسار المشترك</span>
+                <span>المسار المشترك بين الجامعات</span>
               </div>
               <UnitButton unitId="central" onSelect={openUnit} />
-              <div className="guide-map-branch-line" aria-hidden="true" />
+              <div className="guide-map-branch-root-link" aria-hidden="true" />
 
-              <div className="guide-map-pair">
-                <section className="guide-map-team">
-                  <UnitButton unitId="central-youth" onSelect={openUnit} small />
-                  <div className="guide-map-team-roles">
-                    <RoleButton roleId="central-youth-lead" onSelect={openRole} compact />
-                    <RoleButton roleId="central-youth-member" onSelect={openRole} compact />
+              <div className="guide-map-branch-tree">
+                <div className="guide-map-tree-tier">
+                  <div className="guide-map-subheading"><span>فرق الأنشطة المركزية</span></div>
+                  <div className="guide-map-pair">
+                    <OrganizationTeam
+                      unitId="central-youth"
+                      roles={["central-youth-lead", "central-youth-member"]}
+                      onSelectUnit={openUnit}
+                      onSelectRole={openRole}
+                    />
+                    <OrganizationTeam
+                      unitId="central-women"
+                      roles={["central-women-lead", "central-women-member"]}
+                      onSelectUnit={openUnit}
+                      onSelectRole={openRole}
+                    />
                   </div>
-                </section>
-                <section className="guide-map-team">
-                  <UnitButton unitId="central-women" onSelect={openUnit} small />
-                  <div className="guide-map-team-roles">
-                    <RoleButton roleId="central-women-lead" onSelect={openRole} compact />
-                    <RoleButton roleId="central-women-member" onSelect={openRole} compact />
-                  </div>
-                </section>
-              </div>
-
-              <div className="guide-map-subheading"><span>وحدات مركزية قائمة</span></div>
-              <div className="guide-map-pair">
-                <section className="guide-map-team">
-                  <UnitButton unitId="central-media" onSelect={openUnit} small />
-                  <div className="guide-map-team-roles">
-                    <RoleButton roleId="central-media-lead" onSelect={openRole} compact />
-                    <RoleButton roleId="central-media-member" onSelect={openRole} compact />
-                  </div>
-                </section>
-                <section className="guide-map-team">
-                  <UnitButton unitId="central-relations" onSelect={openUnit} small />
-                  <div className="guide-map-team-roles">
-                    <RoleButton roleId="central-relations-lead" onSelect={openRole} compact />
-                    <RoleButton roleId="central-relations-member" onSelect={openRole} compact />
-                  </div>
-                </section>
-              </div>
-
-              <div className="guide-map-planned">
-                <div className="guide-map-subheading">
-                  <span>وحدات مقترحة للتأسيس لاحقًا</span>
-                  <small>غير مفعّلة</small>
                 </div>
-                <div className="guide-map-planned-grid">
-                  {["programs", "review", "expansion", "technology"].map((unitId) => (
-                    <UnitButton key={unitId} unitId={unitId} onSelect={openUnit} small />
-                  ))}
+
+                <div className="guide-map-tree-tier">
+                  <div className="guide-map-subheading"><span>وحدات مركزية قائمة</span></div>
+                  <div className="guide-map-pair">
+                    <OrganizationTeam
+                      unitId="central-media"
+                      roles={["central-media-lead", "central-media-member"]}
+                      onSelectUnit={openUnit}
+                      onSelectRole={openRole}
+                    />
+                    <OrganizationTeam
+                      unitId="central-relations"
+                      roles={["central-relations-lead", "central-relations-member"]}
+                      onSelectUnit={openUnit}
+                      onSelectRole={openRole}
+                    />
+                  </div>
+                </div>
+
+                <div className="guide-map-tree-tier guide-map-tree-tier-optional">
+                  <div className="guide-map-planned">
+                    <div className="guide-map-subheading">
+                      <span>وحدات مقترحة للتأسيس لاحقًا</span>
+                      <small>غير مفعّلة</small>
+                    </div>
+                    <div className="guide-map-planned-grid">
+                      {["programs", "review", "expansion", "technology"].map((unitId) => (
+                        <div className="guide-map-planned-item" key={unitId}>
+                          <UnitButton unitId={unitId} onSelect={openUnit} small />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </article>
           </div>
 
-          <div className="guide-map-equality">
-            <Check size={17} aria-hidden="true" />
-            <p>العمل الجامعي والمركزي مساران متكاملان؛ لكل منهما قراراته وأنشطته وأعضاؤه. لا يلغي أحدهما دور الآخر.</p>
+          <div className="guide-map-collaboration-link" aria-hidden="true">
+            <span />
+            <span />
           </div>
 
           <div className="guide-map-contribution">
             <UnitButton unitId="participation" onSelect={openUnit} />
+            <div className="guide-map-contribution-link" aria-hidden="true" />
             <div className="guide-map-contribution-roles">
-              <RoleButton roleId="volunteer" onSelect={openRole} />
-              <RoleButton roleId="event-lead" onSelect={openRole} />
-              <RoleButton roleId="event-member" onSelect={openRole} />
+              {["volunteer", "event-lead", "event-member"].map((roleId) => (
+                <div className="guide-map-contribution-role" key={roleId}>
+                  <RoleButton roleId={roleId} onSelect={openRole} />
+                </div>
+              ))}
             </div>
+          </div>
+
+          <div className="guide-map-equality">
+            <Check size={17} aria-hidden="true" />
+            <p>العمل الجامعي والمركزي مساران متكاملان؛ لكل منهما قراراته وأنشطته وأعضاؤه. لا يلغي أحدهما دور الآخر، ويمكن للمتطوعين المشاركة في كليهما.</p>
           </div>
         </div>
       </section>
