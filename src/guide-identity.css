@@ -1,11 +1,37 @@
 /* Sahwa guide / Identity chapter. The page is in RTL and uses existing brand tokens. */
+.guide-identity-chapter-heading {
+  padding: 5px 0 7px;
+}
+.guide-identity-chapter-heading h2 {
+  margin: 9px 0 5px;
+  color: var(--brand-primary-dark);
+  font-size: clamp(28px, 3.5vw, 38px);
+  line-height: 1.5;
+  font-weight: 750;
+}
+.guide-identity-chapter-heading p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+.guide-identity-tab-panel {
+  min-height: 190px;
+  padding-top: 20px;
+  outline-offset: 4px;
+}
+.guide-identity-tab-panel:focus-visible {
+  outline: 3px solid var(--brand-gold);
+  border-radius: 14px;
+}
+
 .guide-identity {
   max-width: 1100px;
-  margin: 0 auto 96px;
+  margin: 0 auto 60px;
   scroll-margin-top: 120px;
   color: var(--text-main);
 }
-.guide-identity-section { margin: 80px 0 0; scroll-margin-top: 120px; }
+.guide-identity-section { margin: 14px 0 0; scroll-margin-top: 120px; }
 .guide-identity-hero {
   position: relative;
   overflow: hidden;
@@ -45,14 +71,14 @@
   height: 2px;
   background: var(--brand-gold);
 }
-.guide-identity-hero h2 {
+.guide-identity-hero h3 {
   margin: 13px 0 6px;
   color: var(--brand-primary-dark);
   font-size: clamp(35px, 5vw, 58px);
   line-height: 1.3;
   font-weight: 800;
 }
-.guide-identity-hero h2 em {
+.guide-identity-hero h3 em {
   font-size: .66em;
   font-weight: 500;
   font-style: normal;
@@ -113,7 +139,9 @@
   gap: 9px;
   margin: 21px 0 0;
 }
-.guide-identity-nav a {
+.guide-identity-nav .guide-identity-tab {
+  font: inherit;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -128,12 +156,20 @@
   text-decoration: none;
   transition: background .18s, border-color .18s, transform .18s;
 }
-.guide-identity-nav a:hover {
+.guide-identity-nav .guide-identity-tab:hover {
   background: #f7e8d8;
   border-color: var(--brand-gold);
   transform: translateY(-2px);
 }
-.guide-identity-nav a:focus-visible {
+.guide-identity-nav .guide-identity-tab-selected,
+.guide-identity-nav .guide-identity-tab-selected:hover {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: #fffaf7;
+  transform: none;
+  box-shadow: 0 5px 15px #7520261d;
+}
+.guide-identity-nav .guide-identity-tab:focus-visible {
   outline: 3px solid var(--brand-gold);
   outline-offset: 3px;
 }
@@ -511,12 +547,16 @@
   .guide-identity-hero-decoration { opacity: .15; }
 }
 @media (max-width: 640px) {
+  .guide-identity-chapter-heading h2 { font-size: 27px; }
+  .guide-identity-chapter-heading p { font-size: 12px; }
+  .guide-identity-tab-panel { padding-top: 13px; }
+  .guide-identity-nav { margin-top: 14px; }
   .guide-identity { margin-bottom: 73px; }
-  .guide-identity-section { margin-top: 60px; scroll-margin-top: 90px; }
+  .guide-identity-section { margin-top: 12px; scroll-margin-top: 90px; }
   .guide-identity-hero { border-radius: 20px; }
   .guide-identity-hero-content { padding: 25px 20px 27px; }
-  .guide-identity-hero h2 { font-size: 34px; }
-  .guide-identity-hero h2 em { display: block; font-size: .67em; }
+  .guide-identity-hero h3 { font-size: 34px; }
+  .guide-identity-hero h3 em { display: block; font-size: .67em; }
   .guide-identity-hero p { font-size: 13px; line-height: 2; }
   .guide-identity-hero-quote { padding: 14px 16px; font-size: 15px; }
   .guide-identity-nav {
@@ -525,7 +565,7 @@
     padding-bottom: 7px;
     scrollbar-width: thin;
   }
-  .guide-identity-nav a { flex: 0 0 auto; }
+  .guide-identity-nav .guide-identity-tab { flex: 0 0 auto; }
   .guide-identity-story-intro { gap: 10px; }
   .guide-identity-story-intro p { padding: 17px; font-size: 13px; }
   .guide-identity-timeline { padding-inline-start: 20px; }
@@ -547,6 +587,6 @@
   .guide-identity-closing { padding: 27px 21px; border-radius: 19px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .guide-identity-nav a { transition: none; }
-  .guide-identity-nav a:hover { transform: none; }
+  .guide-identity-nav .guide-identity-tab { transition: none; }
+  .guide-identity-nav .guide-identity-tab:hover { transform: none; }
 }
