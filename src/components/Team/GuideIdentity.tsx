@@ -1,0 +1,375 @@
+import {
+  BookOpen,
+  Compass,
+  GraduationCap,
+  Heart,
+  Handshake,
+  Globe2,
+  Leaf,
+  Lightbulb,
+  Sparkles,
+  UsersRound,
+} from "lucide-react";
+
+const milestones = [
+  {
+    when: "2025",
+    title: "بذرة الفكرة",
+    detail:
+      "بدأ التفكير في تكوين مجتمع طلابي يجمع بين الصحبة الصالحة والقرآن والأخوة والعمل النافع، ويتجاوز حدود اللقاءات العابرة إلى علاقة مستمرة بين الطلاب.",
+  },
+  {
+    when: "9 ديسمبر 2025",
+    title: "بداية التأسيس",
+    detail:
+      "أُنشئت أول مجموعة لصحوة، وبدأ التواصل بين الشباب وتشكيل النواة الأولى للفريق.",
+  },
+  {
+    when: "12 ديسمبر 2025",
+    title: "الإعلان الرسمي الأول",
+    detail:
+      "ظهر أول إعلان رسمي عن صحوة، لتبدأ رحلتها من فكرة بين مجموعة من الطلاب إلى مبادرة تسعى للوصول إلى عدد أكبر من الشباب.",
+  },
+  {
+    when: "2026",
+    title: "من الفكرة إلى العمل",
+    detail:
+      "بدأت صحوة تتوسع في أنشطتها وفعالياتها، وتبني فرقها داخل الجامعات، وتجمع متطوعين ومتطوعات يعملون في مجالات مختلفة.",
+    extra:
+      "تنوعت الأعمال بين اللقاءات والندوات والأنشطة الطلابية والرحلات والمبادرات التعليمية والاجتماعية، مع بناء علاقات وتعاون مع جهات طلابية أخرى.",
+  },
+  {
+    when: "2026",
+    title: "نمو صحوة وتطورها",
+    detail:
+      "امتد حضور صحوة إلى ثلاث جامعات رئيسية، وتطورت فرق الشباب والطالبات، وأعمال الإعلام والعلاقات العامة، وبدأ العمل على تطوير المنصة الإلكترونية والأدوات التي تخدم الطلاب والمتطوعين.",
+    extra:
+      "ومع هذا النمو، أصبحت صحوة أكثر من مجموعة تنظم فعاليات؛ أصبحت مجتمعًا طلابيًا يجمع أشخاصًا من جامعات وخلفيات مختلفة، يعملون معًا على رسالة واحدة.",
+  },
+];
+
+const pillars = [
+  {
+    number: "01",
+    title: "القرآن مرجعنا",
+    icon: BookOpen,
+    intro:
+      "نسعى إلى أن يكون القرآن حاضرًا في تفكيرنا وقراراتنا ونظرتنا إلى الحياة، لا أن يقتصر حضوره على الدروس واللقاءات.",
+    detail:
+      "نتعلم كيف نفهمه ونتدبره بصورة صحيحة، ونرجع إلى أهل العلم فيما لا نعرف، ونستصحب هدايته في أخلاقنا وعلاقاتنا ودراستنا وعملنا ومسؤولياتنا.",
+    clarification:
+      "ولا يعني ذلك أن نستخرج كل العلوم والتخصصات من القرآن؛ بل أن نتعلم العلوم من مصادرها الصحيحة، ونستفيد من خبرات البشر وتجاربهم، مع المحافظة على مرجعيتنا وقيمنا.",
+    closing:
+      "فالغاية أن يسهم القرآن في بناء الإنسان الذي يعرف لماذا يعمل، وكيف يعمل، وما مسؤوليته تجاه الله والناس.",
+  },
+  {
+    number: "02",
+    title: "الصحبة الصالحة بيئتنا",
+    icon: Heart,
+    intro:
+      "نسعى إلى بناء علاقات أخوية حقيقية بين الشباب، يجد فيها كل شخص من يعينه ويسانده ويشاركه الخير.",
+    detail:
+      "نريد صحبة لا تنتهي بانتهاء الفعالية أو الاجتماع، ولا تقوم فقط على التكليفات والمسؤوليات، بل تمتد إلى حياتنا وعلاقاتنا واهتماماتنا.",
+    closing:
+      "نريد أن يشعر كل فرد أنه جزء من عائلة، لا مجرد اسم في قائمة المتطوعين.",
+  },
+  {
+    number: "03",
+    title: "الأمة الواحدة هويتنا",
+    icon: Globe2,
+    intro:
+      "نؤمن أن ما يجمعنا أكبر من اختلاف جنسياتنا ولغاتنا وخلفياتنا.",
+    detail:
+      "نسعى إلى تعزيز انتماء الشباب لأمتهم، وفهم قضاياها وتحدياتها، وبناء علاقات قائمة على الأخوة والتعاون والتكامل.",
+    closing:
+      "ونطمح إلى شباب يدركون أنهم جزء من أمة واحدة، وأن لكل منهم مسؤولية يستطيع القيام بها في موقعه ومجاله.",
+  },
+  {
+    number: "04",
+    title: "النفع والأثر غايتنا العملية",
+    icon: Compass,
+    intro:
+      "لا نريد أن تبقى القيم والأفكار مجرد كلام، بل أن تتحول إلى أعمال ومشروعات ومبادرات تنفع الناس.",
+    detail:
+      "نسعى إلى مساعدة الشباب على اكتشاف قدراتهم، والتقدم في تخصصاتهم، واختيار مجالات يستطيعون من خلالها خدمة مجتمعاتهم وأمتهم.",
+    clarification:
+      "قد يكون أثر أحدهم في التعليم، وآخر في الطب، أو التقنية، أو الاقتصاد، أو الإعلام، أو غيرها من المجالات.",
+    closing:
+      "لا نريد أن نصنع نسخة واحدة من الشباب، بل أشخاصًا مختلفين تجمعهم المبادئ ويكمل بعضهم بعضًا.",
+  },
+];
+
+const principles = [
+  {
+    name: "الإخلاص",
+    icon: Sparkles,
+    detail: "نعمل ابتغاء مرضاة الله، ونحرص على أن يكون نفع الناس أهم من الظهور والألقاب.",
+  },
+  {
+    name: "الأخوة",
+    icon: Heart,
+    detail: "نتعامل باعتبارنا عائلة تجمعها رسالة واحدة، ونحافظ على علاقاتنا حتى خارج العمل والأنشطة.",
+  },
+  {
+    name: "التعاون",
+    icon: Handshake,
+    detail: "نعمل معًا، ونتبادل الخبرات، ونساعد بعضنا على النجاح دون منافسة شخصية أو احتكار.",
+  },
+  {
+    name: "المبادرة",
+    icon: Lightbulb,
+    detail: "لكل فرد فرصة أن يقدم فكرة ويبدأ مشروعًا ويشارك في صنع القرار المناسب لمسؤوليته.",
+  },
+  {
+    name: "المسؤولية",
+    icon: UsersRound,
+    detail: "نحترم التزاماتنا وحقوق الآخرين، ونتعامل بوضوح وعدل.",
+  },
+  {
+    name: "التعلم والتطور",
+    icon: GraduationCap,
+    detail: "نتعلم من تجاربنا وأخطائنا، ونستفيد من المعرفة والخبرات النافعة أينما وجدناها.",
+  },
+  {
+    name: "الاستمرارية",
+    icon: Leaf,
+    detail: "نبني أعمالًا وعلاقات ومشروعات تستطيع الاستمرار بعد تخرجنا أو انتقال مسؤولياتنا.",
+  },
+];
+
+const numbers = [
+  { value: "61", label: "فعالية ونشاطًا" },
+  { value: "نحو 90", label: "متطوعًا حاليًا وسابقًا ومن الخريجين" },
+  { value: "3", label: "جامعات رئيسية تتمتع صحوة فيها باعتماد رسمي" },
+  { value: "800+", label: "طالب في مجموعات صحوة الطلابية" },
+  { value: "2025", label: "سنة تأسيس صحوة" },
+];
+
+const sectionLinks = [
+  { href: "#guide-identity-story", title: "قصتنا" },
+  { href: "#guide-identity-vision", title: "الرؤية والرسالة" },
+  { href: "#guide-identity-goals", title: "أهدافنا الأربعة" },
+  { href: "#guide-identity-principles", title: "مبادئنا" },
+  { href: "#guide-identity-community", title: "الانضمام إلينا" },
+  { href: "#guide-identity-numbers", title: "صحوة بالأرقام" },
+];
+
+export default function GuideIdentity() {
+  return (
+    <section
+      id="guide-identity"
+      className="guide-identity"
+      aria-labelledby="guide-identity-title"
+    >
+      <header className="guide-identity-hero">
+        <div className="guide-identity-hero-decoration" aria-hidden="true">
+          <span /><span /><span />
+        </div>
+        <div className="guide-identity-hero-content">
+          <span className="guide-identity-eyebrow">01 / هوية صحوة</span>
+          <h2 id="guide-identity-title">صحوة <em>من نحن؟</em></h2>
+          <p className="guide-identity-hero-meta">
+            مبادرة طلابية إسلامية تأسست عام 2025 في تركيا
+          </p>
+          <p>
+            صحوة مبادرة يقودها طلاب وطالبات جمعهم هدف واحد:
+            <strong> بناء بيئة متكاملة للشباب، داخل الجامعات وخارجها، تجمع بين القرآن والصحبة الصالحة والوعي والعمل النافع.</strong>
+          </p>
+          <p>
+            نؤمن أن مرحلة الشباب ليست مجرد سنوات للدراسة والحصول على شهادة، بل مرحلة لبناء الإنسان وتشكيل وعيه وشخصيته وعلاقته بدينه وأمته ومجتمعه.
+          </p>
+          <p>
+            ولهذا نسعى إلى بناء مجتمع يجد فيه الشاب الصحبة التي تعينه، والبيئة التي ينمو فيها، والفرص التي يكتشف من خلالها قدراته، ويتعلم كيف يكون نافعًا في المجال الذي يختاره.
+          </p>
+          <div className="guide-identity-hero-quote">
+            صحوة ليست مجرد فعاليات أو لجان إدارية، بل عائلة طلابية نبنيها معًا، ولكل فرد فيها مكان ودور وفرصة ليترك أثرًا.
+          </div>
+        </div>
+      </header>
+
+      <nav className="guide-identity-nav" aria-label="انتقل إلى أقسام هوية صحوة">
+        {sectionLinks.map(({ href, title }) => (
+          <a href={href} key={href}>{title}</a>
+        ))}
+      </nav>
+
+      <section
+        id="guide-identity-story"
+        className="guide-identity-section"
+        aria-labelledby="guide-identity-story-title"
+      >
+        <div className="guide-identity-heading">
+          <span>البداية والمسار</span>
+          <h3 id="guide-identity-story-title">قصتنا <i>كيف بدأت صحوة؟</i></h3>
+        </div>
+        <div className="guide-identity-story-intro">
+          <p>
+            بدأت صحوة من حاجة شعر بها مجموعة من الطلاب: الحاجة إلى بيئة تجمع الشباب على الخير، وتعينهم على الثبات والنمو، وتربطهم بالقرآن وببعضهم وبقضايا أمتهم.
+          </p>
+          <p>
+            لم تبدأ صحوة بمؤسسة كبيرة أو إمكانات واسعة، وإنما بفكرة آمن بها طلاب أرادوا أن يصنعوا لأنفسهم ولغيرهم بيئة أفضل.
+          </p>
+        </div>
+        <h4 className="guide-identity-timeline-label">محطات من تاريخ صحوة</h4>
+        <ol className="guide-identity-timeline">
+          {milestones.map((milestone, index) => (
+            <li key={index}>
+              <span className="guide-identity-timeline-point" aria-hidden="true" />
+              <article>
+                <time>{milestone.when}</time>
+                <h5>{milestone.title}</h5>
+                <p>{milestone.detail}</p>
+                {milestone.extra && <p>{milestone.extra}</p>}
+              </article>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section
+        id="guide-identity-vision"
+        className="guide-identity-section"
+        aria-labelledby="guide-identity-vision-title"
+      >
+        <div className="guide-identity-heading">
+          <span>إلى أين نمضي؟</span>
+          <h3 id="guide-identity-vision-title">رؤيتنا ورسالتنا</h3>
+        </div>
+        <div className="guide-identity-vision-grid">
+          <article className="guide-identity-vision-card guide-identity-vision-card-primary">
+            <span className="guide-identity-card-index">01 / الرؤية</span>
+            <h4>رؤيتنا</h4>
+            <p className="guide-identity-vision-lead">
+              أن نبني بيئة شبابية إسلامية متكاملة، تنطلق من الجامعات وتمتد إلى خارجها، تسهم في إعداد شباب أقوياء في دينهم ووعيهم وتخصصاتهم، قادرين على تحمل مسؤولياتهم وصناعة أثر نافع في مجتمعاتهم وأمتهم.
+            </p>
+            <p>
+              ولا يقتصر طموحنا على ما يُنجز داخل صحوة نفسها، بل نطمح أن يخرج من هذه البيئة طلاب وأصحاب تخصصات ومبادرات ومشروعات وقيادات نافعة في مجالات مختلفة.
+            </p>
+            <strong>
+              فنجاح صحوة الحقيقي ليس أن يبقى الجميع يعملون تحت اسمها، بل أن يخرج منها أشخاص قادرون على بناء أشياء أكبر منها.
+            </strong>
+          </article>
+          <article className="guide-identity-vision-card">
+            <span className="guide-identity-card-index">02 / الرسالة</span>
+            <h4>رسالتنا</h4>
+            <p className="guide-identity-vision-lead">
+              بناء مجتمع شبابي يجمع بين القرآن والصحبة الصالحة ومعنى الأمة الواحدة، من خلال البرامج والأنشطة والمبادرات والعلاقات التي تساعد الشباب على النمو علميًا وإيمانيًا واجتماعيًا، واكتشاف قدراتهم، وتحويل ما يتعلمونه إلى نفع وأثر حقيقي.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section
+        id="guide-identity-goals"
+        className="guide-identity-section"
+        aria-labelledby="guide-identity-goals-title"
+      >
+        <div className="guide-identity-heading">
+          <span>ما الذي يجمعنا؟</span>
+          <h3 id="guide-identity-goals-title">أهدافنا الأربعة</h3>
+          <p>أربعة معانٍ تشكّل مرجعيتنا وبيئتنا وهويتنا وغايتنا العملية.</p>
+        </div>
+        <div className="guide-identity-goal-grid">
+          {pillars.map(({ number, title, icon: Icon, intro, detail, clarification, closing }) => (
+            <article className="guide-identity-goal" key={number}>
+              <div className="guide-identity-goal-top">
+                <span className="guide-identity-goal-icon"><Icon size={25} strokeWidth={1.7} aria-hidden="true" /></span>
+                <span className="guide-identity-goal-number">{number}</span>
+              </div>
+              <h4>{title}</h4>
+              <p>{intro}</p>
+              <p>{detail}</p>
+              {clarification && <p>{clarification}</p>}
+              <div className="guide-identity-goal-closing">{closing}</div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section
+        id="guide-identity-principles"
+        className="guide-identity-section"
+        aria-labelledby="guide-identity-principles-title"
+      >
+        <div className="guide-identity-heading">
+          <span>كيف نعمل ونتعامل؟</span>
+          <h3 id="guide-identity-principles-title">مبادئنا العامة</h3>
+        </div>
+        <div className="guide-identity-principles">
+          {principles.map(({ name, icon: Icon, detail }) => (
+            <article key={name} className="guide-identity-principle">
+              <span className="guide-identity-principle-icon"><Icon size={20} strokeWidth={1.8} aria-hidden="true" /></span>
+              <div>
+                <h4>{name}</h4>
+                <p>{detail}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section
+        id="guide-identity-community"
+        className="guide-identity-section guide-identity-community"
+        aria-labelledby="guide-identity-community-title"
+      >
+        <div className="guide-identity-community-body">
+          <span className="guide-identity-eyebrow">لك مكان بيننا</span>
+          <h3 id="guide-identity-community-title">ماذا يعني أن تكون جزءًا من صحوة؟</h3>
+          <strong>بانضمامك إلى صحوة، تصبح جزءًا من عائلتنا.</strong>
+          <p>
+            هنا تجد طلابًا يشبهونك في طموحاتهم وتحدياتهم، يتعلمون ويخطئون ويتطورون، ويحاولون أن يعين بعضهم بعضًا على الخير.
+          </p>
+          <p>
+            لست مطالبًا أن تكون مسؤولًا أو أن تعمل طوال الوقت حتى يكون لك مكان بيننا.
+          </p>
+          <p>
+            يمكنك أن تشارك في نشاط، أو تقترح فكرة، أو تتعلم مهارة، أو تنضم إلى فريق، أو تقود مشروعًا يناسب اهتماماتك وقدراتك.
+          </p>
+          <p>
+            ونريد أن تبقى علاقتك بصحوة ممتدة حتى بعد التخرج؛ لأن ما يجمعنا أكبر من سنوات الجامعة.
+          </p>
+          <div className="guide-identity-community-last">
+            نحن لا نبني فريق عمل فقط، بل نبني بيئة نتعلم وننمو فيها معًا، ثم ينطلق كل منا ليصنع أثره في المكان الذي يصل إليه.
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="guide-identity-numbers"
+        className="guide-identity-section guide-identity-statistics"
+        aria-labelledby="guide-identity-numbers-title"
+      >
+        <div className="guide-identity-heading guide-identity-heading-center">
+          <span>أثر يتسع</span>
+          <h3 id="guide-identity-numbers-title">صحوة بالأرقام</h3>
+          <p>حصيلة المبادرة حتى إعداد هذا التعريف.</p>
+        </div>
+        <div className="guide-identity-stats-grid">
+          {numbers.map(({ value, label }) => (
+            <div className="guide-identity-stat" key={label}>
+              <strong dir="auto">{value}</strong>
+              <span>{label}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <footer className="guide-identity-closing">
+        <span>صحوة في كلمات</span>
+        <div className="guide-identity-motto">
+          <strong>القرآن مرجعنا.</strong>
+          <strong>الصحبة الصالحة بيئتنا.</strong>
+          <strong>الأمة الواحدة هويتنا.</strong>
+          <strong>والنفع والأثر غايتنا العملية.</strong>
+        </div>
+        <p>
+          نبني الإنسان بالقرآن والصحبة ومعنى الأمة، ثم نساعده أن يعرف مسؤوليته ومجاله ويصنع أثره.
+        </p>
+        <p className="guide-identity-closing-statement">
+          لا نسعى إلى احتواء كل شيء داخل صحوة، بل إلى أن يخرج منها أشخاص يستطيعون بناء أشياء أكبر منها.
+        </p>
+      </footer>
+    </section>
+  );
+}
