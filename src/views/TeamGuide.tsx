@@ -337,7 +337,23 @@ export default function TeamGuide() {
           <span>محتويات الدليل</span>
           <h2 id="guide-chapters-title">خريطة دليل صحوة</h2>
         </div>
-        <div className="guide-chapter-grid" role="tablist" aria-label="أبواب دليل صحوة">
+        <div
+          className="guide-chapter-grid"
+          role="tablist"
+          aria-label="أبواب دليل صحوة"
+          onKeyDown={(event) => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            const available = guideChapters.filter((chapter) => chapter.available).map((chapter) => chapter.number);
+            const currentIndex = available.indexOf(activeChapter);
+            const nextIndex = event.key === "Home" ? 0
+              : event.key === "End" ? available.length - 1
+              : (currentIndex + (event.key === "ArrowLeft" ? 1 : -1) + available.length) % available.length;
+            const next = available[nextIndex];
+            changeChapter(next);
+            document.getElementById(`guide-chapter-tab-${next}`)?.focus();
+          }}
+        >
           {guideChapters.map((chapter) => {
             const Icon = chapter.icon;
             const content = (
@@ -367,13 +383,18 @@ export default function TeamGuide() {
                 {content}
               </button>
             ) : (
-              <article
+              <button
                 key={chapter.number}
+                type="button"
+                role="tab"
+                aria-selected={false}
+                aria-disabled="true"
+                disabled
                 className="guide-chapter-card guide-chapter-card-soon"
                 aria-label={`${chapter.title} — قريبًا`}
               >
                 {content}
-              </article>
+              </button>
             );
           })}
         </div>
