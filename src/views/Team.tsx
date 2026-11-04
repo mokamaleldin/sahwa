@@ -2,6 +2,7 @@
 
 import {
   ArrowUpLeft,
+  BookOpenCheck,
   CalendarDays,
   ClipboardList,
   FolderOpen,
@@ -14,6 +15,14 @@ import PageHeading from "../components/shared/PageIdentity";
 import { useSession } from "../auth/useSession";
 
 const cards = [
+  {
+    title: "دليل صحوة",
+    description:
+      "الهيكل والصلاحيات ومسار القرار وبطاقات المسؤوليات لكل دور.",
+    to: "/team/guide",
+    icon: BookOpenCheck,
+    action: "فتح دليل صحوة",
+  },
   {
     title: "سجل الفعاليات",
     description:
@@ -69,7 +78,7 @@ export default function Team() {
       </Helmet>
       <PageHeading
         title="مساحة فريق صحوة"
-        description="فريقنا، ملفاتنا، وأدواتنا… كلها قريبة منك."
+        description="دليلنا، فريقنا، ملفاتنا، وأدواتنا… كلها قريبة منك."
       />
       {user && (
         <div className="team-welcome">

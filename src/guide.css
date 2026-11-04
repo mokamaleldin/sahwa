@@ -1,0 +1,223 @@
+.guide-draft-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  max-width: 1100px;
+  margin: -12px auto 44px;
+  padding: 18px 21px;
+  border: 1px solid #d6ad6370;
+  border-radius: 17px;
+  background: #d6ad630d;
+}
+.guide-draft-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border-radius: 13px;
+  background: #d6ad6318;
+  color: var(--brand-primary);
+}
+.guide-draft-notice strong { color: var(--brand-primary); font-size: 15px; }
+.guide-draft-notice p { margin: 3px 0 0; color: var(--text-muted); font-size: 13px; line-height: 1.8; }
+
+.guide-chapters,
+.guide-structure { max-width: 1100px; margin-inline: auto; }
+.guide-chapters { margin-bottom: 88px; }
+.guide-section-heading { margin-bottom: 25px; }
+.guide-section-heading > span {
+  display: inline-flex;
+  margin-bottom: 7px;
+  color: var(--brand-primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+.guide-section-heading h2,
+.guide-section-heading h3 { margin: 0; color: var(--brand-primary-dark); font-size: 29px; line-height: 1.45; font-weight: 700; }
+.guide-section-heading p { max-width: 720px; margin: 8px 0 0; color: var(--text-muted); font-size: 14px; line-height: 1.9; }
+.guide-section-heading-center { text-align: center; }
+.guide-section-heading-center p { margin-inline: auto; }
+
+.guide-chapter-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 15px; }
+.guide-chapter-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 255px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff7;
+}
+.guide-chapter-card-active { border-color: #d6ad6380; box-shadow: var(--card-shadow); transition: transform .2s,border-color .2s,background .2s; }
+.guide-chapter-card-active:hover { transform: translateY(-3px); border-color: var(--brand-gold); background: #fff9; }
+.guide-chapter-card-soon { background: #ede4dc66; color: var(--text-muted); }
+.guide-chapter-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; color: var(--brand-primary); }
+.guide-chapter-card-soon .guide-chapter-top { color: #765c5e80; }
+.guide-chapter-number { font-size: 20px; color: #7520264a; font-variant-numeric: tabular-nums; }
+.guide-chapter-card h3 { margin: 0 0 10px; color: var(--brand-primary); font-size: 20px; font-weight: 650; }
+.guide-chapter-card p { margin: 0 0 22px; color: var(--text-muted); font-size: 13px; line-height: 1.85; }
+.guide-chapter-status {
+  width: fit-content;
+  margin-top: auto;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+.guide-chapter-card-active .guide-chapter-status { border-color: #d6ad6370; background: #d6ad6312; color: var(--brand-primary); }
+
+.guide-structure { scroll-margin-top: 120px; }
+.guide-principles { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin: 32px 0 42px; }
+.guide-principles > div { display: flex; align-items: flex-start; gap: 10px; min-width: 0; padding: 15px 17px; border: 1px solid var(--line); border-radius: 14px; background: #fff6; }
+.guide-principles svg { flex: 0 0 auto; margin-top: 4px; color: var(--brand-gold); }
+.guide-principles p { margin: 0; color: var(--text-muted); font-size: 13px; line-height: 1.8; }
+
+.guide-org-card {
+  margin: 0 0 26px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: #fff7;
+  box-shadow: var(--card-shadow);
+}
+.guide-council-card { border-color: #d6ad6355; }
+.guide-org-title { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+.guide-org-title-center { justify-content: center; text-align: center; }
+.guide-org-icon { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; flex: 0 0 auto; border-radius: 16px; color: var(--brand-primary); background: #7520260a; border: 1px solid #75202610; }
+.guide-org-title span:not(.guide-org-icon) { color: var(--text-muted); font-size: 11px; }
+.guide-org-title h3 { margin: 1px 0 2px; color: var(--brand-primary); font-size: 25px; line-height: 1.5; font-weight: 650; }
+.guide-org-title p { margin: 0; color: var(--text-muted); font-size: 13px; }
+.guide-council-card > .guide-role-button { margin: -10px 0 20px; }
+.guide-council-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.guide-council-role { position: relative; min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 15px; background: var(--bg-base); }
+.guide-council-role > span { display: block; margin: 0 2px 5px; color: #75202650; font-size: 10px; }
+
+.guide-role-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 46px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #fff8;
+  color: var(--brand-primary-dark);
+  text-align: right;
+  font-size: 13px;
+  font-weight: 550;
+  transition: border-color .18s,background .18s,color .18s;
+}
+.guide-role-button:hover { border-color: var(--brand-gold); background: #d6ad630c; color: var(--brand-primary); }
+.guide-role-button svg { flex: 0 0 auto; color: var(--brand-primary); opacity: .7; }
+.guide-role-button-compact { min-height: 40px; padding: 7px 10px; font-size: 12px; }
+.guide-council-role .guide-role-button { border: 0; padding: 3px 2px; background: transparent; font-size: 15px; }
+
+.guide-connector { display: flex; flex-direction: column; align-items: center; height: 48px; color: var(--brand-gold); }
+.guide-connector span { width: 1px; flex: 1; background: var(--line); }
+.guide-two-sides { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 15px; }
+.guide-side-card { min-width: 0; padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: var(--bg-base); }
+.guide-side-card > svg { color: var(--brand-primary); }
+.guide-side-card h4 { margin: 9px 0 6px; color: var(--brand-primary); font-size: 20px; }
+.guide-side-card > p { margin: 0 0 17px; color: var(--text-muted); font-size: 13px; line-height: 1.85; }
+.guide-side-roles { display: grid; gap: 7px; }
+.guide-partnership-note { margin: 20px 0 0; padding: 16px 18px; border-radius: 13px; background: #d6ad630c; color: var(--brand-primary-dark); font-size: 13px; line-height: 1.85; text-align: center; }
+
+.guide-university-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+.guide-university-team { min-width: 0; padding: 19px; border: 1px solid var(--line); border-radius: 17px; background: var(--bg-base); }
+.guide-university-team h4 { margin: 0 0 13px; color: var(--brand-primary); font-size: 18px; }
+.guide-university-team .guide-role-button + .guide-role-button { margin-top: 7px; }
+.guide-shared-services { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-top: 14px; }
+.guide-shared-services > div { min-width: 0; padding: 18px; border: 1px dashed #d6ad6390; border-radius: 17px; background: #d6ad6308; }
+.guide-shared-services svg { color: var(--brand-primary); }
+.guide-shared-services h4 { margin: 7px 0 12px; color: var(--brand-primary-dark); font-size: 17px; }
+.guide-shared-services .guide-role-button + .guide-role-button { margin-top: 7px; }
+
+.guide-units { margin: 72px 0; }
+.guide-units-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 15px; }
+.guide-unit-card { display: flex; flex-direction: column; min-width: 0; min-height: 245px; padding: 21px; border: 1px solid var(--line); border-radius: 19px; }
+.guide-unit-active { background: #fff8; border-color: #d6ad6365; }
+.guide-unit-soon { background: #ede4dc70; }
+.guide-unit-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--brand-primary); }
+.guide-unit-top span { padding: 3px 8px; border: 1px solid var(--line); border-radius: 999px; font-size: 10px; color: var(--text-muted); }
+.guide-unit-active .guide-unit-top span { border-color: #80a38760; background: #edf4ef; color: #355d43; }
+.guide-unit-soon .guide-unit-top { color: #765c5e80; }
+.guide-unit-card h4 { margin: 18px 0 8px; color: var(--brand-primary); font-size: 19px; line-height: 1.55; }
+.guide-unit-soon h4 { color: var(--text-muted); }
+.guide-unit-card > p { margin: 0 0 17px; color: var(--text-muted); font-size: 12px; line-height: 1.85; }
+.guide-unit-roles { display: grid; gap: 7px; margin-top: auto; }
+
+.guide-decisions { margin: 0 0 72px; }
+.guide-decision-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; }
+.guide-decision-grid article { min-width: 0; min-height: 205px; padding: 20px; border: 1px solid var(--line); border-radius: 17px; background: #fff7; }
+.guide-decision-grid article > span { color: #75202645; font-size: 19px; }
+.guide-decision-grid h4 { margin: 18px 0 8px; color: var(--brand-primary); font-size: 17px; line-height: 1.55; }
+.guide-decision-grid p { margin: 0; color: var(--text-muted); font-size: 12px; line-height: 1.85; }
+.guide-idea-note { display: flex; align-items: flex-start; gap: 12px; margin-top: 16px; padding: 18px 20px; border: 1px solid #d6ad6370; border-radius: 15px; background: #d6ad630d; }
+.guide-idea-note svg { flex: 0 0 auto; margin-top: 2px; color: var(--brand-gold); }
+.guide-idea-note p { margin: 0; color: var(--brand-primary-dark); font-size: 13px; line-height: 1.85; }
+
+.guide-responsibilities { margin: 0 0 72px; }
+.guide-responsibility-groups { display: grid; gap: 16px; }
+.guide-responsibility-groups > section { padding: 21px; border: 1px solid var(--line); border-radius: 19px; background: #fff6; }
+.guide-responsibility-group-heading { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; color: var(--brand-primary); }
+.guide-responsibility-group-heading h4 { margin: 0; font-size: 17px; }
+.guide-responsibility-group-heading span { margin-inline-start: auto; color: var(--text-muted); font-size: 11px; }
+.guide-responsibility-list { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; }
+
+.guide-governance-summary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-bottom: 20px; }
+.guide-governance-summary > div { padding: 21px; border: 1px solid var(--line); border-radius: 18px; background: #fff7; }
+.guide-governance-summary svg { color: var(--brand-primary); }
+.guide-governance-summary h3 { margin: 10px 0 6px; color: var(--brand-primary); font-size: 18px; }
+.guide-governance-summary p { margin: 0; color: var(--text-muted); font-size: 12px; line-height: 1.85; }
+
+.guide-role-dialog-intro { display: flex; align-items: center; gap: 14px; padding: 22px 24px; border-bottom: 1px solid var(--line); background: #d6ad6308; }
+.guide-role-dialog-icon { display: inline-flex; align-items: center; justify-content: center; width: 50px; height: 50px; flex: 0 0 auto; border: 1px solid #d6ad6365; border-radius: 15px; color: var(--brand-primary); background: #fff7; }
+.guide-role-dialog-intro h3 { margin: 0 0 2px; color: var(--brand-primary); font-size: 21px; }
+.guide-role-dialog-intro p { margin: 0; color: var(--text-muted); font-size: 12px; }
+.guide-role-fields { margin: 0; padding: 0 24px 24px; }
+.guide-role-fields > div { display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 20px; padding: 18px 0; border-bottom: 1px solid var(--line); }
+.guide-role-fields > div:last-child { border-bottom: 0; }
+.guide-role-fields dt { color: var(--brand-primary); font-size: 12px; font-weight: 650; }
+.guide-role-fields dd { min-width: 0; margin: 0; color: var(--text-main); font-size: 13px; line-height: 1.85; }
+.guide-role-fields dd strong,.guide-role-fields dd span { display: block; }
+.guide-role-fields dd span { color: var(--text-muted); font-size: 12px; }
+.guide-role-fields p { margin: 0; }
+.guide-role-fields ul { margin: 0; padding: 0 18px 0 0; }
+.guide-role-fields li + li { margin-top: 5px; }
+
+@media(max-width:900px) {
+  .guide-chapter-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .guide-units-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .guide-decision-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .guide-responsibility-list { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+
+@media(max-width:640px) {
+  .guide-draft-notice { margin-top: -5px; margin-bottom: 34px; padding: 15px; }
+  .guide-chapters { margin-bottom: 64px; }
+  .guide-section-heading h2,.guide-section-heading h3 { font-size: 25px; }
+  .guide-chapter-grid,.guide-principles,.guide-council-grid,.guide-two-sides,.guide-university-grid,.guide-shared-services,.guide-units-grid,.guide-decision-grid,.guide-responsibility-list,.guide-governance-summary { grid-template-columns: 1fr; }
+  .guide-chapter-card { min-height: 220px; padding: 20px; }
+  .guide-org-card { padding: 19px; border-radius: 19px; }
+  .guide-org-title { align-items: flex-start; }
+  .guide-org-title-center { align-items: center; }
+  .guide-org-title h3 { font-size: 21px; }
+  .guide-side-card,.guide-university-team { padding: 16px; }
+  .guide-units { margin: 56px 0; }
+  .guide-unit-card { min-height: 215px; }
+  .guide-decision-grid article { min-height: 175px; }
+  .guide-responsibility-groups > section { padding: 16px; }
+  .guide-role-dialog-intro { padding: 18px 17px; }
+  .guide-role-fields { padding: 0 17px 18px; }
+  .guide-role-fields > div { grid-template-columns: 1fr; gap: 7px; padding: 15px 0; }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .guide-chapter-card-active,.guide-role-button { transition: none; }
+  .guide-chapter-card-active:hover { transform: none; }
+}
