@@ -500,6 +500,21 @@
   transform: translateX(-50%);
 }
 .guide-map-planned-item .guide-map-unit-trigger { height: 100%; }
+/* The second row of proposed units remains linked to the same parent. */
+.guide-map-planned-item:nth-child(-n+2)::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  height: 10px;
+  width: 2px;
+  background: #d6ad63a6;
+  transform: translateX(-50%);
+}
+.guide-map-planned-item:nth-child(n+3)::before {
+  top: -10px;
+  height: 10px;
+}
 
 /* Both tracks feed the shared volunteering and event-teams layer. */
 .guide-map-collaboration-link {
@@ -712,7 +727,8 @@
     padding-top: 9px;
     padding-inline-start: 24px;
   }
-  .guide-map-planned-grid::before { display: none; }
+  .guide-map-planned-grid::before,
+  .guide-map-planned-item:nth-child(-n+2)::after { display: none; }
   .guide-map-planned-item::before {
     top: 50%;
     left: auto;
