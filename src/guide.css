@@ -276,24 +276,125 @@
 .guide-map-unit-trigger-small { min-height: 92px; padding: 12px 13px; border-color: #75202620; background: #fffaf8; }
 .guide-map-unit-trigger-small .guide-map-unit-text strong { font-size: 15px; line-height: 1.55; }
 .guide-map-unit-trigger-small .guide-map-unit-summary { font-size: 11px; }
-.guide-map-branch-line {
+/* A single trunk runs from each track to every team and supporting unit. */
+.guide-map-branch-root-link {
   width: 2px;
-  height: 22px;
+  height: 21px;
   margin-inline: auto;
   background: #d6ad63a6;
 }
-.guide-map-pair { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: stretch; gap: 10px; }
+.guide-map-branch-tree {
+  position: relative;
+  flex: 1;
+  padding-bottom: 5px;
+}
+.guide-map-branch-tree::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 25px;
+  left: 50%;
+  width: 2px;
+  background: #d6ad6394;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.guide-map-tree-tier { position: relative; }
+.guide-map-tree-tier + .guide-map-tree-tier { margin-top: 23px; }
+.guide-map-tree-tier > .guide-map-subheading {
+  position: relative;
+  z-index: 1;
+  justify-content: center;
+  margin: 0 auto 7px;
+}
+.guide-map-tree-tier > .guide-map-subheading span {
+  padding: 5px 12px;
+  border: 1px solid #d6ad635d;
+  border-radius: 99px;
+  background: #fffaf6;
+  text-align: center;
+}
+.guide-map-pair {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2,minmax(0,1fr));
+  align-items: stretch;
+  gap: 12px;
+  padding-top: 23px;
+}
+.guide-map-pair::before {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  background: #d6ad63a6;
+  pointer-events: none;
+}
 .guide-map-team {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
   padding: 10px;
-  border: 1px solid #75202612;
+  border: 1px solid #75202614;
   border-radius: 17px;
-  background: #fff9;
+  background: #fffcf9;
 }
-.guide-map-team-roles { display: grid; align-content: start; gap: 7px; padding-top: 10px; }
-.guide-map-team-roles .guide-role-button { background: #fff; }
+.guide-map-team::before {
+  content: "";
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  width: 2px;
+  height: 14px;
+  background: #d6ad63a6;
+  transform: translateX(-50%);
+}
+.guide-map-team-link {
+  height: 16px;
+  width: 2px;
+  margin-inline: auto;
+  background: #d6ad63a6;
+}
+.guide-map-team-roles {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 12px 0 1px;
+  padding-inline-start: 22px;
+}
+.guide-map-team-roles::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 20px;
+  inset-inline-start: 8px;
+  width: 2px;
+  background: #d6ad63a6;
+}
+.guide-map-team-roles::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline-start: 8px;
+  width: calc(50% - 8px);
+  height: 2px;
+  background: #d6ad63a6;
+}
+.guide-map-team-role { position: relative; min-width: 0; }
+.guide-map-team-role::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  inset-inline-start: -14px;
+  width: 14px;
+  height: 2px;
+  background: #d6ad63a6;
+}
+.guide-map-team-roles .guide-role-button { height: 100%; background: #fff; }
 .guide-map-subheading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 22px 3px 12px; }
 .guide-map-subheading > span { color: var(--brand-primary-dark); font-size: 12px; font-weight: 700; }
 .guide-map-subheading > small { color: var(--text-muted); font-size: 10px; }
@@ -338,6 +439,155 @@
   background: #fff9;
 }
 .guide-map-contribution-roles { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-top: 13px; }
+
+/* Last branches: flexible university committees and proposed central units. */
+.guide-map-tree-tier-optional { padding-top: 9px; }
+.guide-map-tree-tier-optional::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 15px;
+  width: 2px;
+  background: #d6ad63a6;
+}
+.guide-map-tree-tier-optional .guide-map-flex-role {
+  position: relative;
+  z-index: 1;
+  max-width: 405px;
+  margin: 6px auto 0;
+  background: #fffaf7;
+}
+.guide-map-tree-tier-optional .guide-map-planned { margin-top: 0; }
+.guide-map-planned > .guide-map-subheading {
+  position: relative;
+  z-index: 1;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 0 0 8px;
+  padding-top: 9px;
+}
+.guide-map-planned > .guide-map-subheading > span {
+  border: 1px solid #d6ad635d;
+  border-radius: 99px;
+  background: #fffaf6;
+  padding: 5px 12px;
+  text-align: center;
+}
+.guide-map-planned-grid {
+  position: relative;
+  padding-top: 24px;
+  gap: 10px;
+}
+.guide-map-planned-grid::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  background: #d6ad63a6;
+}
+.guide-map-planned-item { position: relative; min-width: 0; }
+.guide-map-planned-item::before {
+  content: "";
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  height: 14px;
+  width: 2px;
+  background: #d6ad63a6;
+  transform: translateX(-50%);
+}
+.guide-map-planned-item .guide-map-unit-trigger { height: 100%; }
+/* The second row of proposed units remains linked to the same parent. */
+.guide-map-planned-item:nth-child(-n+2)::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  height: 10px;
+  width: 2px;
+  background: #d6ad63a6;
+  transform: translateX(-50%);
+}
+.guide-map-planned-item:nth-child(n+3)::before {
+  top: -10px;
+  height: 10px;
+}
+
+/* Both tracks feed the shared volunteering and event-teams layer. */
+.guide-map-collaboration-link {
+  position: relative;
+  height: 53px;
+}
+.guide-map-collaboration-link::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  left: 25%;
+  right: 25%;
+  height: 2px;
+  background: #d6ad63a6;
+}
+.guide-map-collaboration-link::after {
+  content: "";
+  position: absolute;
+  top: 18px;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: #d6ad63a6;
+  transform: translateX(-50%);
+}
+.guide-map-collaboration-link span {
+  position: absolute;
+  top: 0;
+  height: 19px;
+  width: 2px;
+  background: #d6ad63a6;
+}
+.guide-map-collaboration-link span:first-child { left: 25%; }
+.guide-map-collaboration-link span:last-child { left: 75%; }
+.guide-map-contribution-link {
+  width: 2px;
+  height: 23px;
+  margin-inline: auto;
+  background: #d6ad63a6;
+}
+.guide-map-contribution-roles {
+  position: relative;
+  padding-top: 24px;
+  margin-top: 0;
+}
+.guide-map-contribution-roles::before {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 16.667%;
+  right: 16.667%;
+  height: 2px;
+  background: #d6ad63a6;
+}
+.guide-map-contribution-role { position: relative; min-width: 0; }
+.guide-map-contribution-role::before {
+  content: "";
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  width: 2px;
+  height: 15px;
+  background: #d6ad63a6;
+  transform: translateX(-50%);
+}
+.guide-map-contribution-role .guide-role-button {
+  height: 100%;
+  min-height: 62px;
+  justify-content: center;
+  text-align: center;
+  border-color: #d6ad635d;
+}
+.guide-map-equality { margin: 23px auto 0; }
 .guide-map-dialog-eyebrow { display: block; margin-bottom: 3px; font-size: 11px; color: #92672f; }
 .guide-map-dialog-roles { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
 .guide-map-dialog-roles .guide-role-button { min-height: 44px; }
@@ -410,4 +660,131 @@
 @media(prefers-reduced-motion:reduce) {
   .guide-chapter-card-active,.guide-role-button,.guide-map-board-trigger,.guide-map-unit-trigger { transition: none; }
   .guide-chapter-card-active:hover,.guide-role-button:hover,.guide-map-unit-trigger:hover { transform: none; }
+}
+
+
+/* Keep the trunk readable as the two main tracks stack on narrow screens. */
+@media(max-width:900px) {
+  .guide-map-branches { padding-inline-start: 19px; }
+  .guide-map-branches::before {
+    display: block;
+    top: 0;
+    bottom: 0;
+    left: auto;
+    right: 0;
+    width: 2px;
+    height: auto;
+  }
+  .guide-map-branches::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50%;
+    height: 2px;
+    background: #d6ad63a6;
+  }
+  .guide-map-branch::before {
+    display: block;
+    top: 42px;
+    left: auto;
+    right: -19px;
+    width: 19px;
+    height: 2px;
+  }
+  .guide-map-collaboration-link { height: 35px; }
+  .guide-map-collaboration-link::before,
+  .guide-map-collaboration-link span { display: none; }
+  .guide-map-collaboration-link::after { top: 0; }
+}
+@media(max-width:640px) {
+  .guide-map-branch-root-link {
+    position: relative;
+    width: calc(50% - 7px);
+    height: 25px;
+    margin-inline-start: 7px;
+    margin-inline-end: auto;
+    border-inline-start: 2px solid #d6ad63a6;
+    border-bottom: 2px solid #d6ad63a6;
+    background: transparent;
+  }
+  .guide-map-branch-root-link::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 2px;
+    background: #d6ad63a6;
+  }
+  .guide-map-branch-tree::before {
+    left: auto;
+    right: 7px;
+    transform: none;
+  }
+  .guide-map-tree-tier > .guide-map-subheading { justify-content: flex-start; padding-inline-start: 24px; }
+  .guide-map-pair {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding-top: 9px;
+    padding-inline-start: 24px;
+  }
+  .guide-map-pair::before { display: none; }
+  .guide-map-team::before {
+    top: 28px;
+    right: -24px;
+    left: auto;
+    width: 24px;
+    height: 2px;
+    transform: none;
+  }
+  .guide-map-tree-tier-optional::before { right: 7px; left: auto; top: 0; height: 100%; }
+  .guide-map-tree-tier-optional .guide-map-flex-role { margin-inline-start: 24px; }
+  .guide-map-planned > .guide-map-subheading { justify-content: flex-start; padding-inline-start: 24px; }
+  .guide-map-planned-grid {
+    grid-template-columns: 1fr;
+    padding-top: 9px;
+    padding-inline-start: 24px;
+  }
+  .guide-map-planned-grid::before,
+  .guide-map-planned-item:nth-child(-n+2)::after { display: none; }
+  .guide-map-planned-item::before {
+    top: 50%;
+    left: auto;
+    right: -24px;
+    width: 24px;
+    height: 2px;
+    transform: none;
+  }
+  .guide-map-contribution-roles {
+    grid-template-columns: 1fr;
+    gap: 9px;
+    padding-top: 12px;
+    padding-inline-start: 22px;
+  }
+  .guide-map-contribution-roles::before {
+    top: 0;
+    bottom: 25px;
+    left: auto;
+    right: 7px;
+    width: 2px;
+    height: auto;
+  }
+  .guide-map-contribution-roles::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 7px;
+    width: calc(50% - 7px);
+    height: 2px;
+    background: #d6ad63a6;
+  }
+  .guide-map-contribution-role::before {
+    top: 50%;
+    right: -15px;
+    left: auto;
+    width: 15px;
+    height: 2px;
+    transform: none;
+  }
 }
