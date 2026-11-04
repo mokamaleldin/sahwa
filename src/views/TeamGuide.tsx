@@ -3,19 +3,16 @@
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
 import {
-  ArrowDown,
   ArrowUpLeft,
   BadgeCheck,
   BookOpenCheck,
   Building2,
   Check,
-  CircleDot,
   Clock3,
   FileText,
   GitBranch,
   GraduationCap,
   Handshake,
-  Lightbulb,
   Megaphone,
   Network,
   Scale,
@@ -25,12 +22,8 @@ import {
 } from "lucide-react";
 import PageHeading from "../components/shared/PageIdentity";
 import TeamDialog from "../components/Team/TeamDialog";
-import {
-  responsibilityCards,
-  responsibilityGroups,
-  roleById,
-  type ResponsibilityCard,
-} from "../data/sahwaGuide";
+import { roleById, type ResponsibilityCard } from "../data/sahwaGuide";
+import { structureUnitById, type StructureUnit } from "../data/sahwaStructure";
 
 const guideChapters = [
   {
@@ -75,86 +68,6 @@ const councilRoles = [
   "central-relations-lead",
 ];
 
-const centralUnits = [
-  {
-    title: "الإعلام المركزي",
-    description:
-      "الهوية والمحتوى والتصاميم والتغطية والأرشفة ودعم إعلام الجامعات.",
-    status: "موجود الآن",
-    active: true,
-    icon: Megaphone,
-    roles: ["central-media-lead", "central-media-member"],
-  },
-  {
-    title: "العلاقات العامة المركزية",
-    description:
-      "الشراكات والتواصل المؤسسي وبنك العلاقات ودعم مندوبي الجامعات.",
-    status: "موجود الآن",
-    active: true,
-    icon: Handshake,
-    roles: ["central-relations-lead", "central-relations-member"],
-  },
-  {
-    title: "البرامج والبحث",
-    description:
-      "البحث والتخطيط وإعداد البرامج العلمية والتربوية والتعليمية ومراجعتها.",
-    status: "قريبًا",
-    active: false,
-    icon: BookOpenCheck,
-    roles: [],
-  },
-  {
-    title: "المتابعة والمراجعة والتظلمات",
-    description:
-      "متابعة التعثر واقتراح التحسين واستقبال الشكاوى والتظلمات بإجراءات عادلة.",
-    status: "قريبًا",
-    active: false,
-    icon: Scale,
-    roles: [],
-  },
-  {
-    title: "التوسع والتدريب",
-    description:
-      "دراسة الجامعات الجديدة وتأسيس الفرق وتدريب المسؤولين والكوادر.",
-    status: "قريبًا",
-    active: false,
-    icon: GraduationCap,
-    roles: [],
-  },
-  {
-    title: "التقنية والمنصة",
-    description:
-      "تطوير الموقع والأنظمة الداخلية والبيانات والصلاحيات كفريق مستقل.",
-    status: "قريبًا",
-    active: false,
-    icon: GitBranch,
-    roles: [],
-  },
-];
-
-const decisionLevels = [
-  {
-    number: "01",
-    title: "مجلس الإدارة",
-    text: "يقرر الاتجاه والسياسات والتغييرات الكبرى، ولا يدير التفاصيل الصغيرة.",
-  },
-  {
-    number: "02",
-    title: "مسؤول الجامعة",
-    text: "يقرر أنشطة جامعته المعتادة ويدير فريقها داخل التفويض المعتمد.",
-  },
-  {
-    number: "03",
-    title: "مسؤول الوحدة",
-    text: "يدير اختصاصه ويوزع الملفات ويفوض العمل للآخرين.",
-  },
-  {
-    number: "04",
-    title: "المتطوع وقائد الفعالية",
-    text: "يقترح ويقود وينفذ داخل تفويض واضح، بلا سلسلة موافقات غير ضرورية.",
-  },
-];
-
 function RoleButton({
   roleId,
   onSelect,
@@ -187,15 +100,6 @@ function RoleDialog({
   onClose: () => void;
 }) {
   const fields = [
-    {
-      label: "المسمى والارتباط",
-      content: (
-        <>
-          <strong>{role.title}</strong>
-          <span>{role.connection}</span>
-        </>
-      ),
-    },
     { label: "الهدف", content: <p>{role.objective}</p> },
     {
       label: "المهام والصلاحيات",
@@ -240,7 +144,7 @@ function RoleDialog({
     { label: "البديل", content: <p>{role.substitute}</p> },
   ];
   return (
-    <TeamDialog title="بطاقة المسؤولية" onClose={onClose}>
+    <TeamDialog title="تفاصيل المسؤولية" onClose={onClose}>
       <div className="guide-role-dialog-intro">
         <span className="guide-role-dialog-icon" aria-hidden="true">
           <BadgeCheck size={26} />
@@ -267,9 +171,106 @@ function RoleDialog({
   );
 }
 
+
+function UnitButton({
+  unitId,
+  onSelect,
+  small = false,
+}: {
+  unitId: string;
+  onSelect: (unit: StructureUnit) => void;
+  small?: boolean;
+}) {
+  const unit = structureUnitById.get(unitId);
+  if (!unit) return null;
+  return (
+    <button
+      type="button"
+      className={small ? "guide-map-unit-trigger guide-map-unit-trigger-small" : "guide-map-unit-trigger"}
+      onClick={() => onSelect(unit)}
+      aria-label={"عرض اختصاص " + unit.title}
+    >
+      <span className="guide-map-unit-text">
+        <span className="guide-map-unit-eyebrow">{unit.eyebrow}</span>
+        <strong>{unit.title}</strong>
+        <span className="guide-map-unit-summary">{unit.summary}</span>
+      </span>
+      <ArrowUpLeft size={19} aria-hidden="true" />
+    </button>
+  );
+}
+
+function UnitDialog({
+  unit,
+  onClose,
+  onSelectRole,
+}: {
+  unit: StructureUnit;
+  onClose: () => void;
+  onSelectRole: (role: ResponsibilityCard) => void;
+}) {
+  return (
+    <TeamDialog title="اختصاص الفريق" onClose={onClose}>
+      <div className="guide-role-dialog-intro">
+        <span className="guide-role-dialog-icon" aria-hidden="true">
+          <Network size={26} />
+        </span>
+        <div>
+          <span className="guide-map-dialog-eyebrow">{unit.eyebrow}</span>
+          <h3>{unit.title}</h3>
+          <p>{unit.summary}</p>
+        </div>
+      </div>
+      <dl className="guide-role-fields">
+        <div>
+          <dt>الدور الأساسي</dt>
+          <dd><p>{unit.mission}</p></dd>
+        </div>
+        <div>
+          <dt>ماذا يفعل الفريق؟</dt>
+          <dd><ul>{unit.responsibilities.map((item) => <li key={item}>{item}</li>)}</ul></dd>
+        </div>
+        <div>
+          <dt>حدود الصلاحيات</dt>
+          <dd><ul>{unit.authority.map((item) => <li key={item}>{item}</li>)}</ul></dd>
+        </div>
+        <div>
+          <dt>التنسيق والارتباط</dt>
+          <dd><ul>{unit.coordination.map((item) => <li key={item}>{item}</li>)}</ul></dd>
+        </div>
+        {unit.roleIds.length > 0 && (
+          <div>
+            <dt>الأدوار داخل الفريق</dt>
+            <dd className="guide-map-dialog-roles">
+              {unit.roleIds.map((roleId) => (
+                <RoleButton key={roleId} roleId={roleId} onSelect={onSelectRole} compact />
+              ))}
+            </dd>
+          </div>
+        )}
+      </dl>
+      <div className="team-dialog-footer">
+        <button type="button" className="team-button" onClick={onClose}>إغلاق</button>
+      </div>
+    </TeamDialog>
+  );
+}
+
 export default function TeamGuide() {
-  const [selectedRole, setSelectedRole] =
-    useState<ResponsibilityCard | null>(null);
+  const [selectedRole, setSelectedRole] = useState<ResponsibilityCard | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<StructureUnit | null>(null);
+  const openRole = (role: ResponsibilityCard) => {
+    setSelectedUnit(null);
+    setSelectedRole(role);
+  };
+  const openUnit = (unit: StructureUnit) => {
+    setSelectedRole(null);
+    setSelectedUnit(unit);
+  };
+  const openRoleById = (roleId: string) => {
+    const role = roleById.get(roleId);
+    if (role) openRole(role);
+  };
 
   return (
     <>
@@ -297,7 +298,7 @@ export default function TeamGuide() {
       <section className="guide-chapters" aria-labelledby="guide-chapters-title">
         <div className="guide-section-heading">
           <span>محتويات الدليل</span>
-          <h2 id="guide-chapters-title">أربعة أبواب، نبدأ بالأكثر إلحاحًا</h2>
+          <h2 id="guide-chapters-title">خريطة دليل صحوة</h2>
         </div>
         <div className="guide-chapter-grid">
           {guideChapters.map((chapter) => {
@@ -342,323 +343,173 @@ export default function TeamGuide() {
       >
         <div className="guide-section-heading guide-section-heading-center">
           <span>03 — الهيكل والصلاحيات</span>
-          <h2 id="guide-structure-title">وضوح بلا مركزية خانقة</h2>
+          <h2 id="guide-structure-title">كيف يتكوّن فريق صحوة؟</h2>
           <p>
-            الهيكل يوضح نطاق القرار والمسؤولية، لكنه لا يجعل الأفكار تنزل من
-            أعلى إلى أسفل. المبادرة يمكن أن تبدأ من أي متطوع.
+            خريطة واحدة توضح المجلس والفرق الجامعية والمركزية وأدوار الأعضاء.
+            اضغط على أي فريق لمعرفة اختصاصه، أو على أي منصب لمعرفة مسؤوليته وصلاحياته.
           </p>
         </div>
 
-        <div className="guide-principles" aria-label="المبادئ التنظيمية">
-          {[
-            "الفرق الجامعية والمركزية شريكتان؛ لا توجد درجة أهم من الأخرى.",
-            "كل عضو صاحب دور، ويستطيع اقتراح مشروع أو قيادة فعالية.",
-            "المسؤول ينظم ويمكّن ويفوض، ولا يحتكر الأفكار أو التنفيذ.",
-            "القرار يبقى في أدنى مستوى يملك صلاحيته، ولا يُصعّد بلا حاجة.",
-          ].map((principle) => (
-            <div key={principle}>
-              <Check size={17} aria-hidden="true" />
-              <p>{principle}</p>
-            </div>
-          ))}
-        </div>
-
-        <article className="guide-org-card guide-council-card">
-          <div className="guide-org-title">
-            <span className="guide-org-icon" aria-hidden="true">
-              <UsersRound size={25} />
-            </span>
-            <div>
-              <span>المستوى الاستراتيجي</span>
-              <h3>مجلس إدارة صحوة</h3>
-              <p>6 أعضاء — صوت لكل عضو، وصوت ترجيح مقترح عند التعادل.</p>
-            </div>
-          </div>
-          <RoleButton roleId="board" onSelect={setSelectedRole} compact />
-          <div className="guide-council-grid">
-            {councilRoles.map((roleId, index) => (
-              <div className="guide-council-role" key={roleId}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <RoleButton roleId={roleId} onSelect={setSelectedRole} />
+        <div className="guide-map" aria-label="الهيكل التنظيمي التفاعلي لصحوة">
+          <div className="guide-map-board-wrap">
+            <article className="guide-map-board" aria-label="مجلس إدارة صحوة وأعضاؤه">
+              <button
+                type="button"
+                className="guide-map-board-trigger"
+                onClick={() => openRoleById("board")}
+                aria-label="عرض اختصاص مجلس إدارة صحوة"
+              >
+                <span className="guide-map-board-symbol"><UsersRound size={26} aria-hidden="true" /></span>
+                <span>
+                  <small>التوجيه والإشراف العام</small>
+                  <strong>مجلس إدارة صحوة</strong>
+                  <span>ستة أعضاء · السياسات والقرارات الكبرى</span>
+                </span>
+                <ArrowUpLeft size={20} aria-hidden="true" />
+              </button>
+              <div className="guide-map-board-members" aria-label="أعضاء المجلس">
+                {councilRoles.map((roleId) => (
+                  <RoleButton key={roleId} roleId={roleId} onSelect={openRole} compact />
+                ))}
               </div>
-            ))}
+            </article>
           </div>
-        </article>
 
-        <div className="guide-connector" aria-hidden="true">
-          <span />
-          <ArrowDown size={18} />
-        </div>
+          <div className="guide-map-stem" aria-hidden="true"><span /></div>
 
-        <article className="guide-org-card">
-          <div className="guide-org-title guide-org-title-center">
-            <span className="guide-org-icon" aria-hidden="true">
-              <Network size={25} />
-            </span>
-            <div>
-              <span>مستويان متعاونان</span>
-              <h3>الجامعات تقود محليًا، والفرق المركزية تخدم المشترك</h3>
-            </div>
-          </div>
-          <div className="guide-two-sides">
-            <div className="guide-side-card">
-              <Building2 size={24} aria-hidden="true" />
-              <h4>الفرق الجامعية</h4>
-              <p>قيادة وأنشطة ومبادرات نابعة من احتياج طلاب كل جامعة.</p>
-              <div className="guide-side-roles">
-                <RoleButton
-                  roleId="university-youth-coordinator"
-                  onSelect={setSelectedRole}
-                  compact
-                />
-                <RoleButton
-                  roleId="university-women-coordinator"
-                  onSelect={setSelectedRole}
-                  compact
-                />
+          <div className="guide-map-branches">
+            <article className="guide-map-branch guide-map-branch-university">
+              <div className="guide-map-branch-head">
+                <Building2 size={23} aria-hidden="true" />
+                <span>مسار الجامعة</span>
               </div>
-            </div>
-            <div className="guide-side-card">
-              <GitBranch size={24} aria-hidden="true" />
-              <h4>الفرق المركزية</h4>
-              <p>أنشطة مشتركة وخدمات ومعايير وأدوات تدعم صحوة كلها.</p>
-              <div className="guide-side-roles">
-                <RoleButton
-                  roleId="central-youth-lead"
-                  onSelect={setSelectedRole}
-                  compact
-                />
-                <RoleButton
-                  roleId="central-women-lead"
-                  onSelect={setSelectedRole}
-                  compact
-                />
-              </div>
-            </div>
-          </div>
-          <p className="guide-partnership-note">
-            العلاقة بين الطرفين: تعاون وتنسيق، لا تعطيل وتسلسل موافقات. نطاق
-            النشاط هو الذي يحدد إن كان جامعيًا أو مركزيًا، لا أهميته ولا مكانه.
-          </p>
-        </article>
+              <UnitButton unitId="universities" onSelect={openUnit} />
+              <div className="guide-map-branch-line" aria-hidden="true" />
 
-        <article className="guide-org-card">
-          <div className="guide-org-title guide-org-title-center">
-            <span className="guide-org-icon" aria-hidden="true">
-              <Building2 size={25} />
-            </span>
-            <div>
-              <span>داخل كل جامعة</span>
-              <h3>فريق صحوة الجامعي</h3>
-              <p>إدارة محلية مرنة بأهداف صحوة العامة.</p>
-            </div>
-          </div>
-          <div className="guide-university-grid">
-            <div className="guide-university-team">
-              <h4>فريق الشباب</h4>
-              <RoleButton
-                roleId="university-youth-coordinator"
-                onSelect={setSelectedRole}
-              />
-              <RoleButton
-                roleId="internal-youth-activities"
-                onSelect={setSelectedRole}
-              />
-              <RoleButton
-                roleId="university-activities-member"
-                onSelect={setSelectedRole}
-              />
-              <RoleButton
-                roleId="additional-committee-lead"
-                onSelect={setSelectedRole}
-              />
-            </div>
-            <div className="guide-university-team">
-              <h4>فريق الطالبات</h4>
-              <RoleButton
-                roleId="university-women-coordinator"
-                onSelect={setSelectedRole}
-              />
-              <RoleButton
-                roleId="internal-women-activities"
-                onSelect={setSelectedRole}
-              />
-              <RoleButton
-                roleId="university-activities-member"
-                onSelect={setSelectedRole}
-              />
-              <RoleButton
-                roleId="additional-committee-lead"
-                onSelect={setSelectedRole}
-              />
-            </div>
-          </div>
-          <div className="guide-shared-services">
-            <div>
-              <Megaphone size={20} aria-hidden="true" />
-              <h4>الإعلام الميداني</h4>
-              <RoleButton
-                roleId="field-media-lead"
-                onSelect={setSelectedRole}
-                compact
-              />
-              <RoleButton
-                roleId="field-media-member"
-                onSelect={setSelectedRole}
-                compact
-              />
-            </div>
-            <div>
-              <Handshake size={20} aria-hidden="true" />
-              <h4>العلاقات الجامعية</h4>
-              <RoleButton
-                roleId="university-relations-lead"
-                onSelect={setSelectedRole}
-                compact
-              />
-              <RoleButton
-                roleId="university-relations-member"
-                onSelect={setSelectedRole}
-                compact
-              />
-            </div>
-          </div>
-        </article>
-
-        <section className="guide-units" aria-labelledby="guide-units-title">
-          <div className="guide-section-heading">
-            <span>الوحدات المركزية المشتركة</span>
-            <h3 id="guide-units-title">ما يعمل الآن وما ينتظر فريقه</h3>
-            <p>
-              لا نعرض وحدة كأنها موجودة قبل وجود مسؤول وأعضاء ومهام فعلية.
-            </p>
-          </div>
-          <div className="guide-units-grid">
-            {centralUnits.map((unit) => {
-              const Icon = unit.icon;
-              return (
-                <article
-                  key={unit.title}
-                  className={`guide-unit-card${unit.active ? " guide-unit-active" : " guide-unit-soon"}`}
-                >
-                  <div className="guide-unit-top">
-                    <Icon size={22} aria-hidden="true" />
-                    <span>{unit.status}</span>
-                  </div>
-                  <h4>{unit.title}</h4>
-                  <p>{unit.description}</p>
-                  {unit.roles.length > 0 && (
-                    <div className="guide-unit-roles">
-                      {unit.roles.map((roleId) => (
-                        <RoleButton
-                          key={roleId}
-                          roleId={roleId}
-                          onSelect={setSelectedRole}
-                          compact
-                        />
-                      ))}
-                    </div>
-                  )}
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="guide-decisions" aria-labelledby="guide-decisions-title">
-          <div className="guide-section-heading guide-section-heading-center">
-            <span>كيف يتحرك القرار؟</span>
-            <h3 id="guide-decisions-title">الصلاحية تتحرك مع المسؤولية</h3>
-          </div>
-          <div className="guide-decision-grid">
-            {decisionLevels.map((level) => (
-              <article key={level.number}>
-                <span>{level.number}</span>
-                <h4>{level.title}</h4>
-                <p>{level.text}</p>
-              </article>
-            ))}
-          </div>
-          <div className="guide-idea-note">
-            <Lightbulb size={23} aria-hidden="true" />
-            <p>
-              الفكرة قد تبدأ من أي متطوع. إن كانت داخل التفويض تُنفذ مباشرة،
-              وإن احتاجت موارد أو صلاحيات إضافية تُرفع لصاحب الاختصاص فقط.
-            </p>
-          </div>
-        </section>
-
-        <section
-          className="guide-responsibilities"
-          aria-labelledby="guide-responsibilities-title"
-        >
-          <div className="guide-section-heading">
-            <span>بطاقات المسؤوليات</span>
-            <h3 id="guide-responsibilities-title">
-              كل دور يعرف ما له وما عليه
-            </h3>
-            <p>
-              اضغط على أي دور لعرض الهدف والصلاحيات والموافقات والمخرجات
-              والتنسيق والبديل.
-            </p>
-          </div>
-          <div className="guide-responsibility-groups">
-            {responsibilityGroups.map((group) => {
-              const roles = responsibilityCards.filter(
-                (role) => role.group === group.id,
-              );
-              return (
-                <section key={group.id} aria-labelledby={`group-${group.id}`}>
-                  <div className="guide-responsibility-group-heading">
-                    <CircleDot size={16} aria-hidden="true" />
-                    <h4 id={`group-${group.id}`}>{group.label}</h4>
-                    <span>{roles.length.toLocaleString("ar-EG")} أدوار</span>
-                  </div>
-                  <div className="guide-responsibility-list">
-                    {roles.map((role) => (
-                      <RoleButton
-                        key={role.id}
-                        roleId={role.id}
-                        onSelect={setSelectedRole}
-                      />
-                    ))}
+              <div className="guide-map-pair">
+                <section className="guide-map-team">
+                  <UnitButton unitId="university-youth" onSelect={openUnit} small />
+                  <div className="guide-map-team-roles">
+                    <RoleButton roleId="university-youth-coordinator" onSelect={openRole} compact />
+                    <RoleButton roleId="internal-youth-activities" onSelect={openRole} compact />
+                    <RoleButton roleId="university-activities-member" onSelect={openRole} compact />
                   </div>
                 </section>
-              );
-            })}
-          </div>
-        </section>
+                <section className="guide-map-team">
+                  <UnitButton unitId="university-women" onSelect={openUnit} small />
+                  <div className="guide-map-team-roles">
+                    <RoleButton roleId="university-women-coordinator" onSelect={openRole} compact />
+                    <RoleButton roleId="internal-women-activities" onSelect={openRole} compact />
+                    <RoleButton roleId="university-activities-member" onSelect={openRole} compact />
+                  </div>
+                </section>
+              </div>
 
-        <section className="guide-governance-summary" aria-label="ضوابط التطبيق">
-          <div>
-            <ShieldCheck size={23} aria-hidden="true" />
-            <h3>تفويض واضح</h3>
-            <p>
-              كل تفويض يحدد المهمة والصلاحيات والموارد والمدة والجهة التي يُرجع
-              إليها عند الحاجة.
-            </p>
+              <div className="guide-map-subheading"><span>فرق مساندة داخل الجامعة</span></div>
+              <div className="guide-map-pair">
+                <section className="guide-map-team">
+                  <UnitButton unitId="university-media" onSelect={openUnit} small />
+                  <div className="guide-map-team-roles">
+                    <RoleButton roleId="field-media-lead" onSelect={openRole} compact />
+                    <RoleButton roleId="field-media-member" onSelect={openRole} compact />
+                  </div>
+                </section>
+                <section className="guide-map-team">
+                  <UnitButton unitId="university-relations" onSelect={openUnit} small />
+                  <div className="guide-map-team-roles">
+                    <RoleButton roleId="university-relations-lead" onSelect={openRole} compact />
+                    <RoleButton roleId="university-relations-member" onSelect={openRole} compact />
+                  </div>
+                </section>
+              </div>
+              <div className="guide-map-flex-role">
+                <span>لجنة أخرى عند الحاجة</span>
+                <RoleButton roleId="additional-committee-lead" onSelect={openRole} compact />
+              </div>
+            </article>
+
+            <article className="guide-map-branch guide-map-branch-central">
+              <div className="guide-map-branch-head">
+                <GitBranch size={23} aria-hidden="true" />
+                <span>المسار المشترك</span>
+              </div>
+              <UnitButton unitId="central" onSelect={openUnit} />
+              <div className="guide-map-branch-line" aria-hidden="true" />
+
+              <div className="guide-map-pair">
+                <section className="guide-map-team">
+                  <UnitButton unitId="central-youth" onSelect={openUnit} small />
+                  <div className="guide-map-team-roles">
+                    <RoleButton roleId="central-youth-lead" onSelect={openRole} compact />
+                    <RoleButton roleId="central-youth-member" onSelect={openRole} compact />
+                  </div>
+                </section>
+                <section className="guide-map-team">
+                  <UnitButton unitId="central-women" onSelect={openUnit} small />
+                  <div className="guide-map-team-roles">
+                    <RoleButton roleId="central-women-lead" onSelect={openRole} compact />
+                    <RoleButton roleId="central-women-member" onSelect={openRole} compact />
+                  </div>
+                </section>
+              </div>
+
+              <div className="guide-map-subheading"><span>وحدات مركزية قائمة</span></div>
+              <div className="guide-map-pair">
+                <section className="guide-map-team">
+                  <UnitButton unitId="central-media" onSelect={openUnit} small />
+                  <div className="guide-map-team-roles">
+                    <RoleButton roleId="central-media-lead" onSelect={openRole} compact />
+                    <RoleButton roleId="central-media-member" onSelect={openRole} compact />
+                  </div>
+                </section>
+                <section className="guide-map-team">
+                  <UnitButton unitId="central-relations" onSelect={openUnit} small />
+                  <div className="guide-map-team-roles">
+                    <RoleButton roleId="central-relations-lead" onSelect={openRole} compact />
+                    <RoleButton roleId="central-relations-member" onSelect={openRole} compact />
+                  </div>
+                </section>
+              </div>
+
+              <div className="guide-map-planned">
+                <div className="guide-map-subheading">
+                  <span>وحدات مقترحة للتأسيس لاحقًا</span>
+                  <small>غير مفعّلة</small>
+                </div>
+                <div className="guide-map-planned-grid">
+                  {["programs", "review", "expansion", "technology"].map((unitId) => (
+                    <UnitButton key={unitId} unitId={unitId} onSelect={openUnit} small />
+                  ))}
+                </div>
+              </div>
+            </article>
           </div>
-          <div>
-            <UsersRound size={23} aria-hidden="true" />
-            <h3>قيادة دون احتكار</h3>
-            <p>
-              نجاح المسؤول يُقاس ببناء فريق قادر، لا بعدد الأعمال التي يحتفظ
-              بها لنفسه.
-            </p>
+
+          <div className="guide-map-equality">
+            <Check size={17} aria-hidden="true" />
+            <p>العمل الجامعي والمركزي مساران متكاملان؛ لكل منهما قراراته وأنشطته وأعضاؤه. لا يلغي أحدهما دور الآخر.</p>
           </div>
-          <div>
-            <Scale size={23} aria-hidden="true" />
-            <h3>مساءلة عادلة</h3>
-            <p>
-              لا يفصل شخص منفرد في شكوى تخص قراره، وتُراجع الصلاحيات بعد فترة
-              التجربة.
-            </p>
+
+          <div className="guide-map-contribution">
+            <UnitButton unitId="participation" onSelect={openUnit} />
+            <div className="guide-map-contribution-roles">
+              <RoleButton roleId="volunteer" onSelect={openRole} />
+              <RoleButton roleId="event-lead" onSelect={openRole} />
+              <RoleButton roleId="event-member" onSelect={openRole} />
+            </div>
           </div>
-        </section>
+        </div>
       </section>
 
       {selectedRole && (
         <RoleDialog role={selectedRole} onClose={() => setSelectedRole(null)} />
+      )}
+      {selectedUnit && (
+        <UnitDialog
+          unit={selectedUnit}
+          onClose={() => setSelectedUnit(null)}
+          onSelectRole={openRole}
+        />
       )}
     </>
   );
