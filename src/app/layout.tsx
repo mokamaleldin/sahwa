@@ -4,6 +4,7 @@ import Providers from "./providers";
 import "../index.css";
 import "../team.css";
 import "../guide.css";
+import "../guide-identity.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://sahwa.world"),
