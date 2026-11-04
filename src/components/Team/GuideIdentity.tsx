@@ -193,7 +193,22 @@ export default function GuideIdentity() {
         <h2 id="guide-identity-title">تعرف على صحوة</h2>
         <p>اختر القسم الذي تريد قراءته، وسيظهر محتواه هنا دون عرض بقية الأقسام في نفس الصفحة.</p>
       </header>
-      <div className="guide-identity-nav" role="tablist" aria-label="أقسام هوية صحوة">
+      <div
+        className="guide-identity-nav"
+        role="tablist"
+        aria-label="أقسام هوية صحوة"
+        onKeyDown={(event) => {
+          if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          const currentIndex = identityTabs.findIndex((tab) => tab.key === activeSection);
+          const nextIndex = event.key === "Home" ? 0
+            : event.key === "End" ? identityTabs.length - 1
+            : (currentIndex + (event.key === "ArrowLeft" ? 1 : -1) + identityTabs.length) % identityTabs.length;
+          const next = identityTabs[nextIndex].key;
+          changeSection(next);
+          document.getElementById(`guide-identity-tab-${next}`)?.focus();
+        }}
+      >
         {identityTabs.map(({ key, label }) => (
           <button
             key={key}
