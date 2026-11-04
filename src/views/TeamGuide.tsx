@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import PageHeading from "../components/shared/PageIdentity";
 import TeamDialog from "../components/Team/TeamDialog";
+import GuideIdentity from "../components/Team/GuideIdentity";
 import { roleById, type ResponsibilityCard } from "../data/sahwaGuide";
 import { structureUnitById, type StructureUnit } from "../data/sahwaStructure";
 
@@ -25,7 +26,7 @@ const guideChapters = [
     title: "هوية صحوة",
     description: "القصة، الرؤية، الرسالة، الأهداف الأربعة والمبادئ العامة.",
     icon: Sparkles,
-    available: false,
+    available: true,
   },
   {
     number: "02",
@@ -337,7 +338,7 @@ export default function TeamGuide() {
             return chapter.available ? (
               <a
                 key={chapter.number}
-                href="#guide-structure"
+                href={chapter.number === "01" ? "#guide-identity" : "#guide-structure"}
                 className="guide-chapter-card guide-chapter-card-active"
               >
                 {content}
@@ -353,6 +354,8 @@ export default function TeamGuide() {
           })}
         </div>
       </section>
+
+      <GuideIdentity />
 
       <section
         id="guide-structure"
