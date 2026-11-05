@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from 'react';
 import { ArrowLeft, Eye, EyeOff, Loader2, LockKeyhole } from 'lucide-react';
-import { Helmet } from 'react-helmet-async';
 import { Link, Navigate, useNavigate, useSearchParams } from '../lib/navigation';
 import { useSession } from '../auth/useSession';
 import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
@@ -40,10 +39,6 @@ export default function Login() {
 
   return (
     <>
-      <Helmet>
-        <title>تسجيل الدخول | صحوة</title>
-        <meta name="robots" content="noindex, nofollow" />
-      </Helmet>
       <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-6 sm:pb-12">
         <PageEmblem />
 

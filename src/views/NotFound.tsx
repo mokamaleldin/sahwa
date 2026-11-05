@@ -3,18 +3,12 @@
 import React from 'react';
 import { Link } from '../lib/navigation';
 import { Home } from 'lucide-react';
-import SEO from '../components/SEO';
 import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 
 const NotFoundPage: React.FC = () => {
   return (
     <>
-      <SEO
-        title="الصفحة غير موجودة - 404"
-        description="عذراً، الصفحة التي تبحث عنها غير موجودة. يمكنك العودة للصفحة الرئيسية."
-        noindex={true}
-      />
-      <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-12" dir="rtl">
+            <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-12" dir="rtl">
         <PageEmblem />
         <div className="text-center page-container max-w-3xl">
           <PageHeading title="الصفحة غير موجودة" description="عذرًا، الصفحة التي تبحث عنها غير موجودة أو تم نقلها." />

@@ -77,6 +77,10 @@ const Footer: React.FC = () => {
             </a>
           </div>
 
+          <a href="/team-space" className="text-sm text-[#752026] hover:underline">
+            عن فريق صحوة وتنظيم الأنشطة الطلابية
+          </a>
+
           {/* Minimal Copyright */}
           <div className="pt-2 text-xs sm:text-sm text-[#765C5E]">
             <p>© {currentYear} صحوة</p>

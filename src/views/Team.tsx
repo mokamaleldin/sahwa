@@ -10,7 +10,6 @@ import {
   UsersRound,
 } from "lucide-react";
 import { Link } from "../lib/navigation";
-import { Helmet } from "react-helmet-async";
 import PageHeading from "../components/shared/PageIdentity";
 import { useSession } from "../auth/useSession";
 
@@ -73,9 +72,6 @@ export default function Team() {
   );
   return (
     <>
-      <Helmet>
-        <title>مساحة الفريق | صحوة</title>
-      </Helmet>
       <PageHeading
         title="مساحة فريق صحوة"
         description="دليلنا، فريقنا، ملفاتنا، وأدواتنا… كلها قريبة منك."

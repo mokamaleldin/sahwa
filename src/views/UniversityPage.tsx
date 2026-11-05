@@ -3,52 +3,12 @@
 import React from 'react';
 import { useParams, Link } from '../lib/navigation';
 import { MessageCircle, ArrowRight, Users } from 'lucide-react';
-import SEO from '../components/SEO';
 import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
-
-interface UniversityData {
-  id: string;
-  name: string;
-  nameEn: string;
-  city: string;
-  introduction: string;
-  studentMessage: string;
-  whatsappGroup: string;
-}
-
-const universitiesData: Record<string, UniversityData> = {
-  'istinye': {
-    id: 'istinye',
-    name: 'جامعة استنيا',
-    nameEn: 'Istinye University',
-    city: 'إسطنبول',
-    introduction: 'مرحبًا بكم في صحوة استنيا. نحن مجموعة من الطلاب نسعى لبناء بيئة صحية تُعين على الثبات والوعي خلال الحياة الجامعية.',
-    studentMessage: 'نحن طلاب مثلكم، نفهم تحديات الحياة الجامعية ونسعى معًا للنمو والتطور. انضموا إلينا لنكون صحبة تعين بعضها على الخير.',
-    whatsappGroup: 'https://chat.whatsapp.com/K3j6B1lcA42B80O1KpTLFO',
-  },
-  'bilgi': {
-    id: 'bilgi',
-    name: 'جامعة بلجي',
-    nameEn: 'Bilgi University',
-    city: 'إسطنبول',
-    introduction: 'أهلًا بكم في صحوة بلجي. نجتمع هنا لنعيش قيمنا بوعي وإخلاص في حياتنا اليومية كطلاب جامعيين.',
-    studentMessage: 'في بلجي، نبني مجتمعًا طلابيًا يجمعنا حول القيم والوعي. كن جزءًا من رحلتنا.',
-    whatsappGroup: 'https://chat.whatsapp.com/BrHWBBCth9nCyxDw4a8pdH',
-  },
-  'gelisim': {
-    id: 'gelisim',
-    name: 'جامعة جيليشيم',
-    nameEn: 'Gelişim University',
-    city: 'إسطنبول',
-    introduction: 'مرحبًا بكم في صحوة جيليشيم. نحن مجموعة من الطلاب نسعى لبناء بيئة صحية تُعين على الثبات والوعي خلال الحياة الجامعية.',
-    studentMessage: 'نحن طلاب مثلكم، نفهم تحديات الحياة الجامعية ونسعى معًا للنمو والتطور. انضموا إلينا لنكون صحبة تعين بعضها على الخير.',
-    whatsappGroup: 'https://chat.whatsapp.com/JFewtz9mYMHFNOWDXjNAsB',
-  },
-};
+import { getUniversityById } from '../data/universities';
 
 const UniversityPage: React.FC = () => {
   const { universityId } = useParams<{ universityId: string }>();
-  const university = universityId ? universitiesData[universityId] : null;
+  const university = universityId ? getUniversityById(universityId) : undefined;
 
   if (!university) {
     return (
@@ -70,71 +30,19 @@ const UniversityPage: React.FC = () => {
     );
   }
 
-  // Comprehensive structured data for university page
-  const universityStructuredData = [
-    {
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      "@id": `https://sahwa.space/universities/${university.id}#webpage`,
-      "name": `صحوة ${university.name} - Sahwa ${university.nameEn}`,
-      "description": university.introduction,
-      "url": `https://sahwa.space/universities/${university.id}`,
-      "isPartOf": {
-        "@id": "https://sahwa.space/#website"
-      }
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "EducationalOrganization",
-      "name": `صحوة ${university.name}`,
-      "alternateName": [`Sahwa ${university.nameEn}`, `صحوة ${university.nameEn}`],
-      "description": university.introduction,
-      "url": `https://sahwa.space/universities/${university.id}`,
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": "Istanbul",
-        "addressCountry": "TR"
-      },
-      "parentOrganization": {
-        "@id": "https://sahwa.space/#organization"
-      }
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "LocalBusiness",
-      "name": `صحوة - ${university.name}`,
-      "description": `مجتمع صحوة الطلابي في ${university.name}`,
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": university.city,
-        "addressCountry": "TR"
-      }
-    }
-  ];
-
-  const breadcrumbs = [
-    { name: "الرئيسية", url: "/" },
-    { name: "الجامعات", url: "/universities" },
-    { name: university.name, url: `/universities/${university.id}` }
-  ];
-
   return (
     <>
-      <SEO
-        title={`صحوة ${university.name} | Sahwa ${university.nameEn} - مجتمع طلابي`}
-        description={`${university.introduction} انضم لمجتمع صحوة في ${university.name} (${university.nameEn}) في ${university.city}. Student community at ${university.nameEn} Istanbul.`}
-        keywords={`صحوة ${university.name}, ${university.nameEn}, ${university.nameEn} students, طلاب ${university.name}, صحوة ${university.city}, student group ${university.nameEn}, مجتمع طلابي ${university.name}`}
-        canonicalUrl={`/universities/${university.id}`}
-        structuredData={universityStructuredData}
-        breadcrumbs={breadcrumbs}
-      />
-      
+            
       <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-12 sm:pb-16">
         <PageEmblem />
 
         {/* Header */}
         <div className="page-container max-w-4xl relative z-10">
           <PageHeading title={university.name} description={`${university.nameEn} • ${university.city}`} className="!mb-6 sm:!mb-8" />
+          <p className="mb-6 text-[#765C5E] text-center text-sm leading-loose">
+            الاسم التركي: <span lang="tr" dir="ltr">{university.nameTr}</span>.
+            ويُكتب اسم الجامعة بالعربية أيضًا: {university.aliases.slice(0, 3).join('، ')}.
+          </p>
           <Link
             to="/universities"
             className="tap-target inline-flex items-center gap-2 text-[#765C5E] hover:text-[#752026] mb-8 transition-colors text-sm"
