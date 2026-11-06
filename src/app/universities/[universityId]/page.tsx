@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return pageMetadata({
     title: "صحوة " + university.name + " | أنشطة ومجتمع طلابي",
-    description: university.description + " " + university.nameEn + " – " + university.nameTr + ".",
+    description: university.seoDescription + " " + university.nameEn + " – " + university.nameTr + ".",
     path: "/universities/" + university.id,
     imagePath: "/universities/" + university.id + "/opengraph-image",
   });
@@ -38,7 +38,7 @@ export default async function Page({ params }: Props) {
           "@id": absoluteUrl(path + "#webpage"),
           url: absoluteUrl(path),
           name: "صحوة " + university.name + " – مجتمع طلابي",
-          description: university.description,
+          description: university.seoDescription,
           inLanguage: "ar",
           isPartOf: { "@id": absoluteUrl("/#website") },
           about: {
