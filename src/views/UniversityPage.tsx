@@ -32,17 +32,12 @@ const UniversityPage: React.FC = () => {
 
   return (
     <>
-            
       <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-12 sm:pb-16">
         <PageEmblem />
 
         {/* Header */}
         <div className="page-container max-w-4xl relative z-10">
           <PageHeading title={university.name} description={`${university.nameEn} • ${university.city}`} className="!mb-6 sm:!mb-8" />
-          <p className="mb-6 text-[#765C5E] text-center text-sm leading-loose">
-            الاسم التركي: <span lang="tr" dir="ltr">{university.nameTr}</span>.
-            ويُكتب اسم الجامعة بالعربية أيضًا: {university.aliases.slice(0, 3).join('، ')}.
-          </p>
           <Link
             to="/universities"
             className="tap-target inline-flex items-center gap-2 text-[#765C5E] hover:text-[#752026] mb-8 transition-colors text-sm"

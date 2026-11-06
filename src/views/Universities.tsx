@@ -9,16 +9,11 @@ import { universities } from '../data/universities';
 const Universities: React.FC = () => {
   return (
     <>
-            
       <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-14 sm:pb-20">
         <PageEmblem />
 
         <div className="page-container max-w-5xl relative z-10">
-          <PageHeading title="الجامعات" description="اكتشف مجتمعات صحوة والأنشطة الطلابية في جامعات إسطنبول" />
-          <p className="max-w-3xl mx-auto text-center text-[#350E15]/80 leading-loose mb-10">
-            هنا تجد مجموعات صحوة الطلابية في جامعة استينيا، وجامعة بيلجي، وجامعة جيليشيم.
-            هذه صفحات مجتمعات صحوة وليست المواقع الرسمية للجامعات؛ اختر جامعتك للتعارف والانضمام.
-          </p>
+          <PageHeading title="الجامعات" description="اكتشف مجتمع صحوة في جامعتك" />
 
           {/* Universities Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
@@ -35,7 +30,6 @@ const Universities: React.FC = () => {
                       {university.name}
                     </h2>
                     <p className="text-sm text-[#765C5E]" lang="en" dir="ltr">{university.nameEn}</p>
-                    <p className="text-xs text-[#765C5E] mt-1" lang="tr" dir="ltr">{university.nameTr}</p>
                   </div>
                 </div>
                 

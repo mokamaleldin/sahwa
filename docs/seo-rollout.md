@@ -12,15 +12,14 @@ Canonical host: https://sahwa.world
 | بلجي، بيلجي، بيلغي، Bilgi University, İstanbul Bilgi Üniversitesi | /universities/bilgi |
 | جيليشيم، جليشم، جليشيم، Gelisim University, İstanbul Gelişim Üniversitesi | /universities/gelisim |
 | تابع صحوة، Sahwa Instagram, صحوة واتساب، تواصل مع صحوة | /social |
-| فريق صحوة، التطوع الطلابي في إسطنبول، تنظيم الأنشطة الطلابية | /team-space |
 
-No phantom pages or SEO-only duplicate URLs were created for spelling variants. Names appear naturally in page content and in the accurate university-about JSON-LD.
+No new public pages or visible copy were added for SEO. Alternate spellings are metadata/structured-data only, not extra sections or duplicate URLs.
 
-**Private:** /team and descendants, /studio, /login are **not** indexable. /team-space is the public information page, without member data. Do not put private content in a sitemap.
+**Private:** /team and descendants, /studio, /login are **not** indexable. Do not create a public team page without approval or put private content in the sitemap.
 
 ## After merging and deploying
 
-1. Verify that the homepage, /universities, each university page, /social and /team-space return HTTP 200 and meaningful **server-rendered** headings and correct distinct titles, descriptions, canonicals and JSON-LD in View Source.
+1. Verify that the homepage, /universities, each university page and /social return HTTP 200 and meaningful **server-rendered** headings and correct distinct titles, descriptions, canonicals and JSON-LD in View Source.
 2. Confirm https://sahwa.world/robots.txt and https://sahwa.world/sitemap.xml return HTTP 200; sitemap has current pages, not the legacy sahwa.space URLs or private routes.
 3. Check share previews on WhatsApp, Telegram, Facebook Sharing Debugger, and X/Twitter: each image URL should load successfully as a 1200×630 PNG and show the Sahwa mark. Force re-scraping when old share preview is cached.
 4. Verify ownership in **Google Search Console**; submit sitemap.xml, request indexing for new pages, inspect URL coverage and indexing reasons. Also set up **Bing Webmaster Tools**.
