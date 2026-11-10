@@ -17,30 +17,17 @@ const [{ default: TeamGuide }, { responsibilityCards }] = await Promise.all([
   at("src/data/sahwaGuide.js"),
 ]);
 
-test("guide presents the agreed structure without inventing future units", () => {
+test("guide exposes the identity and structure tabs without showing unselected content", () => {
   const html = renderToStaticMarkup(h(TeamGuide));
   const dom = new JSDOM(html);
   const { document } = dom.window;
 
   assert.match(document.body.textContent, /دليل صحوة/);
-  assert.equal(document.querySelectorAll(".guide-chapter-card-soon").length, 3);
-  assert.equal(document.querySelectorAll(".guide-chapter-card-active").length, 1);
-  assert.equal(document.querySelectorAll(".guide-council-role").length, 6);
-  assert.equal(document.querySelectorAll(".guide-unit-active").length, 2);
-  assert.equal(document.querySelectorAll(".guide-unit-soon").length, 4);
-
-  for (const text of [
-    "الإعلام المركزي",
-    "العلاقات العامة المركزية",
-    "البرامج والبحث",
-    "المتابعة والمراجعة والتظلمات",
-    "التوسع والتدريب",
-    "التقنية والمنصة",
-    "مسودة للنقاش",
-    "90 يومًا",
-  ]) {
-    assert.ok(document.body.textContent.includes(text), text);
-  }
+  assert.equal(document.querySelectorAll(".guide-chapter-card-soon").length, 2);
+  assert.equal(document.querySelectorAll(".guide-chapter-card-active").length, 2);
+  assert.equal(document.querySelectorAll(".guide-map").length, 0);
+  assert.ok(document.body.textContent.includes("الهيكل والصلاحيات"));
+  assert.ok(document.body.textContent.includes("هوية صحوة"));
   for (const excluded of ["شؤون المتطوعين والخريجين", "الزبالة"]) {
     assert.ok(!document.body.textContent.includes(excluded), excluded);
   }
@@ -64,7 +51,7 @@ test("every responsibility has the complete seven-field data model", () => {
   }
 });
 
-test("clicking a role opens its responsibility card with seven fields", async () => {
+test("role and team cards keep brief permissions visible and extra details optional", async () => {
   const dom = new JSDOM('<div id="root"></div>', {
     url: "https://sahwa.world/team/guide",
     pretendToBeVisual: true,
@@ -93,6 +80,11 @@ test("clicking a role opens its responsibility card with seven fields", async ()
     await React.act(async () =>
       root.render(h(HelmetProvider, null, h(TeamGuide))),
     );
+    await React.act(async () =>
+      document.querySelector("#guide-chapter-tab-03").click(),
+    );
+    assert.equal(document.querySelectorAll(".guide-map-council-member").length, 6);
+    assert.equal(document.querySelectorAll(".guide-map-planned-item").length, 4);
     const roleButton = document.querySelector(
       '[data-role-id="university-youth-coordinator"]',
     );
@@ -102,22 +94,39 @@ test("clicking a role opens its responsibility card with seven fields", async ()
     const dialog = document.querySelector("dialog");
     assert.ok(dialog?.open);
     assert.match(dialog.textContent, /منسق شباب الجامعة/);
-    assert.equal(dialog.querySelectorAll(".guide-role-fields > div").length, 7);
-    for (const label of [
-      "المسمى والارتباط",
-      "الهدف",
-      "المهام والصلاحيات",
-      "يحتاج موافقة على",
-      "المخرجات",
-      "التنسيق",
-      "البديل",
-    ]) {
-      assert.ok(dialog.textContent.includes(label), label);
+    assert.equal(dialog.querySelectorAll(".guide-role-fields-short > div").length, 3);
+    const extra = dialog.querySelector("details.guide-more-details");
+    assert.ok(extra && !extra.open, "extra role details should be closed initially");
+    for (const label of ["الدور باختصار", "ما الذي يمكنك فعله؟", "متى تحتاج موافقة؟"]) {
+      assert.ok(dialog.querySelector(".guide-role-fields-short").textContent.includes(label), label);
+    }
+    for (const label of ["مهام أخرى", "المخرجات", "التنسيق مع", "البديل عند الغياب"]) {
+      assert.ok(extra.textContent.includes(label), label);
     }
     await React.act(async () =>
       dialog.querySelector('[aria-label="إغلاق"]').click(),
     );
     assert.equal(document.querySelector("dialog"), null);
+
+    await React.act(async () =>
+      document.querySelector('[data-unit-id="university-media"]').click(),
+    );
+    const unitDialog = document.querySelector("dialog");
+    assert.ok(unitDialog?.open);
+    assert.match(unitDialog.textContent, /الإعلام الميداني/);
+    assert.equal(unitDialog.querySelectorAll(".guide-role-fields-short > div").length, 3);
+    assert.match(unitDialog.querySelector(".guide-role-fields-short").textContent, /حدود الصلاحيات/);
+    assert.ok(!unitDialog.querySelector("details.guide-more-details").open);
+    await React.act(async () =>
+      unitDialog.querySelector('[aria-label="إغلاق"]').click(),
+    );
+
+    await React.act(async () =>
+      document.querySelector('[data-unit-id="technology"]').click(),
+    );
+    const proposedDialog = document.querySelector("dialog");
+    assert.match(proposedDialog.textContent, /لم تُفعّل بعد/);
+    assert.equal(proposedDialog.querySelectorAll(".guide-map-dialog-roles .guide-role-button").length, 0);
   } finally {
     await React.act(async () => root.unmount());
     dom.window.close();
