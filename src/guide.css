@@ -716,3 +716,46 @@
   .guide-chapter-card .guide-chapter-title { font-size: 14px; }
   .guide-chapter-card .guide-chapter-description { font-size: 10px; }
 }
+
+/* Short by default: full responsibilities remain available on demand. */
+.guide-role-fields-short { padding-block: 4px 10px; }
+.guide-role-fields-short > div { padding-block: 14px; }
+.guide-role-fields-short > div:last-child { border-bottom: 0; }
+.guide-more-details {
+  margin: 0 24px 22px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff9;
+  overflow: hidden;
+}
+.guide-more-details > summary {
+  padding: 13px 16px;
+  color: var(--brand-primary);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.guide-more-details > summary:focus-visible {
+  outline: 3px solid var(--brand-gold);
+  outline-offset: -3px;
+}
+.guide-more-details[open] > summary { border-bottom: 1px solid var(--line); }
+.guide-more-details .guide-role-fields { padding: 0 16px 8px; }
+.guide-more-details .guide-role-fields > div { padding-block: 14px; }
+.guide-more-details .guide-role-fields > div:last-child { border-bottom: 0; }
+.guide-unit-proposed-note {
+  margin: 16px 24px 0;
+  padding: 10px 13px;
+  border: 1px solid #d6ad6360;
+  border-radius: 10px;
+  color: var(--brand-primary);
+  background: #d6ad6310;
+  font-size: 12px;
+  line-height: 1.8;
+}
+@media(max-width:640px) {
+  .guide-role-fields-short { padding-block: 4px 10px; }
+  .guide-more-details { margin-inline: 17px; }
+  .guide-more-details .guide-role-fields > div { grid-template-columns: 1fr; gap: 7px; }
+  .guide-unit-proposed-note { margin-inline: 17px; }
+}
