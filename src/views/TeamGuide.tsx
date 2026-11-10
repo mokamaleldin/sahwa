@@ -40,7 +40,7 @@ const guideChapters = [
     number: "03",
     title: "الهيكل والصلاحيات",
     description:
-      "المجلس، الفرق الجامعية والمركزية، واختصاصات الفرق والأعضاء.",
+      "الفرق، المسؤوليات، وما يحتاج إلى موافقة.",
     icon: Network,
     available: true,
   },
@@ -87,80 +87,53 @@ function RoleButton({
   );
 }
 
-function RoleDialog({
-  role,
-  onClose,
-}: {
-  role: ResponsibilityCard;
-  onClose: () => void;
-}) {
-  const fields = [
-    { label: "الهدف", content: <p>{role.objective}</p> },
-    {
-      label: "المهام والصلاحيات",
-      content: (
-        <ul>
-          {role.tasks.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      ),
-    },
-    {
-      label: "يحتاج موافقة على",
-      content: (
-        <ul>
-          {role.approvals.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      ),
-    },
-    {
-      label: "المخرجات",
-      content: (
-        <ul>
-          {role.outputs.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      ),
-    },
-    {
-      label: "التنسيق",
-      content: (
-        <ul>
-          {role.coordination.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      ),
-    },
-    { label: "البديل", content: <p>{role.substitute}</p> },
-  ];
+function RoleDialog({ role, onClose }: { role: ResponsibilityCard; onClose: () => void }) {
+  const extraTasks = role.tasks.slice(2);
   return (
-    <TeamDialog title="تفاصيل المسؤولية" onClose={onClose}>
+    <TeamDialog title="مسؤوليات المنصب" onClose={onClose}>
       <div className="guide-role-dialog-intro">
-        <span className="guide-role-dialog-icon" aria-hidden="true">
-          <BadgeCheck size={26} />
-        </span>
-        <div>
-          <h3>{role.title}</h3>
-          <p>{role.connection}</p>
-        </div>
+        <span className="guide-role-dialog-icon" aria-hidden="true"><BadgeCheck size={26} /></span>
+        <div><h3>{role.title}</h3><p>{role.connection}</p></div>
       </div>
-      <dl className="guide-role-fields">
-        {fields.map((field) => (
-          <div key={field.label}>
-            <dt>{field.label}</dt>
-            <dd>{field.content}</dd>
-          </div>
-        ))}
+      <dl className="guide-role-fields guide-role-fields-short">
+        <div>
+          <dt>الدور باختصار</dt>
+          <dd><p>{role.objective}</p></dd>
+        </div>
+        <div>
+          <dt>ما الذي يمكنك فعله؟</dt>
+          <dd><ul>{role.tasks.slice(0, 2).map((item) => <li key={item}>{item}</li>)}</ul></dd>
+        </div>
+        <div>
+          <dt>{role.id === "board" ? "كيف تُتخذ القرارات؟" : "متى تحتاج موافقة؟"}</dt>
+          <dd><ul>{role.approvals.map((item) => <li key={item}>{item}</li>)}</ul></dd>
+        </div>
       </dl>
+      <details className="guide-more-details">
+        <summary>باقي المسؤوليات والتفاصيل</summary>
+        <dl className="guide-role-fields guide-role-fields-secondary">
+          {extraTasks.length > 0 && (
+            <div>
+              <dt>مهام أخرى</dt>
+              <dd><ul>{extraTasks.map((item) => <li key={item}>{item}</li>)}</ul></dd>
+            </div>
+          )}
+          <div>
+            <dt>المخرجات</dt>
+            <dd><ul>{role.outputs.map((item) => <li key={item}>{item}</li>)}</ul></dd>
+          </div>
+          <div>
+            <dt>التنسيق مع</dt>
+            <dd><ul>{role.coordination.map((item) => <li key={item}>{item}</li>)}</ul></dd>
+          </div>
+          <div>
+            <dt>البديل عند الغياب</dt>
+            <dd><p>{role.substitute}</p></dd>
+          </div>
+        </dl>
+      </details>
       <div className="team-dialog-footer">
-        <button type="button" className="team-button" onClick={onClose}>
-          فهمت المسؤولية
-        </button>
+        <button type="button" className="team-button" onClick={onClose}>إغلاق</button>
       </div>
     </TeamDialog>
   );
@@ -184,6 +157,7 @@ function UnitButton({
       className={small ? "guide-map-unit-trigger guide-map-unit-trigger-small" : "guide-map-unit-trigger"}
       onClick={() => onSelect(unit)}
       aria-label={"عرض اختصاص " + unit.title}
+      data-unit-id={unit.id}
     >
       <span className="guide-map-unit-text">
         <span className="guide-map-unit-eyebrow">{unit.eyebrow}</span>
@@ -195,43 +169,35 @@ function UnitButton({
   );
 }
 
-function UnitDialog({
-  unit,
-  onClose,
-  onSelectRole,
-}: {
+function UnitDialog({ unit, onClose, onSelectRole }: {
   unit: StructureUnit;
   onClose: () => void;
   onSelectRole: (role: ResponsibilityCard) => void;
 }) {
+  const extraResponsibilities = unit.responsibilities.slice(2);
   return (
     <TeamDialog title="اختصاص الفريق" onClose={onClose}>
       <div className="guide-role-dialog-intro">
-        <span className="guide-role-dialog-icon" aria-hidden="true">
-          <Network size={26} />
-        </span>
+        <span className="guide-role-dialog-icon" aria-hidden="true"><Network size={26} /></span>
         <div>
           <span className="guide-map-dialog-eyebrow">{unit.eyebrow}</span>
           <h3>{unit.title}</h3>
           <p>{unit.summary}</p>
         </div>
       </div>
-      <dl className="guide-role-fields">
-        <div>
-          <dt>الدور الأساسي</dt>
-          <dd><p>{unit.mission}</p></dd>
-        </div>
+      {unit.proposed && (
+        <p className="guide-unit-proposed-note">
+          هذه الوحدة مقترحة ولم تُفعّل بعد. لا تبدأ عملها إلا بعد اعتمادها وتحديد صلاحياتها.
+        </p>
+      )}
+      <dl className="guide-role-fields guide-role-fields-short">
         <div>
           <dt>ماذا يفعل الفريق؟</dt>
-          <dd><ul>{unit.responsibilities.map((item) => <li key={item}>{item}</li>)}</ul></dd>
+          <dd><ul>{unit.responsibilities.slice(0, 2).map((item) => <li key={item}>{item}</li>)}</ul></dd>
         </div>
         <div>
           <dt>حدود الصلاحيات</dt>
           <dd><ul>{unit.authority.map((item) => <li key={item}>{item}</li>)}</ul></dd>
-        </div>
-        <div>
-          <dt>التنسيق والارتباط</dt>
-          <dd><ul>{unit.coordination.map((item) => <li key={item}>{item}</li>)}</ul></dd>
         </div>
         {unit.roleIds.length > 0 && (
           <div>
@@ -244,6 +210,25 @@ function UnitDialog({
           </div>
         )}
       </dl>
+      <details className="guide-more-details">
+        <summary>المزيد عن الفريق</summary>
+        <dl className="guide-role-fields guide-role-fields-secondary">
+          <div>
+            <dt>الدور الأساسي</dt>
+            <dd><p>{unit.mission}</p></dd>
+          </div>
+          {extraResponsibilities.length > 0 && (
+            <div>
+              <dt>مهام أخرى</dt>
+              <dd><ul>{extraResponsibilities.map((item) => <li key={item}>{item}</li>)}</ul></dd>
+            </div>
+          )}
+          <div>
+            <dt>التنسيق مع</dt>
+            <dd><ul>{unit.coordination.map((item) => <li key={item}>{item}</li>)}</ul></dd>
+          </div>
+        </dl>
+      </details>
       <div className="team-dialog-footer">
         <button type="button" className="team-button" onClick={onClose}>إغلاق</button>
       </div>
@@ -416,10 +401,9 @@ export default function TeamGuide() {
       </div>
         <div className="guide-section-heading guide-section-heading-center">
           <span>03 — الهيكل والصلاحيات</span>
-          <h2 id="guide-structure-title">كيف يتكوّن فريق صحوة؟</h2>
+          <h2 id="guide-structure-title">مين مسؤول عن إيه في صحوة؟</h2>
           <p>
-            خريطة واحدة توضح المجلس والفرق الجامعية والمركزية وأدوار الأعضاء.
-            اضغط على أي فريق لمعرفة اختصاصه، أو على أي منصب لمعرفة مسؤوليته وصلاحياته.
+            اختَر أي فريق أو منصب لمعرفة دوره وحدود صلاحياته. ستجد المختصر أولًا، ويمكنك فتح التفاصيل عند الحاجة.
           </p>
         </div>
 
