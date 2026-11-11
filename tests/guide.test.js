@@ -8,13 +8,18 @@ import { compileUI } from "./helpers/compile-ui.js";
 const output = "tmp/guide-tests";
 const at = compileUI(output, [
   "src/data/sahwaGuide.ts",
+  "src/data/sahwaStructure.ts",
+  "src/data/sahwaGovernance.ts",
   "src/components/shared/PageIdentity.tsx",
   "src/components/Team/TeamDialog.tsx",
+  "src/components/Team/GuideIdentity.tsx",
+  "src/components/Team/GuideGovernance.tsx",
   "src/views/TeamGuide.tsx",
 ]);
-const [{ default: TeamGuide }, { responsibilityCards }] = await Promise.all([
+const [{ default: TeamGuide }, { responsibilityCards }, { governanceRoles, governanceTopics }] = await Promise.all([
   at("src/views/TeamGuide.js"),
   at("src/data/sahwaGuide.js"),
+  at("src/data/sahwaGovernance.js"),
 ]);
 
 test("guide exposes the identity and structure tabs without showing unselected content", () => {
@@ -34,6 +39,33 @@ test("guide exposes the identity and structure tabs without showing unselected c
   dom.window.close();
 });
 
+
+test("new governance data retains all eighteen source roles and four chapters", () => {
+  const expected = [
+    "board", "sahwa-lead", "women-sector-lead", "central-youth-lead",
+    "central-women-lead", "central-media-lead", "central-relations-lead",
+    "university-youth-coordinator", "university-women-coordinator",
+    "internal-youth-activities", "internal-women-activities", "university-activities-member",
+    "field-media-member", "university-relations-lead", "university-relations-member",
+    "central-media-member", "central-relations-member", "central-youth-member", "central-women-member",
+  ];
+  assert.deepEqual(Object.keys(governanceRoles).sort(), expected.sort());
+  assert.equal(governanceTopics.length, 4);
+  assert.ok(!responsibilityCards.some(role => role.id === "field-media-lead"));
+  const studentSector = JSON.stringify(governanceRoles["women-sector-lead"].blocks);
+  assert.match(studentSector, /بناء الأخوة داخل القطاع/);
+  assert.match(studentSector, /متابعة مسؤولات الطالبات داخل الجامعات/);
+  const centralWomen = JSON.stringify(governanceRoles["central-women-lead"].blocks);
+  assert.match(centralWomen, /اختيار قائدات الفعاليات/);
+  assert.match(centralWomen, /لا تدير الأنشطة الداخلية لفرق الطالبات الجامعية/);
+  const centralYouth = JSON.stringify(governanceRoles["central-youth-lead"].blocks);
+  assert.match(centralYouth, /ما ليس من صلاحياته/);
+  assert.match(centralYouth, /لا يحق له إدارة الأنشطة الداخلية للجامعات/);
+  const events = governanceTopics.find(topic => topic.id === "events");
+  assert.ok(events.blocks.some(block => block.kind === "table" && block.rows.length >= 10));
+  assert.ok(governanceTopics.find(topic => topic.id === "pending").blocks.some(block => block.kind === "paragraph" && block.text.includes("آلية التعيين والإعفاء")));
+});
+
 test("every responsibility has the complete seven-field data model", () => {
   assert.ok(responsibilityCards.length >= 20);
   const ids = new Set();
@@ -51,7 +83,7 @@ test("every responsibility has the complete seven-field data model", () => {
   }
 });
 
-test("role and team cards keep brief permissions visible and extra details optional", async () => {
+test("the guide shows each role's full source-specific duties and keeps team and policy pages accessible", async () => {
   const dom = new JSDOM('<div id="root"></div>', {
     url: "https://sahwa.world/team/guide",
     pretendToBeVisual: true,
@@ -94,19 +126,39 @@ test("role and team cards keep brief permissions visible and extra details optio
     const dialog = document.querySelector("dialog");
     assert.ok(dialog?.open);
     assert.match(dialog.textContent, /منسق شباب الجامعة/);
-    assert.equal(dialog.querySelectorAll(".guide-role-fields-short > div").length, 3);
-    const extra = dialog.querySelector("details.guide-more-details");
-    assert.ok(extra && !extra.open, "extra role details should be closed initially");
-    for (const label of ["الدور باختصار", "ما الذي يمكنك فعله؟", "متى تحتاج موافقة؟"]) {
-      assert.ok(dialog.querySelector(".guide-role-fields-short").textContent.includes(label), label);
+    const detail = dialog.querySelector(".guide-governance-content");
+    assert.ok(detail, "full role-specific document should be visible");
+    for (const label of ["بناء حضور صحوة داخل الجامعة", "الأخوة وبناء المجتمع", "صلاحياته", "حدود صلاحياته"]) {
+      assert.ok(detail.textContent.includes(label), label);
     }
-    for (const label of ["مهام أخرى", "المخرجات", "التنسيق مع", "البديل عند الغياب"]) {
-      assert.ok(extra.textContent.includes(label), label);
-    }
+    assert.equal(dialog.querySelector("details.guide-more-details"), null);
     await React.act(async () =>
       dialog.querySelector('[aria-label="إغلاق"]').click(),
     );
     assert.equal(document.querySelector("dialog"), null);
+
+    await React.act(async () =>
+      document.querySelector('[data-role-id="women-sector-lead"]').click(),
+    );
+    const sector = document.querySelector("dialog");
+    assert.ok(sector?.open);
+    for (const text of [
+      "مسؤولة قطاع الطالبات",
+      "قيادة فرق الطالبات الجامعية",
+      "بناء الأخوة داخل القطاع",
+      "حدود صلاحياتها",
+      "التوسع والتطوير",
+    ]) assert.ok(sector.textContent.includes(text), text);
+    assert.ok(!sector.textContent.includes("مسؤول أنشطة الشباب المركزية هو"), "women's sector must have its own duties");
+    await React.act(async () => sector.querySelector('[aria-label="إغلاق"]').click());
+
+    await React.act(async () =>
+      document.querySelector('[data-role-id="university-women-coordinator"]').click(),
+    );
+    const womenUniversity = document.querySelector("dialog");
+    assert.match(womenUniversity.textContent, /مسؤولة الطالبات داخل الجامعة/);
+    assert.match(womenUniversity.textContent, /تنظيم لقاءات دورية للتعلم والصحبة/);
+    await React.act(async () => womenUniversity.querySelector('[aria-label="إغلاق"]').click());
 
     await React.act(async () =>
       document.querySelector('[data-unit-id="university-media"]').click(),
@@ -115,6 +167,8 @@ test("role and team cards keep brief permissions visible and extra details optio
     assert.ok(unitDialog?.open);
     assert.match(unitDialog.textContent, /الإعلام الميداني/);
     assert.equal(unitDialog.querySelectorAll(".guide-role-fields-short > div").length, 3);
+    assert.equal(unitDialog.querySelectorAll(".guide-map-dialog-roles .guide-role-button").length, 1);
+    assert.ok(!unitDialog.textContent.includes("مسؤول الإعلام الميداني"));
     assert.match(unitDialog.querySelector(".guide-role-fields-short").textContent, /حدود الصلاحيات/);
     assert.ok(!unitDialog.querySelector("details.guide-more-details").open);
     await React.act(async () =>
