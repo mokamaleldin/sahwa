@@ -19,6 +19,8 @@ import TeamDialog from "../components/Team/TeamDialog";
 import GuideIdentity from "../components/Team/GuideIdentity";
 import { roleById, type ResponsibilityCard } from "../data/sahwaGuide";
 import { structureUnitById, type StructureUnit } from "../data/sahwaStructure";
+import { governanceRoles } from "../data/sahwaGovernance";
+import GuideGovernanceTopics, { GuideGovernanceBlocks } from "../components/Team/GuideGovernance";
 
 const guideChapters = [
   {
@@ -40,7 +42,7 @@ const guideChapters = [
     number: "03",
     title: "الهيكل والصلاحيات",
     description:
-      "الفرق، المسؤوليات، وما يحتاج إلى موافقة.",
+      "تفاصيل المهام والصلاحيات، وقواعد اتخاذ القرار والتنسيق.",
     icon: Network,
     available: true,
   },
@@ -88,50 +90,53 @@ function RoleButton({
 }
 
 function RoleDialog({ role, onClose }: { role: ResponsibilityCard; onClose: () => void }) {
+  const documented = governanceRoles[role.id];
   const extraTasks = role.tasks.slice(2);
+
   return (
-    <TeamDialog title="مسؤوليات المنصب" onClose={onClose}>
+    <TeamDialog title="مهام وصلاحيات المنصب" onClose={onClose}>
       <div className="guide-role-dialog-intro">
         <span className="guide-role-dialog-icon" aria-hidden="true"><BadgeCheck size={26} /></span>
-        <div><h3>{role.title}</h3><p>{role.connection}</p></div>
+        <div>
+          <h3>{role.title}</h3>
+          <p>{role.connection}</p>
+        </div>
       </div>
-      <dl className="guide-role-fields guide-role-fields-short">
-        <div>
-          <dt>الدور باختصار</dt>
-          <dd><p>{role.objective}</p></dd>
-        </div>
-        <div>
-          <dt>ما الذي يمكنك فعله؟</dt>
-          <dd><ul>{role.tasks.slice(0, 2).map((item) => <li key={item}>{item}</li>)}</ul></dd>
-        </div>
-        <div>
-          <dt>{role.id === "board" ? "كيف تُتخذ القرارات؟" : "متى تحتاج موافقة؟"}</dt>
-          <dd><ul>{role.approvals.map((item) => <li key={item}>{item}</li>)}</ul></dd>
-        </div>
-      </dl>
-      <details className="guide-more-details">
-        <summary>باقي المسؤوليات والتفاصيل</summary>
-        <dl className="guide-role-fields guide-role-fields-secondary">
-          {extraTasks.length > 0 && (
-            <div>
-              <dt>مهام أخرى</dt>
-              <dd><ul>{extraTasks.map((item) => <li key={item}>{item}</li>)}</ul></dd>
-            </div>
+      {documented ? (
+        <>
+          {role.id === "central-women-member" && (
+            <p className="guide-governance-role-scope">
+              هذه المسؤوليات تخص عضوة أنشطة الطالبات المركزية في فريقها، ولا تمنحها سلطة على الجامعات أو الوحدات الأخرى.
+            </p>
           )}
-          <div>
-            <dt>المخرجات</dt>
-            <dd><ul>{role.outputs.map((item) => <li key={item}>{item}</li>)}</ul></dd>
-          </div>
-          <div>
-            <dt>التنسيق مع</dt>
-            <dd><ul>{role.coordination.map((item) => <li key={item}>{item}</li>)}</ul></dd>
-          </div>
-          <div>
-            <dt>البديل عند الغياب</dt>
-            <dd><p>{role.substitute}</p></dd>
-          </div>
-        </dl>
-      </details>
+          {role.id === "central-youth-member" && (
+            <p className="guide-governance-role-scope">
+              هذه المسؤوليات تخص عضو أنشطة الشباب المركزية في فريقه، ولا تمنحه سلطة على الجامعات أو الوحدات الأخرى.
+            </p>
+          )}
+          <GuideGovernanceBlocks blocks={documented.blocks} />
+        </>
+      ) : (
+        <>
+          <p className="guide-legacy-role-note">
+            هذا الدور وارد في المسودة السابقة، ولم يُذكر له وصف مستقل في النسخة التفصيلية الجديدة.
+          </p>
+          <dl className="guide-role-fields guide-role-fields-short">
+            <div><dt>الدور باختصار</dt><dd><p>{role.objective}</p></dd></div>
+            <div><dt>المهام الأساسية</dt><dd><ul>{role.tasks.slice(0, 2).map(item => <li key={item}>{item}</li>)}</ul></dd></div>
+            <div><dt>يحتاج موافقة على</dt><dd><ul>{role.approvals.map(item => <li key={item}>{item}</li>)}</ul></dd></div>
+          </dl>
+          <details className="guide-more-details">
+            <summary>باقي التفاصيل من المسودة السابقة</summary>
+            <dl className="guide-role-fields guide-role-fields-secondary">
+              {extraTasks.length > 0 && <div><dt>مهام أخرى</dt><dd><ul>{extraTasks.map(item => <li key={item}>{item}</li>)}</ul></dd></div>}
+              <div><dt>المخرجات</dt><dd><ul>{role.outputs.map(item => <li key={item}>{item}</li>)}</ul></dd></div>
+              <div><dt>التنسيق مع</dt><dd><ul>{role.coordination.map(item => <li key={item}>{item}</li>)}</ul></dd></div>
+              <div><dt>البديل عند الغياب</dt><dd><p>{role.substitute}</p></dd></div>
+            </dl>
+          </details>
+        </>
+      )}
       <div className="team-dialog-footer">
         <button type="button" className="team-button" onClick={onClose}>إغلاق</button>
       </div>
@@ -403,7 +408,7 @@ export default function TeamGuide() {
           <span>03 — الهيكل والصلاحيات</span>
           <h2 id="guide-structure-title">مين مسؤول عن إيه في صحوة؟</h2>
           <p>
-            اختَر أي فريق أو منصب لمعرفة دوره وحدود صلاحياته. ستجد المختصر أولًا، ويمكنك فتح التفاصيل عند الحاجة.
+            اضغط على أي منصب لقراءة مهامه وصلاحياته وحدودها كاملة وفق المسودة الجديدة، أو اختر فريقًا لمعرفة اختصاصه. وأسفل الخريطة تجد قواعد العمل والقرارات والتقارير.
           </p>
         </div>
 
@@ -475,7 +480,7 @@ export default function TeamGuide() {
                   <div className="guide-map-pair">
                     <OrganizationTeam
                       unitId="university-media"
-                      roles={["field-media-lead", "field-media-member"]}
+                      roles={["field-media-member"]}
                       onSelectUnit={openUnit}
                       onSelectRole={openRole}
                     />
@@ -562,6 +567,8 @@ export default function TeamGuide() {
           </div>
 
         </div>
+
+        <GuideGovernanceTopics />
       </section>}
       </div>
 
