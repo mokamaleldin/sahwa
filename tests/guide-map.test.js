@@ -6,6 +6,7 @@ import ts from "typescript";
 const view = readFileSync("src/views/TeamGuide.tsx", "utf8");
 const units = readFileSync("src/data/sahwaStructure.ts", "utf8");
 const roles = readFileSync("src/data/sahwaGuide.ts", "utf8");
+const governance = readFileSync("src/data/sahwaGovernance.ts", "utf8");
 const css = readFileSync("src/guide.css", "utf8");
 
 test("interactive guide source has valid TSX syntax", () => {
@@ -103,6 +104,8 @@ test("every active university and central branch connects its units and members"
     assert.ok(css.includes(diagramRule), "unconnected descendant: " + diagramRule);
   }
   assert.ok(css.includes(".guide-map-pair::before { display: none; }"), "mobile tree needs side-spine variant");
+  assert.ok(view.includes("GuideGovernanceTopics"));
+  assert.ok(view.includes("GuideGovernanceBlocks"));
   assert.ok(view.includes("المسار المشترك بين الجامعات"));
   assert.ok(view.includes("فريقا الشباب والطالبات"));
 });
@@ -119,4 +122,14 @@ test("guide ends at organizational branches without the volunteering footer", ()
   }
   assert.ok(view.includes('unitId="universities"'));
   assert.ok(view.includes('unitId="central"'));
+});
+
+test("updated structure removes independent field media leadership and preserves women-specific governance", () => {
+  assert.ok(!roles.includes('id: "field-media-lead"'));
+  assert.ok(!units.includes('"field-media-lead"'));
+  assert.ok(!view.includes('"field-media-lead"'));
+  assert.ok(units.includes('roleIds: ["field-media-member"]'));
+  assert.ok(governance.includes('"women-sector-lead"'));
+  assert.ok(governance.includes("بناء الأخوة داخل القطاع"));
+  assert.ok(governance.includes("لا تُعقد اتفاقات رسمية") || governance.includes("لا يحق له إبرام"));
 });
