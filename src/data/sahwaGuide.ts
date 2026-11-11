@@ -179,7 +179,7 @@ export const responsibilityCards: ResponsibilityCard[] = [
   },
   {
     id: "university-youth-coordinator",
-    title: "منسق شباب الجامعة",
+    title: "مسؤول الشباب داخل الجامعة",
     connection: "الفريق الجامعي — قيادة فريق الشباب",
     group: "university",
     objective:
@@ -202,7 +202,7 @@ export const responsibilityCards: ResponsibilityCard[] = [
   },
   {
     id: "university-women-coordinator",
-    title: "منسقة طالبات الجامعة",
+    title: "مسؤولة الطالبات داخل الجامعة",
     connection: "الفريق الجامعي — قيادة فريق الطالبات",
     group: "university",
     objective:
@@ -276,27 +276,9 @@ export const responsibilityCards: ResponsibilityCard[] = [
     substitute: "تُعاد المهمة أو تُوزع بالتنسيق عند تعذر الاستمرار.",
   },
   {
-    id: "field-media-lead",
-    title: "مسؤول الإعلام الميداني",
-    connection: "الخدمات الجامعية المشتركة — إعلام الجامعة",
-    group: "university",
-    objective:
-      "تنسيق تغطية أنشطة الجامعة وإنتاج محتوى محلي منضبط بهوية صحوة.",
-    tasks: [
-      "توزيع مهام التصوير والتوثيق والمحتوى.",
-      "مساعدة الأعضاء على استخدام القوالب والهوية.",
-      "تنظيم أرشيف الجامعة والتنسيق مع الإعلام المركزي.",
-      "تفويض أعضاء بالنشر وفق الصلاحيات الممنوحة.",
-    ],
-    approvals: ["محتوى حساس أو بيان رسمي.", "تغيير في الهوية أو نشر خارج صلاحيات الحساب."],
-    outputs: ["تغطيات ومحتوى", "أرشيف إعلامي", "خطة نشر للجامعة"],
-    coordination: ["الإعلام المركزي", "قادة الفعاليات", "منسقي الجامعة"],
-    substitute: "عضو إعلام ميداني مخوّل بالتغطية والنشر المحدد.",
-  },
-  {
     id: "field-media-member",
     title: "عضو الإعلام الميداني",
-    connection: "إعلام الجامعة — إنتاج وتوثيق",
+    connection: "إعلام الجامعة — يتبع الإعلام المركزي",
     group: "university",
     objective: "إنتاج محتوى وتغطيات تعكس أنشطة الجامعة وتحفظ أثرها.",
     tasks: [
@@ -306,7 +288,7 @@ export const responsibilityCards: ResponsibilityCard[] = [
     ],
     approvals: ["النشر دون صلاحية.", "محتوى حساس أو استخدام غير معتمد للهوية والبيانات."],
     outputs: ["صور وفيديوهات", "نصوص وتصاميم", "ملفات أرشيفية منظمة"],
-    coordination: ["مسؤول الإعلام الميداني", "قائد الفعالية"],
+    coordination: ["الإعلام المركزي", "قائد الفعالية"],
     substitute: "عضو آخر بحسب المهارة والمهمة المطلوبة.",
   },
   {
@@ -408,7 +390,7 @@ export const responsibilityCards: ResponsibilityCard[] = [
   },
   {
     id: "central-relations-member",
-    title: "عضو العلاقات المركزية",
+    title: "عضو العلاقات العامة المركزية",
     connection: "العلاقات المركزية — فرص وشراكات عامة",
     group: "central",
     objective: "البحث عن فرص وشركاء ومتابعة ملفات العلاقات العابرة للجامعات.",

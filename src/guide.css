@@ -759,3 +759,80 @@
   .guide-more-details .guide-role-fields > div { grid-template-columns: 1fr; gap: 7px; }
   .guide-unit-proposed-note { margin-inline: 17px; }
 }
+
+/* Complete governance text — preserve role-specific details without making the chart dense. */
+.guide-governance-content {
+  padding: 16px 24px 28px;
+  color: var(--text-main);
+  font-size: 14px;
+  line-height: 2;
+  overflow-wrap: anywhere;
+}
+.guide-governance-content h4 {
+  margin: 24px 0 11px;
+  padding: 0 12px 0 0;
+  border-right: 3px solid var(--brand-gold);
+  color: var(--brand-primary);
+  font-size: 16px;
+  line-height: 1.7;
+}
+.guide-governance-content h4:first-child { margin-top: 7px; }
+.guide-governance-content p { margin: 9px 0 15px; }
+.guide-governance-content p strong, .guide-governance-content li strong { color: var(--brand-primary-dark); }
+.guide-governance-content ul,
+.guide-governance-content ol { margin: 8px 0 18px; padding: 0 23px 0 0; }
+.guide-governance-content li { padding-right: 3px; }
+.guide-governance-content li + li { margin-top: 6px; }
+.guide-governance-content li::marker { color: var(--brand-primary); }
+.guide-governance-table-wrap { overflow-x: auto; margin: 20px 0; border: 1px solid var(--line); border-radius: 12px; }
+.guide-governance-table-wrap:focus-visible { outline: 3px solid var(--brand-gold); outline-offset: 3px; }
+.guide-governance-table-wrap table { border-collapse: collapse; width: 100%; min-width: 470px; text-align: right; font-size: 12px; }
+.guide-governance-table-wrap th,
+.guide-governance-table-wrap td { padding: 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.guide-governance-table-wrap th { background: #d6ad6320; color: var(--brand-primary); }
+.guide-governance-table-wrap tr:last-child td { border-bottom: 0; }
+.guide-governance-table-wrap td + td { border-right: 1px solid var(--line); }
+.guide-governance-role-scope, .guide-legacy-role-note {
+  margin: 18px 24px 0;
+  padding: 11px 14px;
+  border: 1px solid #d6ad6360;
+  border-radius: 12px;
+  background: #d6ad630d;
+  color: var(--brand-primary);
+  font-size: 12px;
+  line-height: 1.9;
+}
+.guide-governance-topics { max-width: 1100px; margin: 0 auto 66px; }
+.guide-governance-topic-list { display: grid; gap: 12px; }
+.guide-governance-topic {
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: #fff9;
+  overflow: hidden;
+}
+.guide-governance-topic > summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  cursor: pointer;
+  list-style: none;
+}
+.guide-governance-topic > summary::-webkit-details-marker { display: none; }
+.guide-governance-topic > summary:focus-visible { outline: 3px solid var(--brand-gold); outline-offset: -3px; }
+.guide-governance-topic[open] > summary { border-bottom: 1px solid var(--line); }
+.guide-governance-topic-number { color: #92672f; font-size: 14px; font-variant-numeric: tabular-nums; font-weight: 700; }
+.guide-governance-topic-label { flex: 1; min-width: 0; display: grid; gap: 4px; }
+.guide-governance-topic-label strong { color: var(--brand-primary); font-size: 17px; }
+.guide-governance-topic-label small { color: var(--text-muted); font-size: 12px; line-height: 1.7; }
+.guide-governance-topic-action { color: var(--brand-primary); font-size: 25px; font-weight: 400; }
+.guide-governance-topic[open] .guide-governance-topic-action { transform: rotate(45deg); }
+.guide-governance-topic > .guide-governance-content { max-width: 960px; margin-inline: auto; }
+@media(max-width:640px) {
+  .guide-governance-content { padding: 12px 17px 24px; font-size: 13px; line-height: 1.9; }
+  .guide-governance-content h4 { font-size: 15px; }
+  .guide-governance-topic > summary { padding: 14px; gap: 11px; }
+  .guide-governance-topic-label strong { font-size: 15px; }
+  .guide-governance-topic-label small { font-size: 11px; }
+  .guide-governance-role-scope, .guide-legacy-role-note { margin-inline: 17px; }
+}
