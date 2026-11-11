@@ -57,13 +57,61 @@ test("new governance data retains all eighteen source roles and four chapters", 
   assert.match(studentSector, /متابعة مسؤولات الطالبات داخل الجامعات/);
   const centralWomen = JSON.stringify(governanceRoles["central-women-lead"].blocks);
   assert.match(centralWomen, /اختيار قائدات الفعاليات/);
-  assert.match(centralWomen, /لا تدير الأنشطة الداخلية لفرق الطالبات الجامعية/);
+  assert.match(centralWomen, /لا يحق لها إدارة الأنشطة الداخلية لفرق الطالبات بالجامعات/);
   const centralYouth = JSON.stringify(governanceRoles["central-youth-lead"].blocks);
   assert.match(centralYouth, /ما ليس من صلاحياته/);
   assert.match(centralYouth, /لا يحق له إدارة الأنشطة الداخلية للجامعات/);
   const events = governanceTopics.find(topic => topic.id === "events");
   assert.ok(events.blocks.some(block => block.kind === "table" && block.rows.length >= 10));
   assert.ok(governanceTopics.find(topic => topic.id === "pending").blocks.some(block => block.kind === "paragraph" && block.text.includes("آلية التعيين والإعفاء")));
+});
+
+
+test("corresponding youth and women roles have equal detail and sector-specific authority", () => {
+  const headings = id => governanceRoles[id].blocks.filter(block => block.kind === "heading").map(block => block.text);
+  const bullets = id => governanceRoles[id].blocks.reduce(
+    (total, block) => total + (block.kind === "list" ? block.items.length : 0), 0,
+  );
+  const full = id => JSON.stringify(governanceRoles[id].blocks);
+  for (const [youth, women, expectedHeadings, expectedBullets] of [
+    ["central-youth-lead", "central-women-lead", 7, 29],
+    ["university-youth-coordinator", "university-women-coordinator", 6, 44],
+    ["internal-youth-activities", "internal-women-activities", 3, 10],
+  ]) {
+    assert.equal(headings(youth).length, expectedHeadings, youth);
+    assert.equal(headings(women).length, expectedHeadings, women);
+    assert.equal(bullets(youth), expectedBullets, youth);
+    assert.equal(bullets(women), expectedBullets, women);
+  }
+
+  const femaleCentral = full("central-women-lead");
+  for (const term of [
+    "نطاق عملها", "مهامها التفصيلية", "صلاحياتها التنفيذية", "ما ليس من صلاحياتها",
+    "الأنشطة المشتركة بين الشباب والطالبات", "التقارير والمخرجات",
+    "مسؤولة قطاع الطالبات", "لا تصدر مسؤولة أنشطة الطالبات تكليفات منفردة إلى أعضاء فريق الشباب",
+  ]) assert.ok(femaleCentral.includes(term), term);
+
+  const femaleUniversity = full("university-women-coordinator");
+  for (const term of [
+    "بناء حضور صحوة داخل الجامعة", "إدارة الفريق", "الأخوة وبناء المجتمع",
+    "كيف نعرف أنها ناجحة؟", "مسؤولة قطاع الطالبات",
+  ]) assert.ok(femaleUniversity.includes(term), term);
+
+  const femaleInternal = full("internal-women-activities");
+  assert.match(femaleInternal, /تولي قيادة فعالية بنفسها/);
+  assert.match(femaleInternal, /لا تصبح مسؤوليتها عن الأنشطة سلطة/);
+
+  const womenSector = full("women-sector-lead");
+  assert.match(womenSector, /قيادة العمل الإداري لقطاع الطالبات/);
+  assert.match(womenSector, /تمثيل الطالبات في مجلس إدارة صحوة/);
+  assert.match(womenSector, /دورها أثناء فعاليات الطالبات/);
+  assert.match(womenSector, /ولا يعني ذلك انفرادها بإدارة المجلس/);
+  assert.equal(bullets("women-sector-lead") >= 44, true);
+
+  assert.match(full("central-media-lead"), /مشتركة تخدم فرق الشباب والطالبات معًا/);
+  assert.match(full("central-relations-lead"), /مشتركة تخدم فرق الشباب والطالبات معًا/);
+  assert.match(full("central-youth-member"), /عضو أنشطة الشباب/);
+  assert.match(full("central-women-member"), /عضوة أنشطة الطالبات/);
 });
 
 test("every responsibility has the complete seven-field data model", () => {
@@ -125,7 +173,7 @@ test("the guide shows each role's full source-specific duties and keeps team and
 
     const dialog = document.querySelector("dialog");
     assert.ok(dialog?.open);
-    assert.match(dialog.textContent, /منسق شباب الجامعة/);
+    assert.match(dialog.textContent, /مسؤول الشباب داخل الجامعة/);
     const detail = dialog.querySelector(".guide-governance-content");
     assert.ok(detail, "full role-specific document should be visible");
     for (const label of ["بناء حضور صحوة داخل الجامعة", "الأخوة وبناء المجتمع", "صلاحياته", "حدود صلاحياته"]) {
@@ -159,6 +207,23 @@ test("the guide shows each role's full source-specific duties and keeps team and
     assert.match(womenUniversity.textContent, /مسؤولة الطالبات داخل الجامعة/);
     assert.match(womenUniversity.textContent, /تنظيم لقاءات دورية للتعلم والصحبة/);
     await React.act(async () => womenUniversity.querySelector('[aria-label="إغلاق"]').click());
+
+    await React.act(async () =>
+      document.querySelector('[data-role-id="central-women-lead"]').click(),
+    );
+    const centralWomenDialog = document.querySelector("dialog");
+    assert.ok(centralWomenDialog?.open);
+    assert.match(centralWomenDialog.textContent, /نطاق عملها/);
+    assert.match(centralWomenDialog.textContent, /ما ليس من صلاحياتها/);
+    assert.match(centralWomenDialog.textContent, /التقارير والمخرجات/);
+    await React.act(async () => centralWomenDialog.querySelector('[aria-label="إغلاق"]').click());
+
+    await React.act(async () =>
+      document.querySelector('[data-role-id="internal-women-activities"]').click(),
+    );
+    const internalWomenDialog = document.querySelector("dialog");
+    assert.match(internalWomenDialog.textContent, /اختيار فرق التنفيذ وتوزيع المسؤوليات/);
+    await React.act(async () => internalWomenDialog.querySelector('[aria-label="إغلاق"]').click());
 
     await React.act(async () =>
       document.querySelector('[data-unit-id="university-media"]').click(),
