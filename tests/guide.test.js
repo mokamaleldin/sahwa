@@ -56,7 +56,7 @@ test("new governance data retains all eighteen source roles and four chapters", 
   assert.match(studentSector, /بناء الأخوة داخل القطاع/);
   assert.match(studentSector, /متابعة مسؤولات الطالبات داخل الجامعات/);
   const centralWomen = JSON.stringify(governanceRoles["central-women-lead"].blocks);
-  assert.match(centralWomen, /اختيار قائدات الفعاليات/);
+  assert.match(centralWomen, /اختيار قائدة للفعالية/);
   assert.match(centralWomen, /لا يحق لها إدارة الأنشطة الداخلية لفرق الطالبات بالجامعات/);
   const centralYouth = JSON.stringify(governanceRoles["central-youth-lead"].blocks);
   assert.match(centralYouth, /ما ليس من صلاحياته/);
@@ -205,7 +205,7 @@ test("the guide shows each role's full source-specific duties and keeps team and
     );
     const womenUniversity = document.querySelector("dialog");
     assert.match(womenUniversity.textContent, /مسؤولة الطالبات داخل الجامعة/);
-    assert.match(womenUniversity.textContent, /تنظيم لقاءات دورية للتعلم والصحبة/);
+    assert.match(womenUniversity.textContent, /مجالس دورية للصحبة والتعلم/);
     await React.act(async () => womenUniversity.querySelector('[aria-label="إغلاق"]').click());
 
     await React.act(async () =>
