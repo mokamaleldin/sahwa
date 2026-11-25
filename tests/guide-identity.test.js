@@ -8,6 +8,7 @@ import { compileUI } from "./helpers/compile-ui.js";
 
 const outline = readFileSync("docs/guide/bylaws.md", "utf8");
 const identity = readFileSync("docs/guide/identity.md", "utf8");
+const structure = readFileSync("docs/guide/structure.md", "utf8");
 const books = outline.split(/(?=^# الباب )/m);
 const at = compileUI("tmp/bylaws-tests", [
   "src/components/shared/PageIdentity.tsx",
@@ -16,6 +17,7 @@ const at = compileUI("tmp/bylaws-tests", [
   "src/components/Team/GuideStructure.tsx",
   "src/components/Team/TeamDialog.tsx",
   "src/components/Team/GuideGovernance.tsx",
+  "src/lib/structureParser.ts",
   "src/data/sahwaGuide.ts",
   "src/data/sahwaStructure.ts",
   "src/data/sahwaGovernance.ts",
@@ -23,6 +25,7 @@ const at = compileUI("tmp/bylaws-tests", [
   "src/views/TeamGuide.tsx",
 ]);
 const { default: TeamGuide } = await at("src/views/TeamGuide.js");
+const { parseStructureBook } = await at("src/lib/structureParser.js");
 
 function sourceLines(source) {
   return source.split(/\r?\n/).filter(line => line.trim() && line !== "---")
@@ -65,6 +68,46 @@ test("the two guide sources match the supplied UTF-8 files byte for byte", () =>
   assert.equal(hash(outline), "e304a76b4ea70eb072f53c40127b81569da3e4c914b58488c9652164d0d00edf");
   assert.equal(hash(identity), "94dac43f535482c8281b9c75345e1105c8decca6361ec4a94ffc416b991d2f29");
   assert.equal(books.length, 7);
+});
+
+test("every chapter and every chart entry in Book 2 parses verbatim without dropping content", () => {
+  const parsed = parseStructureBook(structure);
+  assert.equal(parsed.chapters.length, 9);
+  for (const chapter of parsed.chapters) {
+    assert.ok(chapter.blocks.length > 0, chapter.id);
+  }
+  assert.ok(parsed.entries.size >= 45);
+  for (const [id, entry] of parsed.entries) {
+    assert.ok(entry.blocks.length > 0, `empty structure entry: ${id}`);
+  }
+  const renderedBookWords = normalizeWords(
+    parsed.chapters
+      .flatMap((chapter) => chapter.blocks)
+      .flatMap((block) => {
+        if (block.kind === "heading" || block.kind === "paragraph") return [block.text.replaceAll("**", "")];
+        if (block.kind === "list") return block.items.map((item) => item.replaceAll("**", ""));
+        if (block.kind === "table") return [...block.headers, ...block.rows.flat()].map((cell) => cell.replaceAll("**", ""));
+        return [];
+      })
+      .join(" "),
+  );
+  const expectedBookWords = normalizeWords(
+    structure
+      .replace(/\r\n/g, "\n")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line && line !== "---" && line !== "2.5" && !/^\|[\s:|-]+\|$/.test(line))
+      .map((line) => {
+        if (line.startsWith("|")) {
+          return line.replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim()).join(" ");
+        }
+        if (/^#{1,4}\s+/.test(line)) return line.replace(/^#{1,4}\s+/, "");
+        return line.replace(/^- /, "").replace(/^\d+\.\s+/, "");
+      })
+      .join(" ")
+      .replaceAll("**", ""),
+  );
+  assert.equal(renderedBookWords, expectedBookWords);
 });
 
 test("all source text is reachable verbatim in the three tabs, with interactive identity sections", async () => {

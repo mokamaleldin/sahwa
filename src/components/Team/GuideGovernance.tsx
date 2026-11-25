@@ -38,7 +38,7 @@ export function GuideGovernanceBlocks({ blocks }: { blocks: GovernanceBlock[] })
         }
         if (block.kind === "table") {
           return (
-            <div className="guide-governance-table-wrap" key={index} role="region" aria-label="جدول توزيع القرارات" tabIndex={0}>
+            <div className="guide-governance-table-wrap" key={index} role="region" aria-label="جدول تفصيلي" tabIndex={0}>
               <table>
                 <thead><tr>{block.headers.map((heading, hIndex) => <th key={hIndex} scope="col">{heading}</th>)}</tr></thead>
                 <tbody>{block.rows.map((row, rowIndex) => (

@@ -10,6 +10,7 @@ const at = compileUI(output, [
   "src/data/sahwaGuide.ts",
   "src/data/sahwaStructure.ts",
   "src/data/sahwaGovernance.ts",
+  "src/lib/structureParser.ts",
   "src/components/shared/PageIdentity.tsx",
   "src/components/Team/TeamDialog.tsx",
   "src/components/Team/GuideStructure.tsx",
@@ -168,93 +169,91 @@ test("the guide shows each role's full source-specific duties and keeps team and
     const outline = chapter.querySelector('[data-book="2"]');
     const chart = chapter.querySelector("#guide-structure-map");
     assert.equal(outline.open, false);
-    assert.equal(outline.nextElementSibling, chart);
+    assert.equal(chart.nextElementSibling, outline);
     assert.ok(chart.querySelector(".guide-map"));
     assert.equal(chart.closest("details"), null);
     assert.equal(document.querySelectorAll("#guide-structure").length, 1);
     assert.equal(document.querySelectorAll(".guide-map-council-member").length, 6);
-    assert.equal(document.querySelectorAll(".guide-map-planned-item").length, 4);
-    const roleButton = document.querySelector(
-      '[data-role-id="university-youth-coordinator"]',
-    );
+    assert.ok(!chart.textContent.includes("نسخة أولية — غير معتمدة نهائيًا"));
+    assert.ok(!chart.textContent.includes("وحدات مقترحة للتأسيس لاحقًا"));
+    assert.ok(!chart.textContent.includes("القرارات والإجراءات المشتركة"));
+
+    // Click Central Board and check verbatim 2.2 text
+    await React.act(async () => document.querySelector('[data-role-id="board"]').click());
+    const boardDialog = document.querySelector("dialog");
+    assert.ok(boardDialog?.open);
+    assert.match(boardDialog.textContent, /مجلس الإدارة المركزي هو الجهة المسؤولة عن التنسيق العام/);
+    assert.match(boardDialog.textContent, /الرد على رسائل العمل خلال 24 ساعة/);
+    await React.act(async () => boardDialog.querySelector('[aria-label="إغلاق"]').click());
+    assert.equal(document.querySelector("dialog"), null);
+
+    // Click University Youth Coordinator and check verbatim 2.6 table and details
+    const roleButton = document.querySelector('[data-role-id="university-youth-coordinator"]');
     assert.ok(roleButton);
     await React.act(async () => roleButton.click());
-
     const dialog = document.querySelector("dialog");
     assert.ok(dialog?.open);
     assert.match(dialog.textContent, /مسؤول الشباب داخل الجامعة/);
     const detail = dialog.querySelector(".guide-governance-content");
-    assert.ok(detail, "full role-specific document should be visible");
-    for (const label of ["بناء حضور صحوة داخل الجامعة", "الأخوة وبناء المجتمع", "صلاحياته", "حدود صلاحياته"]) {
+    assert.ok(detail);
+    for (const label of ["يتبع إداريًا", "الحضور الجامعي", "الأخوة والمجتمع", "معيار نجاحه"]) {
       assert.ok(detail.textContent.includes(label), label);
     }
-    assert.equal(dialog.querySelector("details.guide-more-details"), null);
-    await React.act(async () =>
-      dialog.querySelector('[aria-label="إغلاق"]').click(),
-    );
+    await React.act(async () => dialog.querySelector('[aria-label="إغلاق"]').click());
     assert.equal(document.querySelector("dialog"), null);
 
-    await React.act(async () =>
-      document.querySelector('[data-role-id="women-sector-lead"]').click(),
-    );
+    // Women's sector lead (verbatim 2.4)
+    await React.act(async () => document.querySelector('[data-role-id="women-sector-lead"]').click());
     const sector = document.querySelector("dialog");
     assert.ok(sector?.open);
     for (const text of [
       "مسؤولة قطاع الطالبات",
-      "قيادة فرق الطالبات الجامعية",
-      "بناء الأخوة داخل القطاع",
+      "متابعة فرق الطالبات الجامعية",
+      "بناء الأخوة ومجتمع الطالبات",
       "حدود صلاحياتها",
-      "التوسع والتطوير",
+      "التوسع وتطوير القيادات",
     ]) assert.ok(sector.textContent.includes(text), text);
-    assert.ok(!sector.textContent.includes("مسؤول أنشطة الشباب المركزية هو"), "women's sector must have its own duties");
     await React.act(async () => sector.querySelector('[aria-label="إغلاق"]').click());
 
-    await React.act(async () =>
-      document.querySelector('[data-role-id="university-women-coordinator"]').click(),
-    );
-    const womenUniversity = document.querySelector("dialog");
-    assert.match(womenUniversity.textContent, /مسؤولة الطالبات داخل الجامعة/);
-    assert.match(womenUniversity.textContent, /مجالس دورية للصحبة والتعلم/);
-    await React.act(async () => womenUniversity.querySelector('[aria-label="إغلاق"]').click());
+    // Finance lead & review council & technology lead & university volunteers are all active full roles
+    for (const [id, snippet] of [
+      ["finance-lead", "طريقة استقبال الطلبات المالية"],
+      ["records-lead", "الفصل بين الأرشفة الإدارية والإعلامية"],
+      ["review-lead", "تنظيم استقبال الطلبات وتصنيفها"],
+      ["technology-lead", "حماية بيانات المستخدمين وتنظيم صلاحيات الوصول"],
+      ["expansion-lead", "الوصول إلى الأعضاء المؤسسين"],
+      ["programs-lead", "تحويل الاحتياجات إلى برامج عملية"],
+      ["university-volunteers", "يمكن للمتطوع المشاركة في نشاط أو مهمة محددة دون الانضمام إلى لجنة دائمة"],
+      ["membership-levels", "يقوم العمل داخل صحوة على ثلاثة مستويات أساسية من المشاركة التنظيمية"],
+      ["event-lead", "المسؤول الإداري هو الشخص المكلف بقيادة فريق أو لجنة أو ملف بصورة مستمرة"],
+    ]) {
+      const btn = document.querySelector(`[data-role-id="${id}"]`);
+      assert.ok(btn, id);
+      await React.act(async () => btn.click());
+      const openDialog = document.querySelector("dialog");
+      assert.ok(openDialog?.open, id);
+      assert.ok(openDialog.textContent.includes(snippet), `${id} missing ${snippet}`);
+      await React.act(async () => openDialog.querySelector('[aria-label="إغلاق"]').click());
+    }
 
-    await React.act(async () =>
-      document.querySelector('[data-role-id="central-women-lead"]').click(),
-    );
-    const centralWomenDialog = document.querySelector("dialog");
-    assert.ok(centralWomenDialog?.open);
-    assert.match(centralWomenDialog.textContent, /نطاق عملها/);
-    assert.match(centralWomenDialog.textContent, /ما ليس من صلاحياتها/);
-    assert.match(centralWomenDialog.textContent, /التقارير والمخرجات/);
-    await React.act(async () => centralWomenDialog.querySelector('[aria-label="إغلاق"]').click());
+    // Field media has no independent lead
+    await React.act(async () => document.querySelector('[data-unit-id="university-media"]').click());
+    const mediaDialog = document.querySelector("dialog");
+    assert.ok(mediaDialog?.open);
+    assert.match(mediaDialog.textContent, /لا يُنشأ منصب مستقل/);
+    await React.act(async () => mediaDialog.querySelector('[aria-label="إغلاق"]').click());
 
-    await React.act(async () =>
-      document.querySelector('[data-role-id="internal-women-activities"]').click(),
-    );
-    const internalWomenDialog = document.querySelector("dialog");
-    assert.match(internalWomenDialog.textContent, /اختيار فرق التنفيذ وتوزيع المسؤوليات/);
-    await React.act(async () => internalWomenDialog.querySelector('[aria-label="إغلاق"]').click());
-
-    await React.act(async () =>
-      document.querySelector('[data-unit-id="university-media"]').click(),
-    );
-    const unitDialog = document.querySelector("dialog");
-    assert.ok(unitDialog?.open);
-    assert.match(unitDialog.textContent, /الإعلام الميداني/);
-    assert.equal(unitDialog.querySelectorAll(".guide-role-fields-short > div").length, 3);
-    assert.equal(unitDialog.querySelectorAll(".guide-map-dialog-roles .guide-role-button").length, 1);
-    assert.ok(!unitDialog.textContent.includes("مسؤول الإعلام الميداني"));
-    assert.match(unitDialog.querySelector(".guide-role-fields-short").textContent, /حدود الصلاحيات/);
-    assert.ok(!unitDialog.querySelector("details.guide-more-details").open);
-    await React.act(async () =>
-      unitDialog.querySelector('[aria-label="إغلاق"]').click(),
-    );
-
-    await React.act(async () =>
-      document.querySelector('[data-unit-id="technology"]').click(),
-    );
-    const proposedDialog = document.querySelector("dialog");
-    assert.match(proposedDialog.textContent, /لم تُفعّل بعد/);
-    assert.equal(proposedDialog.querySelectorAll(".guide-map-dialog-roles .guide-role-button").length, 0);
+    // Switch to Book view ("الكتاب") and verify all 9 chapters are selectable and verbatim
+    await React.act(async () => document.querySelector("#guide-structure-mode-book").click());
+    assert.equal(document.querySelector(".guide-map"), null);
+    const bookTabs = [...document.querySelectorAll('[data-structure-book] .guide-identity-tab')];
+    assert.equal(bookTabs.length, 9);
+    assert.equal(bookTabs[0].textContent, "الهيكل التنظيمي العام لصحوة");
+    assert.equal(bookTabs[8].textContent, "قواعد التبعية والتنسيق والإنابة");
+    await React.act(async () => bookTabs[8].click());
+    const activeBookPanel = document.querySelector('[data-structure-chapter="2.9"]');
+    assert.equal(activeBookPanel.hasAttribute("hidden"), false);
+    assert.match(activeBookPanel.textContent, /وضوح التبعية لا يعني تقييد التواصل/);
   } finally {
     await React.act(async () => root.unmount());
     dom.window.close();

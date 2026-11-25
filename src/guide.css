@@ -319,7 +319,7 @@
 .guide-map-unit-eyebrow { font-size: 10px; font-weight: 600; color: #946535; }
 .guide-map-unit-text strong { font-size: 20px; font-weight: 700; line-height: 1.5; }
 .guide-map-unit-summary { font-size: 12px; line-height: 1.8; color: var(--text-muted); }
-.guide-map-unit-trigger-small { min-height: 92px; padding: 12px 13px; border-color: #75202620; background: #fffaf8; }
+.guide-map-unit-trigger-small { min-height: 54px; padding: 12px 14px; border-color: #75202620; background: #fffaf8; }
 .guide-map-unit-trigger-small .guide-map-unit-text strong { font-size: 15px; line-height: 1.55; }
 .guide-map-unit-trigger-small .guide-map-unit-summary { font-size: 11px; }
 /* A single trunk runs from each track to every team and supporting unit. */
@@ -835,4 +835,149 @@
   .guide-governance-topic-label strong { font-size: 15px; }
   .guide-governance-topic-label small { font-size: 11px; }
   .guide-governance-role-scope, .guide-legacy-role-note { margin-inline: 17px; }
+}
+
+/* Book 2 mode switcher (الهيكل المرسوم | الكتاب), expanded chart nodes & verbatim book reader. */
+.guide-structure-modes {
+  display: inline-flex;
+  gap: 8px;
+  padding: 5px;
+  margin: 0 auto 24px;
+  border: 1px solid #d6ad6375;
+  border-radius: 999px;
+  background: #fffaf6;
+  box-shadow: 0 8px 24px #350e1508;
+}
+.guide-structure > .guide-structure-modes {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+}
+.guide-structure-mode-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 20px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--brand-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease, border-color .18s ease;
+}
+.guide-structure-mode-tab:hover {
+  background: #f7e8d8;
+}
+.guide-structure-mode-tab[aria-selected="true"] {
+  background: var(--brand-primary);
+  color: #fffaf7;
+  box-shadow: 0 6px 16px #75202620;
+}
+.guide-structure-mode-tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset-inline: 18px;
+  inset-block-end: 4px;
+  border-block-end: 2px solid var(--brand-gold);
+  border-radius: 999px;
+}
+.guide-structure-mode-tab:focus-visible {
+  outline: 3px solid var(--brand-gold);
+  outline-offset: 2px;
+}
+
+.guide-map-single-node {
+  position: relative;
+  z-index: 1;
+  max-width: 340px;
+  margin: 12px auto 0;
+}
+.guide-map-single-team {
+  position: relative;
+  z-index: 1;
+  margin-top: 12px;
+}
+.guide-map-single-team .guide-map-team::before {
+  display: none;
+}
+.guide-map-branch-support {
+  border-color: #75202626;
+  background: linear-gradient(180deg, #d6ad630c, #fff8 180px);
+}
+.guide-map-support-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+.guide-map-support-grid .guide-map-team::before {
+  display: none;
+}
+.guide-map-participation-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+  padding: 16px;
+  border: 1px solid #d6ad6370;
+  border-radius: 20px;
+  background: #fffaf6;
+}
+.guide-dialog-children {
+  padding: 16px 24px 0;
+}
+.guide-structure-book {
+  margin-bottom: 36px;
+}
+.guide-structure-book-sheet {
+  margin-top: 8px;
+  padding: clamp(14px, 3vw, 28px);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: #fffaf6;
+  box-shadow: 0 12px 34px #350e1508;
+}
+.guide-structure-book-sheet .guide-governance-content {
+  padding: 8px 12px;
+}
+@media (max-width: 900px) {
+  .guide-map-support-grid {
+    grid-template-columns: 1fr;
+  }
+  .guide-map-participation-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .guide-structure-modes {
+    width: 100%;
+    justify-content: center;
+  }
+  .guide-structure-mode-tab {
+    flex: 1;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+  .guide-map-participation-strip {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+  .guide-dialog-children {
+    padding: 14px 17px 0;
+  }
+  .guide-structure-book-sheet {
+    border-radius: 16px;
+    padding: 10px 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-structure-mode-tab {
+    transition: none;
+  }
 }

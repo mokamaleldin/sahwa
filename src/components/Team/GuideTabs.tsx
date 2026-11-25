@@ -28,12 +28,20 @@ const tabs = [
 ] as const;
 
 function tabForHash(hash: string) {
-  if (hash === "#guide-structure" || hash === "#guide-structure-map") return 1;
+  if (hash === "#guide-structure" || hash.startsWith("#guide-structure-")) return 1;
   if (hash === "#guide-policies") return 2;
   return 0;
 }
 
-export default function GuideTabs({ books, identity }: { books: Book[]; identity: string }) {
+export default function GuideTabs({
+  books,
+  identity,
+  structure,
+}: {
+  books: Book[];
+  identity: string;
+  structure: string;
+}) {
   const [active, setActive] = useState(0);
   useEffect(() => {
     function sync() {
@@ -104,8 +112,8 @@ export default function GuideTabs({ books, identity }: { books: Book[]; identity
           )}
           {active === index && index === 1 && (
             <>
+              <GuideStructure source={structure} />
               <BookDetails book={books[1]} number={2} />
-              <GuideStructure />
             </>
           )}
           {active === index && index === 2 && books.slice(2).map((book, i) => (

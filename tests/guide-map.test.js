@@ -4,9 +4,8 @@ import { readFileSync } from "node:fs";
 import ts from "typescript";
 
 const view = readFileSync("src/components/Team/GuideStructure.tsx", "utf8");
-const units = readFileSync("src/data/sahwaStructure.ts", "utf8");
-const roles = readFileSync("src/data/sahwaGuide.ts", "utf8");
-const governance = readFileSync("src/data/sahwaGovernance.ts", "utf8");
+const parser = readFileSync("src/lib/structureParser.ts", "utf8");
+const structureDoc = readFileSync("docs/guide/structure.md", "utf8");
 const css = readFileSync("src/guide.css", "utf8");
 
 test("interactive guide source has valid TSX syntax", () => {
@@ -20,43 +19,45 @@ test("interactive guide source has valid TSX syntax", () => {
   assert.ok(result.outputText.includes("guide-map-branches"));
 });
 
-test("organizational chart replaces duplicate sections and unwanted phrases", () => {
+test("organizational chart removes draft banner, proposed-unit labels and old governance topics footer", () => {
   for (const removed of [
-    "بطاقات المسؤوليات",
-    "تفويض واضح",
-    "قيادة دون احتكار",
-    "مساءلة عادلة",
-    "أربعة أبواب، نبدأ بالأكثر إلحاحًا",
-    "كيف يتحرك القرار؟",
-    "الصلاحية تتحرك مع المسؤولية",
+    "نسخة أولية — غير معتمدة نهائيًا",
+    "وحدات مقترحة للتأسيس لاحقًا",
+    "غير مفعّلة",
+    "GuideGovernanceTopics",
+    "القرارات والإجراءات المشتركة",
+    "قواعد العمل بين الفرق",
   ]) {
     assert.ok(!view.includes(removed), removed);
   }
-  for (const node of ["guide-map-board-trigger", "guide-map-branches", "UnitDialog", "RoleDialog"]) {
+  for (const node of [
+    "guide-structure-modes",
+    "guide-map-board-trigger",
+    "guide-map-branches",
+    "StructureDialog",
+    "StructureBookReader",
+  ]) {
     assert.ok(view.includes(node), node);
   }
 });
 
-test("every role remains reachable and proposed units are clearly marked", () => {
-  const ids = [...roles.matchAll(/^\s+id: "([^"]+)"/gm)].map(match => match[1]);
-  assert.ok(ids.length >= 20);
-  for (const roleId of ids) {
-    assert.ok(view.includes('"' + roleId + '"') || units.includes('"' + roleId + '"'), "unreachable role: " + roleId);
-  }
-  const unitIds = [...units.matchAll(/^\s+id: "([^"]+)"/gm)].map(match => match[1]);
+test("every unit and role in the chart is backed by verbatim entries in structureParser", () => {
+  const entryIds = [...parser.matchAll(/id:\s*"([^"]+)"/g)].map(match => match[1]);
   for (const unitId of [...view.matchAll(/unitId="([^"]+)"/g)].map(match => match[1])) {
-    assert.ok(unitIds.includes(unitId), "undefined unit: " + unitId);
+    assert.ok(entryIds.includes(unitId), "undefined unit: " + unitId);
   }
-  for (const future of ["programs", "review", "expansion", "technology"]) {
-    assert.ok(units.includes('id: "' + future + '"'));
+  for (const roleId of [...view.matchAll(/entryId="([^"]+)"/g)].map(match => match[1])) {
+    assert.ok(entryIds.includes(roleId), "undefined entry: " + roleId);
   }
-  assert.ok(units.includes("لم تُفعّل بعد"));
-});
-
-test("mobile layout and keyboard focus are supported", () => {
-  assert.ok(css.includes("@media(max-width:900px)"));
-  assert.ok(css.includes("@media(max-width:640px)"));
-  assert.ok(css.includes(".guide-map-unit-trigger:focus-visible"));
+  for (const unit of [
+    "universities", "university-board", "university-youth", "university-women",
+    "university-relations", "university-media", "additional-committees",
+    "central", "central-youth", "central-women", "central-media", "central-relations",
+    "expansion", "technology", "programs",
+    "admin-support", "finance", "records", "review",
+  ]) {
+    assert.ok(view.includes('unitId="' + unit + '"'), "missing chart unit: " + unit);
+  }
 });
 
 test("all six council roles branch below the board, not inside its card", () => {
@@ -66,70 +67,19 @@ test("all six council roles branch below the board, not inside its card", () => 
   const branch = view.slice(membersStart, membersEnd);
   assert.ok(boardEnd > 0 && membersStart > boardEnd, "members should be siblings below the board");
   assert.ok(view.slice(boardEnd, membersStart).includes('className="guide-map-council-link"'));
-  assert.ok(branch.includes('councilRoles.map((roleId)'));
+  assert.ok(branch.includes("councilRoles.map((roleId)"));
   assert.equal((branch.match(/className="guide-map-council-member"/g) || []).length, 1);
   assert.ok(css.includes("grid-template-columns: repeat(6,minmax(0,1fr))"));
   assert.ok(css.includes(".guide-map-board-members::before"));
   assert.ok(css.includes(".guide-map-council-member::before"));
-  assert.ok(css.includes("grid-template-columns: repeat(2,minmax(0,1fr))"));
 });
 
-
-test("every active university and central branch connects its units and members", () => {
-  assert.equal((view.match(/<OrganizationTeam\b/g) || []).length, 8);
-  for (const id of [
-    "universities", "university-youth", "university-women", "university-media", "university-relations",
-    "central", "central-youth", "central-women", "central-media", "central-relations",
-  ]) {
-    assert.ok(view.includes('unitId="' + id + '"'), "unreachable unit: " + id);
-  }
-  for (const connector of [
-    "guide-map-branch-root-link",
-    "guide-map-branch-tree",
-    "guide-map-tree-tier",
-    "guide-map-team-link",
-    "guide-map-team-role",
-  ]) {
-    assert.ok(view.includes(connector), "missing chart node: " + connector);
-    assert.ok(css.includes("." + connector), "missing styling: " + connector);
-  }
-  for (const diagramRule of [
-    ".guide-map-branch-tree::before",
-    ".guide-map-pair::before",
-    ".guide-map-team::before",
-    ".guide-map-team-roles::before",
-    ".guide-map-team-role::before",
-    ".guide-map-planned-item:nth-child(-n+2)::after",
-  ]) {
-    assert.ok(css.includes(diagramRule), "unconnected descendant: " + diagramRule);
-  }
-  assert.ok(css.includes(".guide-map-pair::before { display: none; }"), "mobile tree needs side-spine variant");
-  assert.ok(view.includes("GuideGovernanceTopics"));
-  assert.ok(view.includes("GuideGovernanceBlocks"));
-  assert.ok(view.includes("المسار المشترك بين الجامعات"));
-  assert.ok(view.includes("فريقا الشباب والطالبات"));
-});
-
-test("guide ends at organizational branches without the volunteering footer", () => {
-  for (const removed of [
-    "guide-map-collaboration-link",
-    "guide-map-contribution",
-    "guide-map-equality",
-    "المتطوعون وفرق الفعاليات",
-    "العمل الجامعي والمركزي مساران متكاملان",
-  ]) {
-    assert.ok(!view.includes(removed), "old footer still visible: " + removed);
-  }
-  assert.ok(view.includes('unitId="universities"'));
-  assert.ok(view.includes('unitId="central"'));
-});
-
-test("updated structure removes independent field media leadership and preserves women-specific governance", () => {
-  assert.ok(!roles.includes('id: "field-media-lead"'));
-  assert.ok(!units.includes('"field-media-lead"'));
+test("mobile layout, connectors, and keyboard focus are supported", () => {
+  assert.ok(css.includes("@media(max-width:900px)"));
+  assert.ok(css.includes("@media(max-width:640px)"));
+  assert.ok(css.includes(".guide-map-unit-trigger:focus-visible"));
+  assert.ok(css.includes(".guide-structure-mode-tab:focus-visible"));
+  assert.ok(structureDoc.includes("## الفصل 2.1 — الهيكل التنظيمي العام لصحوة"));
+  assert.ok(structureDoc.includes("## الفصل 2.9 — قواعد التبعية والتنسيق والإنابة"));
   assert.ok(!view.includes('"field-media-lead"'));
-  assert.ok(units.includes('roleIds: ["field-media-member"]'));
-  assert.ok(governance.includes('"women-sector-lead"'));
-  assert.ok(governance.includes("بناء الأخوة داخل القطاع"));
-  assert.ok(governance.includes("لا تُعقد اتفاقات رسمية") || governance.includes("لا يحق له إبرام"));
 });
