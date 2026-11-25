@@ -26,13 +26,13 @@ export function createTeamHandler(store, platformStore) {
           const targets = targetsOf(p, own);
           if (!can(actor, "volunteers.view", targets)) continue;
           const manage = p.id !== actor.volunteerId && mayManagePerson(actor, own);
-          const { accountId, username, accountStatus, mustChangePassword, lastLoginAt, lastResetAt, temporaryExpiresAt, accountCreatedAt, isTest, archivedAt, ...person } = p;
+          const { accountId, username, accountEmail, accountStatus, mustChangePassword, lastLoginAt, lastResetAt, temporaryExpiresAt, accountCreatedAt, isTest, archivedAt, ...person } = p;
           volunteers.push({
             ...person,
             assignments: own.map(describeAssignment),
             account: can(actor, "accounts.view", targets)
               ? accountId
-                ? { username, status: accountStatus, pending: mustChangePassword, lastLoginAt, lastResetAt, temporaryExpiresAt, createdAt: accountCreatedAt }
+                ? { username, email: accountEmail, status: accountStatus, pending: mustChangePassword, lastLoginAt, lastResetAt, temporaryExpiresAt, createdAt: accountCreatedAt }
                 : { status: "none" }
               : null,
             allowed: {

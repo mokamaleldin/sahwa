@@ -12,6 +12,8 @@ export async function testDatabase({sharedEmail='sahwa@example.invalid',legacySe
  if(beforePlatform)await beforePlatform(db);
  const platform=await readFile(new URL('../../db/migrations/004-platform.sql',import.meta.url),'utf8');
  await db.transaction(async tx=>{for(const statement of platform.split(';').map(x=>x.trim()).filter(Boolean))await tx.query(statement);});
+ const owner=await readFile(new URL('../../db/migrations/005-owner-email-login.sql',import.meta.url),'utf8');
+ await db.transaction(async tx=>{for(const statement of owner.split(';').map(x=>x.trim()).filter(Boolean))await tx.query(statement);});
  const sql=pgliteClient(db);
  return {db,sql,store:createTeamStore(()=>sql)};
 }

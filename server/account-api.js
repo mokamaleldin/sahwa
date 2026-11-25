@@ -60,8 +60,8 @@ export function createAccountHandler(teamStore, platformStore) {
   return async (request) => {
     try {
       const actor = await requireActor(request, stores, { allowPasswordChange: true });
-      if (actor.kind !== "account") throw forbidden("الحساب المشترك لا يملك ملفًا شخصيًا. ادخل بحسابك الشخصي.");
       if (request.method === "GET") {
+        if (actor.kind !== "account") return json({ profile: null });
         if (actor.mustChangePassword) return json({ mustChangePassword: true });
         return json({ profile: (await platformStore.profile(actor.volunteerId)) || null });
       }
@@ -83,6 +83,7 @@ export function createAccountHandler(teamStore, platformStore) {
         return json({ changed: true }, 200, { "Set-Cookie": cookie });
       }
       if (actor.mustChangePassword) throw new TeamError("غيّر كلمة المرور المؤقتة أولًا.", 403, "PASSWORD_CHANGE_REQUIRED");
+      if (actor.kind !== "account") throw forbidden("حساب المسؤول العام لا يرتبط بملف متطوع.");
       if (!can(actor, "profile.edit", {})) throw forbidden();
       const profile = validateProfile(input.profile || {});
       if (profile.handle) {

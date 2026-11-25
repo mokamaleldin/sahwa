@@ -4,7 +4,7 @@ import { TeamError } from "../team-data.js";
 
 const PERSON = `v.id, v.full_name AS "fullName", v.university, v.major, v.study_year AS "studyYear", COALESCE(v.birth_date::text,'') AS "birthDate", v.gender, v.team, v.responsibility, v.role_id AS "roleId", v.phone, v.status, v.revision, v.membership_level AS "membershipLevel", v.is_test AS "isTest", v.archived_at AS "archivedAt"`;
 const ASSIGNMENT = `a.id, a.volunteer_id AS "volunteerId", a.role_id AS "roleId", a.university, a.sector, COALESCE(a.starts_on::text,'') AS "startsOn", COALESCE(a.ends_on::text,'') AS "endsOn", a.status, a.source, a.assigned_by AS "assignedBy", a.created_at AS "createdAt"`;
-const ACCOUNT = `c.id AS "accountId", c.username, c.status AS "accountStatus", c.must_change_password AS "mustChangePassword", c.temporary_expires_at AS "temporaryExpiresAt", c.last_login_at AS "lastLoginAt", c.last_reset_at AS "lastResetAt", c.created_at AS "accountCreatedAt"`;
+const ACCOUNT = `c.id AS "accountId", c.username, c.email AS "accountEmail", c.status AS "accountStatus", c.must_change_password AS "mustChangePassword", c.temporary_expires_at AS "temporaryExpiresAt", c.last_login_at AS "lastLoginAt", c.last_reset_at AS "lastResetAt", c.created_at AS "accountCreatedAt"`;
 const POST = `p.id, p.kind, p.title, p.body, p.skills, p.link, COALESCE(p.happens_on::text,'') AS "happensOn", p.audience_university AS "audienceUniversity", p.audience_sector AS "audienceSector", p.author_label AS "authorLabel", p.revision, p.created_at AS "createdAt"`;
 const FORM = `f.id, f.slug, f.title, f.description, f.fields, f.routing, f.audience, f.active, f.confidential, f.sort_order AS "sortOrder", f.revision`;
 const SUBMISSION = `s.id, s.form_id AS "formId", s.form_snapshot AS "form", s.answers, s.route_role AS "routeRole", s.route_university AS "routeUniversity", s.route_sector AS "routeSector", s.status, s.response, s.responded_by AS "respondedBy", s.revision, s.created_at AS "createdAt", s.submitter_volunteer AS "submitterId"`;
@@ -20,8 +20,8 @@ export function createPlatformStore(getClient = getSql) {
     // Sessions and accounts
     async sessionAccount(hash) {
       return one(
-        `SELECT c.id AS "accountId", c.username, c.status AS "accountStatus", c.must_change_password AS "mustChangePassword", ${PERSON}
-         FROM sahwa_account_sessions s JOIN sahwa_accounts c ON c.id=s.account_id JOIN sahwa_volunteers v ON v.id=c.volunteer_id
+        `SELECT c.id AS "accountId", c.username, c.email, c.is_owner AS "isOwner", c.display_name AS "displayName", c.status AS "accountStatus", c.must_change_password AS "mustChangePassword", ${PERSON}
+         FROM sahwa_account_sessions s JOIN sahwa_accounts c ON c.id=s.account_id LEFT JOIN sahwa_volunteers v ON v.id=c.volunteer_id
          WHERE s.token_hash=$1 AND s.expires_at>now() AND s.session_version=c.session_version`,
         [hash],
       );
@@ -37,12 +37,17 @@ export function createPlatformStore(getClient = getSql) {
     async deleteAccountSession(hash) {
       await query("DELETE FROM sahwa_account_sessions WHERE token_hash=$1", [hash]);
     },
-    async accountForLogin(username) {
+    // Login by e-mail or username.
+    async accountForLogin(identifier) {
       return one(
-        `SELECT c.id AS "accountId", c.password_hash AS "passwordHash", c.status AS "accountStatus", c.temporary_expires_at AS "temporaryExpiresAt", c.must_change_password AS "mustChangePassword", v.is_test AS "isTest", v.archived_at AS "archivedAt"
-         FROM sahwa_accounts c JOIN sahwa_volunteers v ON v.id=c.volunteer_id WHERE c.username=$1`,
-        [username],
+        `SELECT c.id AS "accountId", c.password_hash AS "passwordHash", c.status AS "accountStatus", c.temporary_expires_at AS "temporaryExpiresAt", c.must_change_password AS "mustChangePassword", c.is_owner AS "isOwner", v.archived_at AS "archivedAt"
+         FROM sahwa_accounts c LEFT JOIN sahwa_volunteers v ON v.id=c.volunteer_id
+         WHERE (c.username=$1 OR c.email=$1) AND (c.is_owner OR v.id IS NOT NULL)`,
+        [identifier],
       );
+    },
+    async emailTaken(email) {
+      return Boolean(await one("SELECT 1 AS x FROM sahwa_accounts WHERE email=$1", [email]));
     },
     async accountPasswordHash(accountId) {
       return (await one("SELECT password_hash AS hash FROM sahwa_accounts WHERE id=$1", [accountId]))?.hash;
@@ -53,11 +58,11 @@ export function createPlatformStore(getClient = getSql) {
     async accountForVolunteer(volunteerId) {
       return one(`SELECT ${ACCOUNT}, c.volunteer_id AS "volunteerId" FROM sahwa_accounts c WHERE c.volunteer_id=$1`, [volunteerId]);
     },
-    async createAccount({ volunteerId, username, passwordHash, mustChange, expiresAt, createdBy }) {
+    async createAccount({ volunteerId, username, email = null, passwordHash, mustChange, expiresAt, createdBy }) {
       return one(
-        `INSERT INTO sahwa_accounts(id,volunteer_id,username,password_hash,must_change_password,temporary_expires_at,created_by,last_reset_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,now()) RETURNING id`,
-        [randomUUID(), volunteerId, username, passwordHash, mustChange, expiresAt, createdBy],
+        `INSERT INTO sahwa_accounts(id,volunteer_id,username,email,password_hash,must_change_password,temporary_expires_at,created_by,last_reset_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now()) RETURNING id`,
+        [randomUUID(), volunteerId, username, email, passwordHash, mustChange, expiresAt, createdBy],
       );
     },
     async resetAccount(accountId, passwordHash, expiresAt, mustChange = true) {

@@ -2,7 +2,7 @@ import { test, before, beforeEach, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { testDatabase, person } from "./helpers/database.js";
-import { hashPassword, createSession } from "../server/auth.js";
+import { hashPassword } from "../server/auth.js";
 import { createAuthHandler } from "../server/auth-api.js";
 import { createTeamHandler } from "../server/team-api.js";
 import { createEventsHandler } from "../server/events-api.js";
@@ -46,9 +46,7 @@ before(async () => {
 });
 beforeEach(async () => {
   await db.exec("TRUNCATE sahwa_shared_sessions,sahwa_account_sessions,sahwa_accounts,sahwa_role_assignments,sahwa_permission_grants,sahwa_audit_log,sahwa_form_submissions,sahwa_profiles,sahwa_posts,sahwa_volunteers,sahwa_login_limits,sahwa_events CASCADE");
-  process.env.SAHWA_ACCOUNT_EMAIL = sharedEmail;
-  process.env.SAHWA_PASSWORD_HASH = sharedHash;
-  delete process.env.VERCEL_ENV;
+  await db.query("INSERT INTO sahwa_accounts(id,volunteer_id,username,email,display_name,password_hash,must_change_password,is_owner) VALUES ('5a4f0000-0000-4000-8000-000000000001',NULL,'owner',$1,'المسؤول العام',$2,false,true) ON CONFLICT (id) DO UPDATE SET email=EXCLUDED.email,password_hash=EXCLUDED.password_hash,status='active'", [sharedEmail, sharedHash]);
 });
 after(async () => db.close());
 
@@ -66,7 +64,6 @@ async function member(name, { university = "استنيا", gender = "شاب", ro
 }
 const grant = (volunteerId, permission, scope = {}, effect = "allow") =>
   platform.addGrant({ volunteerId, permission, effect, university: scope.university ?? null, sector: scope.sector ?? null, team: scope.team ?? null, reason: "test", expiresAt: null, grantedBy: "test", grantedByVolunteer: null });
-const shared = async () => `__Host-sahwa_session=${(await createSession(true, req("auth"), store)).split(";")[0].split("=")[1]}`;
 
 test("username accounts sign in, start with a forced password change, and change it", async () => {
   const { auth, account, team } = handlers();
@@ -89,11 +86,11 @@ test("username accounts sign in, start with a forced password change, and change
   assert.ok(row.password_hash.startsWith("scrypt$") && !row.password_hash.includes("another-strong-pass"));
 });
 
-test("the shared Sahwa account still signs in with its e-mail and acts as global administrator", async () => {
+test("the owner account signs in with its e-mail and acts as global administrator", async () => {
   const response = await handlers().auth(req("auth", "POST", { email: sharedEmail, password: sharedPassword }));
   assert.equal(response.status, 200);
   const data = await response.json();
-  assert.equal(data.user.kind, "shared");
+  assert.equal(data.user.kind, "owner");
   assert.equal(data.user.nav.admin, true);
   assert.equal((await handlers().team(req("team", "GET", undefined, cookieOf(response)))).status, 200);
 });
@@ -196,19 +193,31 @@ test("explicit deny overrides a role default and archived people lose access", a
   assert.equal((await (await auth(req("auth", "GET", undefined, lead.cookie))).json()).authenticated, false);
 });
 
+test("accounts are created with e-mail and username, and sign in with either", async () => {
+  const { admin, auth } = handlers();
+  const owner = cookieOf(await auth(req("auth", "POST", { identifier: sharedEmail, password: sharedPassword })));
+  const lead = await member("سارة أحمد", { gender: "بنت", account: false, roles: [{ roleId: "women-sector-lead" }] });
+  const created = await admin(req("admin", "POST", { action: "create-account", volunteerId: lead.id, email: "Sara@Sahwa.com", username: "sara.lead", password: "Fixture-Pass-9x", requireChange: false }, owner));
+  assert.equal(created.status, 201);
+  for (const identifier of ["sara@sahwa.com", "SARA.LEAD"]) assert.equal((await auth(req("auth", "POST", { identifier, password: "Fixture-Pass-9x" }))).status, 200);
+  const other = await member("آخر", { account: false });
+  assert.equal((await admin(req("admin", "POST", { action: "create-account", volunteerId: other.id, email: "sara@sahwa.com", password: "Fixture-Pass-9x" }, owner))).status, 409, "e-mail unique");
+  assert.equal((await admin(req("admin", "POST", { action: "create-account", volunteerId: other.id, username: "sara.lead", password: "Fixture-Pass-9x" }, owner))).status, 409, "username unique");
+});
+
 test("the administrator can set the initial password and choose whether it must change", async () => {
   const { admin, auth } = handlers();
   const head = await member("رئيس", { roles: [{ roleId: "sahwa-lead" }] });
   const lead = await member("خالد علي", { account: false, roles: [{ roleId: "media-lead" }] });
-  const created = await (await admin(req("admin", "POST", { action: "create-account", volunteerId: lead.id, password: "Sahwa2345", requireChange: false }, head.cookie))).json();
+  const created = await (await admin(req("admin", "POST", { action: "create-account", volunteerId: lead.id, password: "Fixture-Pass-9x", requireChange: false }, head.cookie))).json();
   assert.equal(created.chosenPassword, true);
   assert.ok(!("temporaryPassword" in created) || created.temporaryPassword === undefined);
-  const login = await auth(req("auth", "POST", { identifier: created.username, password: "Sahwa2345" }));
+  const login = await auth(req("auth", "POST", { identifier: created.username, password: "Fixture-Pass-9x" }));
   assert.equal(login.status, 200);
   assert.equal((await login.json()).user.mustChangePassword, false);
   assert.equal((await admin(req("admin", "POST", { action: "reset-account", volunteerId: lead.id, password: "short" }, head.cookie))).status, 400);
   const stored = (await db.query("SELECT password_hash FROM sahwa_accounts WHERE volunteer_id=$1", [lead.id])).rows[0].password_hash;
-  assert.ok(!stored.includes("Sahwa2345"));
+  assert.ok(!stored.includes("Fixture-Pass-9x"));
 });
 
 test("contacts resolve to the people actually assigned, update on reassignment, and show vacancies", async () => {
@@ -253,8 +262,8 @@ test("forms route by the submitter's real record; inactive and complaint forms a
   assert.equal((await forms(req("forms", "POST", { formId: complaints, answers: { kind: "x", details: "y" } }, volunteer.cookie))).status, 409);
   await db.query("UPDATE sahwa_form_definitions SET active=true WHERE slug='complaints'");
   assert.equal((await forms(req("forms", "POST", { formId: complaints, answers: { kind: "x", details: "y" } }, volunteer.cookie))).status, 409, "confidential path stays closed even if toggled in the database");
-  const shared = await (await handlers().auth(req("auth", "POST", { email: sharedEmail, password: sharedPassword })));
-  const save = await forms(req("forms", "PUT", { action: "save-form", id: complaints, revision: 1, form: { title: "الشكاوى", fields: [{ id: "kind", label: "نوع", type: "short_text" }], active: true } }, cookieOf(shared)));
+  const owner = await handlers().auth(req("auth", "POST", { email: sharedEmail, password: sharedPassword }));
+  const save = await forms(req("forms", "PUT", { action: "save-form", id: complaints, revision: 1, form: { title: "الشكاوى", fields: [{ id: "kind", label: "نوع", type: "short_text" }], active: true } }, cookieOf(owner)));
   assert.equal(save.status, 409);
   const mine = await (await forms(req("forms", "GET", undefined, volunteer.cookie))).json();
   assert.equal(mine.submissions.length, 1);

@@ -158,7 +158,7 @@ export function createFormsHandler(teamStore, platformStore) {
       if (request.method === "PUT" && input.action === "save-form") {
         if (!canAny(actor, "forms.manage") || !isGlobalAdmin(actor)) throw forbidden();
         const definition = validateDefinition(input.form || {});
-        const label = actor.kind === "shared" ? "حساب صحوة المشترك" : actor.fullName;
+        const label = actor.fullName;
         if (input.id) {
           const existing = await platformStore.form(String(input.id));
           if (!existing) throw new TeamError("النموذج غير موجود.", 404);

@@ -1,13 +1,5 @@
 import { randomBytes, randomInt } from "node:crypto";
-import {
-  accountVersion,
-  hashPassword,
-  readSessionToken,
-  sessionCookie,
-  settings,
-  sharedUser,
-  tokenHash,
-} from "../auth.js";
+import { hashPassword, readSessionToken, sessionCookie, tokenHash } from "../auth.js";
 import { TeamError } from "../team-data.js";
 import { sectorForGender } from "../../shared/platform-roles.js";
 import { buildPermissions, canAny, ADMIN_PERMISSIONS, isGlobalAdmin } from "./access.js";
@@ -17,15 +9,6 @@ const SESSION_SECONDS = 24 * 60 * 60;
 export const TEMPORARY_DAYS = 7;
 export const USERNAME = /^[a-z0-9][a-z0-9._-]{2,39}$/;
 
-function sharedConfigured() {
-  try {
-    settings();
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export async function actorFromRow(row, store) {
   const [assignments, grants] = await Promise.all([store.assignmentsOf(row.id), store.grantsOf(row.id)]);
   const actor = {
@@ -34,6 +17,7 @@ export async function actorFromRow(row, store) {
     volunteerId: row.id,
     accountId: row.accountId,
     username: row.username,
+    email: row.email,
     fullName: row.fullName,
     university: row.university,
     gender: row.gender,
@@ -49,20 +33,23 @@ export async function actorFromRow(row, store) {
   return actor;
 }
 
-function sharedActor() {
-  const user = sharedUser();
+// The platform owner: a personal account with full administration and no
+// volunteer record of its own.
+function ownerActor(row) {
   const actor = {
-    kind: "shared",
-    id: "sahwa",
+    kind: "owner",
+    id: row.accountId,
     volunteerId: null,
-    username: null,
-    fullName: "حساب صحوة المشترك",
-    university: user.university,
+    accountId: row.accountId,
+    username: row.username,
+    email: row.email,
+    fullName: row.displayName || "المسؤول العام",
+    university: "",
     sector: null,
     membershipLevel: null,
     status: null,
     isTest: false,
-    mustChangePassword: false,
+    mustChangePassword: row.mustChangePassword,
     assignments: [],
     grants: [],
   };
@@ -71,16 +58,14 @@ function sharedActor() {
 }
 
 // Resolves the signed-in person from the session cookie, checking account
-// status, session version, archive state and the test-account guard on every
-// request.
-export async function currentActor(request, { teamStore, platformStore }) {
+// status, session version and archive state on every request.
+export async function currentActor(request, { platformStore }) {
   const token = readSessionToken(request);
-  if (!token) return null;
-  const hash = tokenHash(token);
-  if (sharedConfigured() && (await teamStore.hasSharedSession(hash, accountVersion()))) return sharedActor();
-  if (!platformStore) return null;
-  const row = await platformStore.sessionAccount(hash);
-  if (!row || row.accountStatus !== "active" || row.archivedAt) return null;
+  if (!token || !platformStore) return null;
+  const row = await platformStore.sessionAccount(tokenHash(token));
+  if (!row || row.accountStatus !== "active") return null;
+  if (row.isOwner) return ownerActor(row);
+  if (!row.id || row.archivedAt) return null;
   return actorFromRow(row, platformStore);
 }
 
@@ -128,7 +113,7 @@ export function navFor(actor) {
   const has = (permission) => canAny(actor, permission);
   const admin = ADMIN_PERMISSIONS.some(has);
   return {
-    dashboard: actor.kind === "account",
+    dashboard: true,
     community: has("community.view"),
     workspace: true,
     directory: has("directory.view") && actor.kind === "account",
@@ -145,7 +130,7 @@ export function sessionUser(actor) {
   return {
     id: actor.id,
     fullName: actor.fullName,
-    email: actor.kind === "shared" ? sharedUser().email : "",
+    email: actor.email || "",
     username: actor.username,
     kind: actor.kind,
     accessRole: navFor(actor).admin ? "admin" : "volunteer",

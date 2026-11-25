@@ -8,7 +8,7 @@ export const metadata = { title: "ملفي الشخصي" };
 
 export default async function Page() {
   const actor = await requirePageActor({ permission: "profile.edit" });
-  if (actor.kind !== "account") return (<><PageHeading title="ملفي الشخصي" description="" /><p className="platform-empty">الحساب المشترك لا يملك ملفًا شخصيًا.</p></>);
+  if (actor.kind !== "account") return (<><PageHeading title="ملفي الشخصي" description="" /><p className="platform-empty">حساب المسؤول العام لا يرتبط بملف متطوع.</p></>);
   const [person, profile] = await Promise.all([platformStore.person(actor.volunteerId), platformStore.profile(actor.volunteerId)]);
   return (
     <ProfileEditor

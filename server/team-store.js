@@ -73,31 +73,6 @@ export function createTeamStore(getClient = getSql) {
       );
       if (!rows.length) throw conflict();
     },
-    async saveSession(hash, version, expires) {
-      const sql = getClient();
-      await sql.transaction([
-        sql.query("DELETE FROM sahwa_shared_sessions WHERE expires_at<=now()"),
-        sql.query(
-          "INSERT INTO sahwa_shared_sessions(token_hash,account_version,expires_at) VALUES ($1,$2,$3)",
-          [hash, version, expires],
-        ),
-      ]);
-    },
-    async hasSharedSession(hash, version) {
-      return (
-        (
-          await query(
-            "SELECT 1 FROM sahwa_shared_sessions WHERE token_hash=$1 AND account_version=$2 AND expires_at>now()",
-            [hash, version],
-          )
-        ).length > 0
-      );
-    },
-    async deleteSession(hash) {
-      await query("DELETE FROM sahwa_shared_sessions WHERE token_hash=$1", [
-        hash,
-      ]);
-    },
     async consumeLoginLimit(keys) {
       const sql = getClient();
       const results = await sql.transaction([

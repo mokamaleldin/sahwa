@@ -121,8 +121,8 @@ function fill(template, assignment) {
 export function buildPermissions(actor) {
   const allow = [];
   const deny = [];
-  if (actor.kind === "shared") {
-    for (const p of PERMISSIONS) allow.push({ permission: p.key, ...scope(), source: "shared" });
+  if (actor.kind === "owner") {
+    for (const p of PERMISSIONS) allow.push({ permission: p.key, ...scope(), source: "owner" });
     return { allow, deny };
   }
   for (const key of BASE) allow.push({ permission: key, ...scope(), source: "base" });
@@ -172,7 +172,7 @@ export function scopesFor(actor, permission) {
 }
 
 export function isGlobalAdmin(actor) {
-  return actor.kind === "shared" || actor.permissions.allow.some((a) => a.permission === "permissions.manage" && a.university === null && a.sector === null && a.team === null)
+  return actor.kind === "owner" || actor.permissions.allow.some((a) => a.permission === "permissions.manage" && a.university === null && a.sector === null && a.team === null)
     && !actor.permissions.deny.some((d) => d.permission === "permissions.manage");
 }
 

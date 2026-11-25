@@ -5,6 +5,7 @@ import { Download, KeyRound, Loader2, RefreshCw, ShieldCheck, UserPlus } from "l
 import PageHeading from "../../components/shared/PageIdentity";
 import TeamDialog from "../../components/Team/TeamDialog";
 import { teamRequest } from "../../lib/team";
+import CreateAccountForm from "../../components/Team/CreateAccountForm";
 import { UNIVERSITIES } from "../../../shared/team-options.js";
 
 type Json = Record<string, unknown>;
@@ -19,7 +20,7 @@ export interface Credential { fullName: string; university?: string; role?: stri
 export function CredentialsReport({ items, onClear }: { items: Credential[]; onClear: () => void }) {
   if (!items.length) return null;
   function download() {
-    const rows = [["اسم الشخص", "الجامعة", "الدور", "اسم المستخدم", "حالة الحساب", "بيانات التفعيل", "تنتهي في"], ...items.map((c) => [c.fullName, c.university || "", c.role || "", c.username, c.status, c.temporaryPassword || "", c.expiresAt ? new Date(c.expiresAt).toLocaleString("ar-EG") : ""])];
+    const rows = [["اسم الشخص", "الجامعة", "الدور", "الدخول", "حالة الحساب", "كلمة المرور", "تنتهي في"], ...items.map((c) => [c.fullName, c.university || "", c.role || "", c.username, c.status, c.temporaryPassword || "", c.expiresAt ? new Date(c.expiresAt).toLocaleString("ar-EG") : ""])];
     const csv = "﻿" + rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const a = document.createElement("a");
@@ -31,7 +32,7 @@ export function CredentialsReport({ items, onClear }: { items: Credential[]; onC
   return (
     <section className="platform-card mb-6" aria-label="تقرير بيانات التفعيل" style={{ borderColor: "#D6AD63" }}>
       <div className="platform-row mb-3">
-        <h2 className="font-heading flex items-center gap-2"><KeyRound size={19} aria-hidden="true" />بيانات التفعيل (تظهر مرة واحدة)</h2>
+        <h2 className="font-heading flex items-center gap-2"><KeyRound size={19} aria-hidden="true" />بيانات الدخول (تظهر مرة واحدة)</h2>
         <div className="flex gap-2">
           <button className="team-button" onClick={download}><Download size={16} aria-hidden="true" />تنزيل التقرير</button>
           <button className="team-button team-button-secondary" onClick={onClear}>إخفاء</button>
@@ -40,7 +41,7 @@ export function CredentialsReport({ items, onClear }: { items: Credential[]; onC
       <p className="platform-notice">سلّم كل شخص بياناته عبر وسيلة خاصة. الكلمات المولدة تلقائيًا تنتهي بعد 7 أيام. لا تُحفظ هذه البيانات في المنصة ولا في GitHub، ولا يمكن عرضها مرة أخرى؛ عند فقدانها أعد ضبط الحساب.</p>
       <div className="platform-table-wrap">
         <table className="platform-table">
-          <thead><tr><th>اسم الشخص</th><th>الجامعة</th><th>الدور</th><th>اسم المستخدم</th><th>حالة الحساب</th><th>بيانات التفعيل</th></tr></thead>
+          <thead><tr><th>اسم الشخص</th><th>الجامعة</th><th>الدور</th><th>الدخول (البريد / اسم المستخدم)</th><th>حالة الحساب</th><th>كلمة المرور</th></tr></thead>
           <tbody>{items.map((c, i) => (
             <tr key={i}><td>{c.fullName}</td><td>{c.university}</td><td>{c.role}</td><td className="platform-secret">{c.username}</td><td>{c.status}</td><td>{c.temporaryPassword ? <span className="platform-secret">{c.temporaryPassword}</span> : "حساب موجود — لم تتغير كلمة مروره"}</td></tr>
           ))}</tbody>
@@ -52,13 +53,13 @@ export function CredentialsReport({ items, onClear }: { items: Credential[]; onC
 
 interface Official {
   volunteerId: string; fullName: string; university: string; role: { title: string; scope: string };
-  account: { status: string; username?: string; pending?: boolean; lastResetAt?: string; lastLoginAt?: string };
+  account: { status: string; username?: string; email?: string | null; pending?: boolean; lastResetAt?: string; lastLoginAt?: string };
   canCreate: boolean; canReset: boolean; canSuspend: boolean;
 }
 
 function Officials({ onCredentials }: { onCredentials: (c: Credential[]) => void }) {
   const [groups, setGroups] = useState<{ id: string; title: string; people: Official[] }[] | null>(null);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [creatingFor, setCreatingFor] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [password, setPassword] = useState("");
@@ -84,23 +85,20 @@ function Officials({ onCredentials }: { onCredentials: (c: Credential[]) => void
       }
     }
     if (results.length) onCredentials(results);
-    setSelected(new Set());
     await load();
     setBusy(false);
   }
   if (!groups) return error ? <p className="team-error">{error}</p> : <p className="team-loading"><Loader2 className="animate-spin" /> جارٍ التحميل…</p>;
-  const creatable = [...selected].filter((id) => byId.get(id)?.canCreate && byId.get(id)?.account.status === "none");
   return (
     <>
       <div className="platform-row mb-3">
-        <p className="platform-muted">الأشخاص المكلفون فعليًا بحسب الإسنادات المسجلة. لا تُنشأ حسابات لجميع المتطوعين؛ اختر من تريد تفعيله.</p>
+        <p className="platform-muted">الأشخاص المكلفون فعليًا بحسب الإسنادات المسجلة. لإضافة شخص غير موجود: «إدارة المتطوعين» ← إضافة متطوع، ثم أسند له الدور وأنشئ حسابه من ملفه.</p>
         <div className="flex gap-2">
           <button className="team-button team-button-secondary" onClick={() => void load()} disabled={busy}><RefreshCw size={15} />تحديث</button>
-          <button className="team-button" disabled={busy || !creatable.length} onClick={() => void run("create-account", creatable)}>{busy ? <Loader2 size={15} className="animate-spin" /> : <UserPlus size={15} />}إنشاء حسابات للمحددين ({creatable.length.toLocaleString("ar-EG")})</button>
         </div>
       </div>
       <div className="platform-card platform-form mb-4" style={{ maxWidth: 560 }}>
-        <label className="team-field"><span>كلمة مرور للحسابات الجديدة أو المعاد ضبطها <small>اختياري — اتركها فارغة لإنشاء كلمة مؤقتة مختلفة لكل شخص</small></span>
+        <label className="team-field"><span>كلمة المرور عند «إعادة ضبط» حساب <small>اختياري — فارغة = كلمة مؤقتة تلقائية</small></span>
           <input type="text" dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} maxLength={128} autoComplete="off" placeholder="8 أحرف على الأقل" />
         </label>
         <label className="platform-check"><input type="checkbox" checked={requireChange} onChange={(e) => setRequireChange(e.target.checked)} />يُطلب من الشخص تغييرها عند أول دخول</label>
@@ -112,21 +110,26 @@ function Officials({ onCredentials }: { onCredentials: (c: Credential[]) => void
           {g.people.length ? (
             <div className="platform-table-wrap">
               <table className="platform-table">
-                <thead><tr><th><span className="sr-only">تحديد</span></th><th>الاسم</th><th>الجامعة</th><th>الدور</th><th>اسم المستخدم</th><th>حالة الحساب</th><th>إجراءات</th></tr></thead>
-                <tbody>{g.people.map((p) => (
+                <thead><tr><th>الاسم</th><th>الجامعة</th><th>الدور</th><th>الدخول</th><th>حالة الحساب</th><th>إجراءات</th></tr></thead>
+                <tbody>{g.people.map((p) => [
                   <tr key={p.volunteerId + p.role.title}>
-                    <td><input type="checkbox" aria-label={`تحديد ${p.fullName}`} disabled={!p.canCreate || p.account.status !== "none"} checked={selected.has(p.volunteerId)} onChange={(e) => setSelected((s) => { const n = new Set(s); if (e.target.checked) n.add(p.volunteerId); else n.delete(p.volunteerId); return n; })} /></td>
                     <td>{p.fullName}</td><td>{p.university}</td><td>{p.role.title}<br /><small className="platform-muted">{p.role.scope}</small></td>
-                    <td className="platform-ltr">{p.account.username || "—"}</td>
+                    <td className="platform-ltr">{p.account.email || p.account.username || "—"}{p.account.email && p.account.username && <><br /><small className="platform-muted">{p.account.username}</small></>}</td>
                     <td>{ACCOUNT_STATUS[p.account.status] || p.account.status}{p.account.pending && p.account.status === "active" ? " — بانتظار أول دخول" : ""}{p.account.lastResetAt && <><br /><small className="platform-muted">آخر ضبط: {new Date(p.account.lastResetAt).toLocaleDateString("ar-EG")}</small></>}</td>
                     <td className="whitespace-nowrap">
-                      {p.account.status === "none" && p.canCreate && <button className="team-text-button" disabled={busy} onClick={() => void run("create-account", [p.volunteerId])}>إنشاء حساب</button>}
+                      {p.account.status === "none" && p.canCreate && <button className="team-text-button" disabled={busy} onClick={() => setCreatingFor(creatingFor === p.volunteerId ? null : p.volunteerId)}><UserPlus size={14} />إنشاء حساب</button>}
                       {p.account.status !== "none" && p.canReset && <button className="team-text-button" disabled={busy} onClick={() => confirm(`إعادة ضبط حساب ${p.fullName}؟ ستتوقف كلمة مروره الحالية.`) && void run("reset-account", [p.volunteerId])}>إعادة ضبط</button>}
                       {p.account.status === "active" && p.canSuspend && <button className="team-text-button" disabled={busy} onClick={() => confirm(`إيقاف حساب ${p.fullName}؟`) && void run("suspend-account", [p.volunteerId])}>إيقاف</button>}
                       {p.account.status === "suspended" && p.canSuspend && <button className="team-text-button" disabled={busy} onClick={() => void run("reactivate-account", [p.volunteerId])}>إعادة تفعيل</button>}
                     </td>
-                  </tr>
-                ))}</tbody>
+                  </tr>,
+                  creatingFor === p.volunteerId && (
+                    <tr key={`${p.volunteerId}-create`}><td colSpan={6}>
+                      <CreateAccountForm volunteerId={p.volunteerId} fullName={p.fullName} onCancel={() => setCreatingFor(null)}
+                        onCreated={(a) => { setCreatingFor(null); onCredentials([{ fullName: a.fullName, university: p.university, role: p.role.title, username: a.email ? `${a.email} / ${a.username}` : a.username, status: "فعال", temporaryPassword: a.password }]); void load(); }} />
+                    </td></tr>
+                  ),
+                ])}</tbody>
               </table>
             </div>
           ) : <p className="platform-empty">لا يوجد شاغل مسجل لهذه المناصب.</p>}

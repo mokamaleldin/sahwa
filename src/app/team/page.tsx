@@ -11,11 +11,11 @@ export const metadata = { title: "لوحتي" };
 
 export default async function Page() {
   const actor = await requirePageActor();
-  if (actor.kind === "shared") {
+  if (actor.kind === "owner") {
     return (
       <>
-        <PageHeading title="حساب صحوة المشترك" description="هذا الحساب مؤقت لإدارة المنصة في مرحلتها الأولى، وليس حسابًا شخصيًا." />
-        <div className="platform-notice">أنشئ الحسابات الشخصية للمسؤولين من لوحة التحكم، ثم يُنصح بإيقاف الحساب المشترك بعد أن يستلم مسؤول صحوة حسابه.</div>
+        <PageHeading title={`أهلًا، ${actor.fullName}`} description="حساب المسؤول العام للمنصة: إدارة المتطوعين والحسابات والأدوار والصلاحيات." />
+        <div className="platform-notice">أضف المسؤولين والمتطوعين من «إدارة المتطوعين»، وأنشئ لكل شخص حسابه (الاسم، البريد، اسم المستخدم، كلمة المرور) من ملفه أو من «لوحة التحكم ← المسؤولون والحسابات».</div>
         <div className="platform-shortcuts">
           <Link className="platform-shortcut" href="/team/admin">لوحة التحكم الإدارية</Link>
           <Link className="platform-shortcut" href="/team/volunteers">إدارة المتطوعين</Link>
