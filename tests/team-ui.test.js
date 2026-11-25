@@ -6,7 +6,7 @@ import {JSDOM} from 'jsdom';
 import {compileUI} from './helpers/compile-ui.js';
 import {person} from './helpers/database.js';
 import {ageFromBirthDate} from '../shared/team-options.js';
-const at=compileUI('tmp/forms-tests',['shared/team-options.js','shared/volunteer-roles.js','src/components/Team/TeamComboField.tsx','src/components/Team/VolunteerRoleField.tsx','src/lib/team.ts','src/components/shared/PageIdentity.tsx','src/components/Team/TeamDialog.tsx','src/components/Team/PersonForm.tsx','src/components/Team/PersonAccess.tsx','src/components/Team/PersonDetails.tsx','src/components/Team/VolunteerCard.tsx','src/components/Team/EventForm.tsx','src/views/TeamVolunteers.tsx']);
+const at=compileUI('tmp/forms-tests',['shared/team-options.js','shared/volunteer-roles.js','src/components/Team/TeamComboField.tsx','src/components/Team/VolunteerRoleField.tsx','src/lib/team.ts','src/components/shared/PageIdentity.tsx','src/components/Team/TeamDialog.tsx','src/components/Team/PersonForm.tsx','src/components/Team/CreateAccountForm.tsx','src/components/Team/PersonAccess.tsx','src/components/Team/PersonDetails.tsx','src/components/Team/VolunteerCard.tsx','src/components/Team/EventForm.tsx','src/views/TeamVolunteers.tsx']);
 const{default:PersonForm}=await at('src/components/Team/PersonForm.js');
 const{default:EventForm}=await at('src/components/Team/EventForm.js');
 const{default:VolunteerCard}=await at('src/components/Team/VolunteerCard.js');

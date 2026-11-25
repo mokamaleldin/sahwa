@@ -44,7 +44,7 @@ export default function Login() {
 
         <div className="page-container relative z-10">
           <div className="mx-auto max-w-md">
-            <PageHeading title="منصة صحوة الداخلية" description="ادخل باسم المستخدم الذي استلمته من المسؤول. في أول دخول ستختار كلمة مرورك الخاصة." />
+            <PageHeading title="منصة صحوة الداخلية" description="ادخل بالحساب الذي أنشأه لك المسؤول." />
 
             <section className="section-card p-6 sm:p-9" aria-labelledby="login-heading">
               <div className="flex items-center gap-3 mb-7">
@@ -56,11 +56,11 @@ export default function Login() {
 
               <form onSubmit={handleSubmit} className="space-y-5" aria-busy={busy}>
                 <div>
-                  <label htmlFor="login-identifier" className="block text-sm font-medium text-[#350E15] mb-2">اسم المستخدم</label>
+                  <label htmlFor="login-identifier" className="block text-sm font-medium text-[#350E15] mb-2">البريد الإلكتروني أو اسم المستخدم</label>
                   <input id="login-identifier" type="text" name="username" dir="ltr" autoComplete="username" autoCapitalize="none" spellCheck={false}
                     value={identifier} onChange={event => setIdentifier(event.target.value)} required maxLength={254}
                     disabled={busy} className="login-input" aria-describedby="login-identifier-hint" />
-                  <p id="login-identifier-hint" className="mt-1.5 text-xs text-gray-500">مثل: ahmed.mohamed — ويمكن للمسؤولين الدخول ببريد حساب صحوة المشترك.</p>
+                  <p id="login-identifier-hint" className="mt-1.5 text-xs text-gray-500">ادخل بالبريد الإلكتروني أو اسم المستخدم الذي أنشأه لك المسؤول.</p>
                 </div>
                 <div>
                   <label htmlFor="login-password" className="block text-sm font-medium text-[#350E15] mb-2">كلمة المرور</label>

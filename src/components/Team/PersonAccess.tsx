@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { KeyRound, Loader2, Plus, X } from "lucide-react";
 import { teamRequest, type Volunteer, type VolunteerMeta } from "../../lib/team";
 import { UNIVERSITIES } from "../../../shared/team-options.js";
+import CreateAccountForm from "./CreateAccountForm";
 
 const ACCOUNT_STATUS: Record<string, string> = { none: "لا يوجد حساب دخول", active: "فعال", suspended: "موقوف" };
 const LEVELS = ["متطوع", "عضو فاعل", "مسؤول"];
@@ -20,6 +21,7 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
   const [roleId, setRoleId] = useState("");
   const [issued, setIssued] = useState<IssuedCredential | null>(null);
   const [password, setPassword] = useState("");
+  const [creating, setCreating] = useState(false);
   const allowed = person.allowed;
   const role = meta.assignableRoles.find((r) => r.id === roleId);
   const women = person.gender === "بنت";
@@ -95,17 +97,22 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
           <h3 className="platform-section-title font-heading">حساب الدخول</h3>
           <p className="platform-muted">
             الحالة: <strong>{ACCOUNT_STATUS[person.account.status] || person.account.status}</strong>
+            {person.account.email && <> · البريد: <span className="platform-secret">{person.account.email}</span></>}
             {person.account.username && <> · اسم المستخدم: <span className="platform-secret">{person.account.username}</span></>}
             {person.account.pending && person.account.status === "active" && " · بانتظار أول دخول"}
             {person.account.lastResetAt && ` · آخر إعادة ضبط: ${new Date(person.account.lastResetAt).toLocaleDateString("ar-EG")}`}
           </p>
-          {(allowed.createAccount || allowed.resetAccount) && (
-            <label className="team-field mt-2" style={{ maxWidth: 320 }}><span>كلمة مرور تختارها <small>اختياري؛ فارغة = كلمة مؤقتة تلقائية</small></span>
+          {creating && (
+            <div className="mt-2"><CreateAccountForm volunteerId={person.id} fullName={person.fullName} onCancel={() => setCreating(false)}
+              onCreated={async (a) => { setCreating(false); setIssued({ fullName: a.fullName, username: a.email ? `${a.email} (${a.username})` : a.username, temporaryPassword: a.password, expiresAt: "" }); await onChanged(); }} /></div>
+          )}
+          {allowed.resetAccount && person.account.status !== "none" && (
+            <label className="team-field mt-2" style={{ maxWidth: 320 }}><span>كلمة مرور جديدة عند إعادة الضبط <small>اختياري؛ فارغة = كلمة مؤقتة تلقائية</small></span>
               <input type="text" dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} maxLength={128} autoComplete="off" />
             </label>
           )}
           <div className="flex flex-wrap gap-2 mt-2">
-            {person.account.status === "none" && allowed.createAccount && <button className="team-button" disabled={busy} onClick={() => void act({ action: "create-account", volunteerId: person.id, ...chosen }, credential)}><KeyRound size={15} />إنشاء حساب</button>}
+            {person.account.status === "none" && allowed.createAccount && !creating && <button className="team-button" disabled={busy} onClick={() => setCreating(true)}><KeyRound size={15} />إنشاء حساب</button>}
             {person.account.status !== "none" && allowed.resetAccount && <button className="team-button team-button-secondary" disabled={busy} onClick={() => confirm("إعادة ضبط الحساب؟ ستتوقف كلمة المرور الحالية وتنتهي الجلسات.") && void act({ action: "reset-account", volunteerId: person.id, ...chosen }, credential)}>إعادة ضبط كلمة المرور</button>}
             {person.account.status === "active" && allowed.suspendAccount && <button className="team-button team-button-secondary" disabled={busy} onClick={() => confirm("إيقاف الحساب؟ يُمنع الدخول فورًا.") && void act({ action: "suspend-account", volunteerId: person.id })}>إيقاف الحساب</button>}
             {person.account.status === "suspended" && allowed.suspendAccount && <button className="team-button" disabled={busy} onClick={() => void act({ action: "reactivate-account", volunteerId: person.id })}>إعادة التفعيل</button>}
@@ -116,9 +123,9 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
       {error && <p className="team-error mt-3" role="alert">{error}</p>}
       {issued && (
         <div className="platform-notice mt-3" role="status">
-          <strong>بيانات التفعيل لـ {issued.fullName} (تظهر مرة واحدة):</strong><br />
-          اسم المستخدم: <span className="platform-secret">{issued.username}</span> · كلمة المرور المؤقتة: <span className="platform-secret">{issued.temporaryPassword}</span><br />
-          {issued.expiresAt && `تنتهي في ${new Date(issued.expiresAt).toLocaleString("ar-EG")}. `}سلّمها للشخص عبر وسيلة خاصة؛ سيختار كلمة مروره عند أول دخول.
+          <strong>بيانات الدخول لـ {issued.fullName} (تظهر مرة واحدة):</strong><br />
+          الدخول بـ: <span className="platform-secret">{issued.username}</span> · كلمة المرور المؤقتة: <span className="platform-secret">{issued.temporaryPassword}</span><br />
+          {issued.expiresAt && `تنتهي في ${new Date(issued.expiresAt).toLocaleString("ar-EG")}. `}سلّمها للشخص عبر وسيلة خاصة.
         </div>
       )}
     </section>

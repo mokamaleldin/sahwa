@@ -24,6 +24,7 @@ export interface VolunteerAssignment {
 export interface VolunteerAccount {
   status: "none" | "active" | "suspended";
   username?: string;
+  email?: string | null;
   pending?: boolean;
   lastLoginAt?: string | null;
   lastResetAt?: string | null;

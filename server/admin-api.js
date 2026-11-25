@@ -1,6 +1,6 @@
 import { TeamError, UUID, date } from "./team-data.js";
 import { json, readInput, errorResponse } from "./http.js";
-import { requireActor, forbidden, temporaryCredential, validateNewPassword } from "./platform/session.js";
+import { requireActor, forbidden, temporaryCredential, validateNewPassword, USERNAME } from "./platform/session.js";
 import { hashPassword } from "./auth.js";
 import {
   PERMISSIONS,
@@ -16,7 +16,7 @@ import {
   volunteerTargets,
 } from "./platform/access.js";
 import { describeAssignment, loadRealm } from "./platform/service.js";
-import { uniqueUsername } from "./platform/usernames.js";
+import { uniqueUsername, RESERVED } from "./platform/usernames.js";
 import {
   CENTRAL,
   LEGACY_ROLE_MAP,
@@ -59,7 +59,7 @@ export function assignmentScope(role, person, input) {
 }
 
 function actorLabel(actor) {
-  return actor.kind === "shared" ? "حساب صحوة المشترك" : `${actor.fullName} (${actor.username})`;
+  return `${actor.fullName} (${actor.username})`;
 }
 
 function grantInput(input) {
@@ -140,7 +140,7 @@ export function createAdminHandler(teamStore, platformStore) {
                   fullName: p.fullName,
                   university: p.university,
                   role: describeAssignment(a),
-                  account: p.accountId ? { username: p.username, status: p.accountStatus, pending: p.mustChangePassword, lastResetAt: p.lastResetAt, lastLoginAt: p.lastLoginAt } : { status: "none" },
+                  account: p.accountId ? { username: p.username, email: p.accountEmail, status: p.accountStatus, pending: p.mustChangePassword, lastResetAt: p.lastResetAt, lastLoginAt: p.lastLoginAt } : { status: "none" },
                   canCreate: manage && can(actor, "accounts.create", targets),
                   canReset: manage && can(actor, "accounts.reset", targets),
                   canSuspend: manage && can(actor, "accounts.suspend", targets),
@@ -248,11 +248,19 @@ export function createAdminHandler(teamStore, platformStore) {
         if (action === "create-account") {
           // An existing account is reused; its password is never replaced here.
           if (account) return json({ existing: true, username: account.username, status: account.accountStatus }, 200);
-          const username = await uniqueUsername(person.fullName, (u) => platformStore.usernameTaken(u));
+          const email = typeof input.email === "string" && input.email.trim() ? input.email.trim().toLowerCase() : null;
+          if (email && (!/^[^\s@]{1,64}@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 254)) throw new TeamError("أدخل بريدًا إلكترونيًا صحيحًا.");
+          if (email && (await platformStore.emailTaken(email))) throw new TeamError("هذا البريد مستخدم في حساب آخر.", 409, "EMAIL_TAKEN");
+          let username;
+          if (typeof input.username === "string" && input.username.trim()) {
+            username = input.username.trim().toLowerCase();
+            if (!USERNAME.test(username) || RESERVED.has(username)) throw new TeamError("اسم المستخدم من 3 إلى 40 حرفًا لاتينيًا أو أرقامًا أو (. _ -).");
+            if (await platformStore.usernameTaken(username)) throw new TeamError("اسم المستخدم هذا مستخدم بالفعل.", 409, "USERNAME_TAKEN");
+          } else username = await uniqueUsername(person.fullName, (u) => platformStore.usernameTaken(u));
           const credential = await credentialFor();
-          await platformStore.createAccount({ volunteerId: person.id, username, passwordHash: credential.hash, mustChange: credential.mustChange, expiresAt: credential.expiresAt, createdBy: label });
-          await audit("account.create", person.id, { username });
-          return json({ created: true, fullName: person.fullName, university: person.university, username, temporaryPassword: credential.password, chosenPassword: Boolean(credential.chosen), expiresAt: credential.expiresAt }, 201);
+          await platformStore.createAccount({ volunteerId: person.id, username, email, passwordHash: credential.hash, mustChange: credential.mustChange, expiresAt: credential.expiresAt, createdBy: label });
+          await audit("account.create", person.id, { username, email });
+          return json({ created: true, fullName: person.fullName, university: person.university, username, email, temporaryPassword: credential.password, chosenPassword: Boolean(credential.chosen), expiresAt: credential.expiresAt }, 201);
         }
         if (!account) throw new TeamError("لا يوجد حساب لهذا الشخص بعد.", 404);
         if (action === "reset-account") {

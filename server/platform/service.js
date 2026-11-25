@@ -188,7 +188,7 @@ export function directoryData(actor, realm, policy = "leads") {
 // A post or event is visible when its audience fields match one of the
 // viewer's scopes (base record or any assignment). Null fields mean everyone.
 export function viewerScopes(actor) {
-  if (actor.kind === "shared") return null;
+  if (actor.kind === "owner") return null;
   return [
     { university: actor.university || null, sector: actor.sector },
     ...actor.assignments.map((a) => ({ university: a.university || CENTRAL, sector: a.sector || actor.sector })),
@@ -226,7 +226,7 @@ export function workspaceData(actor) {
   const roleIds = new Set(actor.assignments.map((a) => a.roleId));
   const tools = [];
   const add = (category, tool) => tools.push({ category, ...tool });
-  const global = actor.kind === "shared" || roleIds.has("sahwa-lead");
+  const global = actor.kind === "owner" || roleIds.has("sahwa-lead");
   const HOME = [
     ["sahwa-lead", "sahwa-admin"], ["women-sector-lead", "women-admin"], ["university-youth-lead", "universities"], ["university-women-lead", "universities"],
     ["internal-activities-lead", "internal-activities"], ["internal-activities-member", "internal-activities"], ["central-activities-lead", "central-activities"],

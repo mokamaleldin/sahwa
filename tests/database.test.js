@@ -2,7 +2,7 @@ import {test,before,beforeEach,after} from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {testDatabase,person,event} from './helpers/database.js';
-import {hashPassword,createSession,tokenHash} from '../server/auth.js';
+import {hashPassword,tokenHash} from '../server/auth.js';
 import {createAuthHandler} from '../server/auth-api.js';
 import {createTeamHandler} from '../server/team-api.js';
 import {createEventsHandler} from '../server/events-api.js';
@@ -10,10 +10,10 @@ import {createPlatformStore} from '../server/platform/store.js';
 let db,store,platform,hash;
 const password='fixture-password-only',email='sahwa@example.invalid';
 before(async()=>{let sql;({db,store,sql}=await testDatabase());platform=createPlatformStore(()=>sql);hash=await hashPassword(password);process.env.SAHWA_SESSION_SECRET='test-only-secret-at-least-32-characters';});
-beforeEach(async()=>{await db.exec('TRUNCATE sahwa_shared_sessions,sahwa_account_sessions,sahwa_accounts,sahwa_role_assignments,sahwa_audit_log,sahwa_volunteers,sahwa_sessions,sahwa_login_limits,sahwa_events,sahwa_users CASCADE');process.env.SAHWA_ACCOUNT_EMAIL=email;process.env.SAHWA_PASSWORD_HASH=hash;});
+beforeEach(async()=>{await db.exec('TRUNCATE sahwa_shared_sessions,sahwa_account_sessions,sahwa_role_assignments,sahwa_audit_log,sahwa_volunteers,sahwa_sessions,sahwa_login_limits,sahwa_events,sahwa_users CASCADE');await db.query("INSERT INTO sahwa_accounts(id,volunteer_id,username,email,display_name,password_hash,must_change_password,is_owner) VALUES ('5a4f0000-0000-4000-8000-000000000001',NULL,'owner',$1,'المسؤول العام',$2,false,true) ON CONFLICT (id) DO UPDATE SET email=EXCLUDED.email,password_hash=EXCLUDED.password_hash,status='active'",[email,hash]);});
 after(async()=>db.close());
 const req=(path,method='GET',input,cookie='',origin='https://sahwa.world')=>new Request(`https://sahwa.world/api/${path}`,{method,headers:{cookie,origin,'Content-Type':'application/json'},...(input===undefined?{}:{body:JSON.stringify(input)})});
-const session=()=>createSession(true,req('auth'),store);
+const session=async()=>(await createAuthHandler(store,platform)(req('auth','POST',{identifier:email,password}))).headers.get('set-cookie').split(';')[0];
 async function legacyUser(identifier='old-volunteer@example.invalid',role='volunteer'){
  const id=randomUUID();await db.query("INSERT INTO sahwa_users(id,full_name,email,password_hash,access_role,university) VALUES ($1,'عضو سابق',$2,$3,$4,'استنيا')",[id,identifier,hash,role]);return id;
 }
@@ -68,10 +68,10 @@ test('event responsibilities reject missing volunteer IDs and ignore supplied fr
  assert.equal((await handler(req('events','POST',{event:event({responsibleId:randomUUID()})},cookie))).status,400);
  const response=await handler(req('events','POST',{event:{title:'اختبار',responsible:'اسم خارج المتطوعين'}},cookie));assert.equal(response.status,201);assert.equal((await response.json()).event.responsible,'');
 });
-test('only shared Sahwa credentials log in; former volunteer and administrator accounts are disabled',async()=>{
+test('only platform accounts log in; former volunteer and administrator records are disabled',async()=>{
  await legacyUser();await legacyUser('old-admin@example.invalid','admin');const auth=createAuthHandler(store,platform);
  for(const identifier of ['old-volunteer@example.invalid','old-admin@example.invalid'])assert.equal((await auth(req('auth','POST',{email:identifier,password}))).status,401);
- const response=await auth(req('auth','POST',{email,password}));assert.equal(response.status,200);const data=await response.json();assert.equal(data.user.email,email);assert.equal(data.user.accessRole,'admin');assert.equal(data.user.id,'sahwa');
+ const response=await auth(req('auth','POST',{email,password}));assert.equal(response.status,200);const data=await response.json();assert.equal(data.user.email,email);assert.equal(data.user.accessRole,'admin');assert.equal(data.user.kind,'owner');
  assert.equal((await db.query('SELECT count(*)::int AS count FROM sahwa_users')).rows[0].count,2,'sign-in never provisions accounts');
 });
 test('old individual sessions cannot read or change protected records after removal of account access',async()=>{
@@ -80,17 +80,17 @@ test('old individual sessions cannot read or change protected records after remo
  for(const [handler,path] of [[createTeamHandler(store,platform),'team'],[createEventsHandler(store,platform),'events']])for(const method of ['GET','POST','PUT','DELETE'])assert.equal((await handler(req(path,method,method==='GET'?undefined:{person:person(),event:event()},cookie))).status,401);
  assert.equal((await(await createAuthHandler(store,platform)(req('auth','GET',undefined,cookie))).json()).authenticated,false);
 });
-test('shared session logout, expiration and credential changes revoke access',async()=>{
+test('logout, expiration and password changes revoke access',async()=>{
  const auth=createAuthHandler(store,platform),cookie=await session();assert.equal((await(await auth(req('auth','GET',undefined,cookie))).json()).authenticated,true);
  assert.equal((await auth(req('auth','DELETE',undefined,cookie))).status,200);assert.equal((await(await auth(req('auth','GET',undefined,cookie))).json()).authenticated,false);
- const another=await session();process.env.SAHWA_PASSWORD_HASH=await hashPassword('changed-fixture-password');assert.equal((await(await auth(req('auth','GET',undefined,another))).json()).authenticated,false);
- process.env.SAHWA_PASSWORD_HASH=hash;const expired=await session();await db.exec("UPDATE sahwa_shared_sessions SET expires_at=now()-interval '1 second'");assert.equal((await(await auth(req('auth','GET',undefined,expired))).json()).authenticated,false);
+ const another=await session();await db.exec('UPDATE sahwa_accounts SET session_version=session_version+1 WHERE is_owner');assert.equal((await(await auth(req('auth','GET',undefined,another))).json()).authenticated,false);
+ const expired=await session();await db.exec("UPDATE sahwa_account_sessions SET expires_at=now()-interval '1 second'");assert.equal((await(await auth(req('auth','GET',undefined,expired))).json()).authenticated,false);
 });
 test('anonymous requests and cross-origin writes do not read or change volunteer data',async()=>{
  const cookie=await session(),team=createTeamHandler(store,platform);
  assert.equal((await team(req('team'))).status,401);assert.equal((await team(req('team','POST',{person:person()},cookie,'https://attacker.invalid'))).status,403);assert.equal((await store.listVolunteers()).length,0);
 });
-test('login limits remain shared and persist across requests',async()=>{
+test('login limits persist across requests',async()=>{
  const auth=createAuthHandler(store,platform);for(let i=0;i<10;i++)assert.equal((await auth(req('auth','POST',{email,password:'wrong'}))).status,401);
  const blocked=await auth(req('auth','POST',{email,password:'wrong'}));assert.equal(blocked.status,429);assert.equal(blocked.headers.get('retry-after'),'900');
 });

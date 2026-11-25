@@ -22,27 +22,57 @@ async function localClient() {
   return local;
 }
 
-// The platform tables (migration 004) are additive and idempotent. When a
-// deployment reaches a database that does not have them yet, they are
-// created once per server instance before the first query.
+// Platform migrations (004, 005) are additive and idempotent. When a
+// deployment reaches a database that does not have them yet, they run once
+// per server instance before the first query.
+const PLATFORM_MIGRATIONS = ["004-platform.sql", "005-owner-email-login.sql"];
+
+async function applied(client) {
+  const [state] = await client.query(
+    `SELECT to_regclass('public.sahwa_form_submissions') IS NOT NULL AS "m004",
+       EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sahwa_accounts' AND column_name='is_owner') AS "m005"`,
+  );
+  return state || {};
+}
+
+function migrationStatements(name) {
+  return readFileSync(join(process.cwd(), "db", "migrations", name), "utf8")
+    .split(";")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+// The general administrator comes from server variables (never from the
+// repository). It is created once; later password changes made inside the
+// platform are kept.
+export async function ensureOwner(client, env = process.env) {
+  const email = env.SAHWA_OWNER_EMAIL?.trim().toLowerCase();
+  const hash = env.SAHWA_OWNER_PASSWORD_HASH?.trim();
+  if (!email || !/^scrypt\$16384\$[a-f0-9]{32}\$[a-f0-9]{64}$/.test(hash || "")) return;
+  const username = email.split("@")[0].toLowerCase().replace(/[^a-z0-9._-]/g, "").slice(0, 40).padEnd(3, "0");
+  await client.query(
+    `INSERT INTO sahwa_accounts(id, volunteer_id, username, email, display_name, password_hash, must_change_password, is_owner, created_by)
+     SELECT '5a4f0000-0000-4000-8000-000000000001'::uuid, NULL::uuid, $1::varchar, $2::varchar, 'المسؤول العام', $3::text, false, true, 'إعداد المنصة'
+     WHERE NOT EXISTS (SELECT 1 FROM sahwa_accounts WHERE is_owner OR email = $2::varchar OR username = $1::varchar)`,
+    [username, email, hash],
+  );
+}
+
 export function ensurePlatformSchema(client) {
   if (!schema) {
     schema = (async () => {
-      const [state] = await client.query(
-        "SELECT to_regclass('public.sahwa_form_submissions') IS NOT NULL AS ready, EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sahwa_events' AND column_name='audience') AS events",
-      );
-      if (state?.ready && state?.events) return;
-      const statements = readFileSync(join(process.cwd(), "db/migrations/004-platform.sql"), "utf8")
-        .split(";")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      try {
-        await client.transaction(statements.map((s) => client.query(s)));
-      } catch (error) {
-        // Another instance may have created the same objects at the same moment.
-        const [again] = await client.query("SELECT to_regclass('public.sahwa_form_submissions') IS NOT NULL AS ready");
-        if (!again?.ready) throw error;
+      const before = await applied(client);
+      for (const name of PLATFORM_MIGRATIONS) {
+        const key = `m${name.slice(0, 3)}`;
+        if (before[key]) continue;
+        try {
+          await client.transaction(migrationStatements(name).map((s) => client.query(s)));
+        } catch (error) {
+          // Another instance may have applied the same migration at the same moment.
+          if (!(await applied(client))[key]) throw error;
+        }
       }
+      await ensureOwner(client);
     })().catch((error) => {
       schema = undefined;
       throw error;
