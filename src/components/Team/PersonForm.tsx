@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
 import TeamDialog from "./TeamDialog";
+import VolunteerRoleField from "./VolunteerRoleField";
+import { roleForTitle, roleForVolunteer, volunteerRoleLabel } from "../../../shared/volunteer-roles.js";
 import {
   EMPTY_PERSON,
   type Volunteer,
@@ -10,20 +12,21 @@ import {
   GENDERS,
   PERSON_STATUSES,
   UNIVERSITIES,
-  VOLUNTEER_AREAS,
-  RESPONSIBILITIES,
   STUDY_YEARS,
   MAJORS,
   normalizeMajor,
+  normalizeSearch,
   todayInIstanbul,
 } from "../../../shared/team-options.js";
 
 export default function PersonForm({
   person,
+  volunteers = [],
   onSave,
   onClose,
 }: {
   person: Volunteer | null;
+  volunteers?: Volunteer[];
   onSave: (input: VolunteerInput) => Promise<void>;
   onClose: () => void;
 }) {
@@ -33,6 +36,22 @@ export default function PersonForm({
     birthDate: person?.birthDate || "",
     phone: person?.phone || "",
   });
+  const previousRole = person && roleForVolunteer(person);
+  const originalTitle = previousRole?.title || (person ? volunteerRoleLabel(person) : "");
+  const originalDetail = previousRole?.detailLabel && person ? person.team : "";
+  const [roleTitle, setRoleTitle] = useState(originalTitle);
+  const [roleDetail, setRoleDetail] = useState(originalDetail);
+  const [editedRole, setEditedRole] = useState(false);
+  const selectedRole = roleForTitle(roleTitle);
+  const roleChanged = roleTitle !== originalTitle
+    || roleDetail !== originalDetail
+    || (editedRole && Boolean(selectedRole) && !previousRole);
+  const detailSuggestions = selectedRole?.detailLabel
+    ? [...new Set(volunteers
+        .filter((other) => normalizeSearch(other.university) === normalizeSearch(input.university)
+          && roleForVolunteer(other)?.detailLabel === selectedRole.detailLabel)
+        .map((other) => other.team).filter(Boolean))]
+    : [];
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const update = (key: keyof VolunteerInput, value: string) =>
@@ -43,21 +62,16 @@ export default function PersonForm({
     setBusy(true);
     setError("");
     try {
-      await onSave({ ...input, major: normalizeMajor(input.major) });
+      await onSave({
+        ...input,
+        major: normalizeMajor(input.major),
+        ...(!person || roleChanged ? { roleTitle, roleDetail } : {}),
+      });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "تعذر حفظ البيانات.");
       setBusy(false);
     }
   }
-  const areas = [
-    ...new Set([...VOLUNTEER_AREAS, ...(input.team ? [input.team] : [])]),
-  ];
-  const responsibilities = [
-    ...new Set([
-      ...RESPONSIBILITIES,
-      ...(input.responsibility ? [input.responsibility] : []),
-    ]),
-  ];
   const statuses = [
     ...new Set([
       ...PERSON_STATUSES,
@@ -129,6 +143,31 @@ export default function PersonForm({
                   ))}
                 </select>
               </label>
+              <VolunteerRoleField
+                value={roleTitle}
+                onChange={(title) => {
+                  setEditedRole(true);
+                  if (roleForTitle(title)?.detailLabel !== selectedRole?.detailLabel) setRoleDetail("");
+                  setRoleTitle(title);
+                }}
+              />
+              {selectedRole?.detailLabel && (
+                <label className="team-field team-field-full">
+                  <span>{selectedRole.detailLabel}</span>
+                  <input
+                    required={!person || roleChanged || Boolean(originalDetail)}
+                    maxLength={80}
+                    list={detailSuggestions.length ? "sahwa-role-details" : undefined}
+                    value={roleDetail}
+                    onChange={(event) => setRoleDetail(event.target.value)}
+                  />
+                  {detailSuggestions.length > 0 && (
+                    <datalist id="sahwa-role-details">
+                      {detailSuggestions.map((detail) => <option key={detail} value={detail} />)}
+                    </datalist>
+                  )}
+                </label>
+              )}
             </div>
           </div>
           <div className="team-form-section">
@@ -148,34 +187,6 @@ export default function PersonForm({
                   onChange={(e) => update("birthDate", e.target.value)}
                 />
                 <small>نحسب العمر تلقائيًا ونظهره في كارت المتطوع.</small>
-              </label>
-              <label className="team-field">
-                <span>
-                  مجال التطوع <small>اختياري</small>
-                </span>
-                <select
-                  value={input.team}
-                  onChange={(e) => update("team", e.target.value)}
-                >
-                  <option value="">غير محدد</option>
-                  {areas.map((area) => (
-                    <option key={area}>{area}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="team-field">
-                <span>
-                  المسؤولية <small>اختياري</small>
-                </span>
-                <select
-                  value={input.responsibility}
-                  onChange={(e) => update("responsibility", e.target.value)}
-                >
-                  <option value="">بدون مسؤولية محددة</option>
-                  {responsibilities.map((responsibility) => (
-                    <option key={responsibility}>{responsibility}</option>
-                  ))}
-                </select>
               </label>
               <label className="team-field">
                 <span>

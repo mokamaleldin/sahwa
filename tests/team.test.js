@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validatePerson} from '../server/team-data.js';
-import {filterVolunteers,ageFromBirthDate,todayInIstanbul,normalizeMajor,PERSON_STATUSES,RESPONSIBILITIES,STUDY_YEARS} from '../shared/team-options.js';
+import {filterVolunteers,ageFromBirthDate,todayInIstanbul,normalizeMajor,PERSON_STATUSES,STUDY_YEARS} from '../shared/team-options.js';
 import {person} from './helpers/database.js';
 test('volunteers need only name, university, current status and gender',()=>{
  const value=validatePerson({fullName:'أحمد',university:'استنيا',status:'نشط',gender:'شاب'});
@@ -34,9 +34,8 @@ test('Arabic directory search combines with university and current-status filter
  assert.equal(filterVolunteers(people,{query:'',university:'بيلجي',status:'نشط'}).length,0);
 });
 
-test('three operational statuses and three responsibilities, separate from academic graduation',()=>{
+test('operational statuses remain separate from academic graduation',()=>{
  assert.deepEqual(PERSON_STATUSES,['نشط','متوقف مؤقتًا','غير نشط']);
- assert.deepEqual(RESPONSIBILITIES,['عضو','نائب مسؤول','مسؤول']);
  assert.ok(STUDY_YEARS.includes('متخرج'));
  assert.equal(validatePerson(person({status:'غير نشط',studyYear:'متخرج'})).status,'غير نشط');
 });
@@ -64,4 +63,18 @@ test('volunteer filters combine university, status, gender and academic year',()
  assert.deepEqual(filterVolunteers(people,{query:'',university:'استنيا',status:'نشط',gender:'بنت',studyYear:'متخرج'}).map(p=>p.fullName),['فاطمة']);
  assert.equal(filterVolunteers(people,{query:'',university:'بيلجي',status:'',gender:'',studyYear:'السنة الثانية'}).length,0);
  assert.equal(filterVolunteers(people,{query:'',university:'',status:'غير نشط',gender:'شاب',studyYear:''}).length,1);
+});
+
+test('a named committee requires its name; free text is bounded and preserved', () => {
+  assert.throws(() => validatePerson(person({ roleTitle: 'عضو لجنة جامعية أخرى', roleDetail: ' ' })), /اسم اللجنة/);
+  assert.throws(() => validatePerson(person({ roleTitle: 'س'.repeat(121) })), /الدور/);
+  assert.throws(() => validatePerson(person({ roleTitle: 'مسؤول لجنة جامعية أخرى', roleDetail: 'س'.repeat(81) })), /اسم اللجنة/);
+  const legacy = validatePerson(person({ responsibility: 'نائب مسؤول', team: 'أنشطة' }));
+  assert.equal(legacy.responsibility, 'نائب مسؤول');
+  assert.equal(legacy.team, 'أنشطة');
+  assert.ok(!Object.hasOwn(legacy, 'roleId'));
+  const custom = validatePerson(person({ roleTitle: '  منسق اللقاء الأسبوعي  ', roleDetail: 'اسم قديم' }));
+  assert.equal(custom.responsibility, 'منسق اللقاء الأسبوعي');
+  assert.equal(custom.team, '');
+  assert.equal(filterVolunteers([custom], { query: 'اللقاء', university: '', status: '' }).length, 1);
 });

@@ -7,10 +7,13 @@ export interface VolunteerInput {
   gender: string;
   team: string;
   responsibility: string;
+  roleTitle?: string;
+  roleDetail?: string;
   status: string;
   phone: string;
 }
 export interface Volunteer extends VolunteerInput {
+  roleId?: string | null;
   id: string;
   revision: number;
 }

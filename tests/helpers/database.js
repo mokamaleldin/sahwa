@@ -7,6 +7,7 @@ export async function testDatabase({sharedEmail='sahwa@example.invalid',legacySe
  if(legacySetup)await legacySetup(db);
  const migration=await readFile(new URL('../../db/migrations/002-independent-volunteers.sql',import.meta.url),'utf8');
  await db.transaction(async tx=>{await tx.query("SELECT set_config('sahwa.shared_email',$1,true)",[sharedEmail]);for(const statement of migration.split(';').map(x=>x.trim()).filter(Boolean))await tx.query(statement);});
+ await db.exec(await readFile(new URL('../../db/migrations/003-volunteer-role.sql',import.meta.url),'utf8'));
  const sql={query(text,params=[]){return {text,params,then(resolve,reject){return db.query(text,params).then(result=>result.rows).then(resolve,reject);}};},transaction(queries){return db.transaction(async tx=>{const results=[];for(const query of queries)results.push((await tx.query(query.text,query.params)).rows);return results;});}};
  return {db,store:createTeamStore(()=>sql)};
 }

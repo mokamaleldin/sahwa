@@ -1,5 +1,7 @@
 import { todayInIstanbul, normalizeMajor } from "../shared/team-options.js";
 
+import { roleForTitle } from "../shared/volunteer-roles.js";
+
 export class TeamError extends Error {
   constructor(message, status = 400, code = "INVALID_INPUT") {
     super(message);
@@ -31,6 +33,21 @@ export function date(value, label, required = false) {
     throw new TeamError(`أدخل ${label} صحيحًا.`);
   return value;
 }
+function volunteerAssignment(input) {
+  if (!Object.hasOwn(input, "roleTitle")) {
+    return {
+      team: text(input, "team", "الفريق", 80),
+      responsibility: text(input, "responsibility", "الدور", 120),
+    };
+  }
+  const title = text(input, "roleTitle", "الدور في صحوة", 120);
+  const role = roleForTitle(title);
+  return {
+    roleId: role?.id ?? null,
+    responsibility: role?.title || title,
+    team: role?.detailLabel ? text(input, "roleDetail", role.detailLabel, 80, true) : "",
+  };
+}
 export function validatePerson(input) {
   if (!input || typeof input !== "object" || Array.isArray(input))
     throw new TeamError("بيانات المتطوع غير صالحة.");
@@ -43,8 +60,7 @@ export function validatePerson(input) {
       text(input, "birthDate", "تاريخ الميلاد", 10),
       "تاريخ ميلاد",
     ),
-    team: text(input, "team", "مجال التطوع", 80),
-    responsibility: text(input, "responsibility", "المسؤولية", 120),
+    ...volunteerAssignment(input),
     phone: text(input, "phone", "رقم الهاتف", 30).replace(/[٠-٩]/g, (digit) =>
       String(digit.charCodeAt(0) - 1632),
     ),

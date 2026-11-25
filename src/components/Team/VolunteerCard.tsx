@@ -2,6 +2,8 @@ import { ChevronLeft, UserRound } from "lucide-react";
 import type { Volunteer } from "../../lib/team";
 import { ageFromBirthDate } from "../../../shared/team-options.js";
 
+import { roleForVolunteer, volunteerRoleLabel } from "../../../shared/volunteer-roles.js";
+
 export default function VolunteerCard({
   person,
   onOpen,
@@ -9,6 +11,7 @@ export default function VolunteerCard({
   person: Volunteer;
   onOpen: () => void;
 }) {
+  const role = roleForVolunteer(person);
   const age = ageFromBirthDate(person.birthDate);
   return (
     <button
@@ -40,8 +43,8 @@ export default function VolunteerCard({
         {[person.major, person.studyYear].filter(Boolean).join(" · ") || "—"}
       </p>
       <div className="team-person-role">
-        <strong>{person.responsibility || "متطوع"}</strong>
-        <span>{person.team || "مجال التطوع غير محدد"}</span>
+        <strong>{volunteerRoleLabel(person) || "الدور غير محدد"}</strong>
+        {role?.status && <span>{role.status}</span>}
       </div>
       <span className="team-person-open">
         عرض الملف

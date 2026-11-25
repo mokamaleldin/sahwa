@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pencil, UserRound, Phone, Trash2, Loader2 } from "lucide-react";
 import TeamDialog from "./TeamDialog";
 import { ageFromBirthDate } from "../../../shared/team-options.js";
+import { roleForVolunteer, volunteerRoleLabel } from "../../../shared/volunteer-roles.js";
 import { displayDate, type Volunteer } from "../../lib/team";
 
 export default function PersonDetails({
@@ -40,9 +41,8 @@ export default function PersonDetails({
       person.gender === "شاب" ? "شاب" : person.gender === "بنت" ? "بنت" : "",
     ],
     ["العمر", age === null ? "" : `${age.toLocaleString("ar-EG")} سنة`],
-    ["مجال التطوع", person.team],
+    ["الدور في صحوة", [volunteerRoleLabel(person), roleForVolunteer(person)?.status].filter(Boolean).join(" · ")],
     ["رقم الهاتف", person.phone],
-    ["المسؤولية", person.responsibility],
   ];
   return (
     <TeamDialog title="ملف المتطوع" onClose={onClose} busy={deleting}>

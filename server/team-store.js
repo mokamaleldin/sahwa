@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { getSql } from "./db.js";
 import { TeamError } from "./team-data.js";
-const VOLUNTEER_FIELDS = `id, full_name AS "fullName", university, major, study_year AS "studyYear", COALESCE(birth_date::text,'') AS "birthDate", gender, team, responsibility, phone, status, revision`;
+const VOLUNTEER_FIELDS = `id, full_name AS "fullName", university, major, study_year AS "studyYear", COALESCE(birth_date::text,'') AS "birthDate", gender, team, responsibility, role_id AS "roleId", phone, status, revision`;
 const EVENT_FIELDS = `e.id, e.title, COALESCE(e.event_date::text,'') AS "eventDate", e.responsible_id AS "responsibleId", COALESCE(v.full_name,e.responsible,'') AS responsible, e.attendance, e.notes, e.revision`;
 const conflict = () =>
   new TeamError(
@@ -20,6 +20,7 @@ const values = (p) => [
   p.phone,
   p.major,
   p.studyYear,
+  p.roleId ?? null,
 ];
 export function createTeamStore(getClient = getSql) {
   const query = (statement, params = []) =>
@@ -46,15 +47,20 @@ export function createTeamStore(getClient = getSql) {
     async createVolunteer(person) {
       return (
         await query(
-          `INSERT INTO sahwa_volunteers(id,full_name,university,birth_date,gender,status,team,responsibility,phone,major,study_year) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING ${VOLUNTEER_FIELDS}`,
+          `INSERT INTO sahwa_volunteers(id,full_name,university,birth_date,gender,status,team,responsibility,phone,major,study_year,role_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING ${VOLUNTEER_FIELDS}`,
           [randomUUID(), ...values(person)],
         )
       )[0];
     },
     async updateVolunteer(id, revision, person) {
       const rows = await query(
-        `UPDATE sahwa_volunteers SET full_name=$3,university=$4,birth_date=$5,gender=$6,status=$7,team=$8,responsibility=$9,phone=$10,major=$11,study_year=$12,revision=revision+1,updated_at=now() WHERE id=$1 AND revision=$2 RETURNING ${VOLUNTEER_FIELDS}`,
-        [id, revision, ...values(person)],
+        `UPDATE sahwa_volunteers SET full_name=$3,university=$4,birth_date=$5,gender=$6,status=$7,team=$8,responsibility=$9,phone=$10,major=$11,study_year=$12,
+          role_id=CASE
+            WHEN $14::boolean THEN $13::varchar
+            WHEN team=$8::varchar AND responsibility=$9::varchar THEN role_id
+            ELSE NULL END,
+          revision=revision+1,updated_at=now() WHERE id=$1 AND revision=$2 RETURNING ${VOLUNTEER_FIELDS}`,
+        [id, revision, ...values(person), Object.hasOwn(person, "roleId")],
       );
       if (!rows.length) throw conflict();
       return rows[0];

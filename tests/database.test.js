@@ -102,3 +102,33 @@ test('legacy volunteer data migrates independently while the shared account is e
  }});
  try{const records=await legacy.store.listVolunteers();assert.equal(records.length,1);assert.equal(records[0].id,volunteerId);assert.equal(records[0].gender,'بنت');assert.equal(records[0].birthDate,'2003-05-10');assert.ok(!('email' in records[0]));assert.equal((await legacy.db.query('SELECT count(*)::int AS count FROM sahwa_users')).rows[0].count,2,'legacy records are preserved');}finally{await legacy.db.close();}
 });
+
+test('volunteer roles round-trip through the API, including named committees, free text and older edits', async () => {
+  const cookie = await session(), handler = createTeamHandler(store);
+  async function save(input, previous) {
+    const body = previous ? { id: previous.id, revision: previous.revision, person: input } : { person: input };
+    const response = await handler(req('team', previous ? 'PUT' : 'POST', body, cookie));
+    assert.equal(response.status, previous ? 200 : 201);
+    return (await response.json()).person;
+  }
+  let saved = await save(person({ roleTitle: 'عضوة لجنة جامعية أخرى', roleDetail: 'لجنة القراءة' }));
+  assert.equal(saved.roleId, 'additional-committee-women-member');
+  assert.equal(saved.team, 'لجنة القراءة');
+  assert.equal(saved.responsibility, 'عضوة لجنة جامعية أخرى');
+  saved = await save({ ...saved, fullName: 'اسم تجريبي' }, saved);
+  assert.equal(saved.roleId, 'additional-committee-women-member');
+  saved = await save({ ...saved, team: 'إعلام', responsibility: 'عضو' }, saved);
+  assert.equal(saved.roleId, null);
+  saved = await save({ ...saved, roleTitle: 'مسؤول الاعلام المركزي' }, saved);
+  assert.equal(saved.roleId, 'central-media-lead');
+  assert.equal(saved.responsibility, 'مسؤول الإعلام المركزي');
+  assert.equal(saved.team, '');
+  saved = await save({ ...saved, roleTitle: 'منسق نادي القراءة' }, saved);
+  assert.equal(saved.roleId, null);
+  assert.equal(saved.responsibility, 'منسق نادي القراءة');
+  const listed = (await (await handler(req('team','GET',undefined,cookie))).json()).volunteers;
+  assert.deepEqual(listed, [saved]);
+  saved = await save({ ...saved, roleTitle: '' }, saved);
+  assert.equal(saved.responsibility, '');
+  assert.equal(saved.team, '');
+});

@@ -1,13 +1,5 @@
 export const UNIVERSITIES = ["استنيا", "بيلجي", "جليشيم", "عام / مركزي"];
 export const GENDERS = ["شاب", "بنت"];
-export const VOLUNTEER_AREAS = [
-  "أنشطة",
-  "إعلام",
-  "علاقات عامة",
-  "متطوع عام",
-  "إدارة (مسؤولية عامة)",
-];
-export const RESPONSIBILITIES = ["عضو", "نائب مسؤول", "مسؤول"];
 export const PERSON_STATUSES = ["نشط", "متوقف مؤقتًا", "غير نشط"];
 export const STUDY_YEARS = [
   "سنة تحضيرية",
@@ -105,7 +97,7 @@ export function filterVolunteers(people, filters) {
       (p) =>
         (!query ||
           normalizeSearch(
-            [p.fullName, p.university, p.major, p.team, p.phone].join(" "),
+            [p.fullName, p.university, p.major, p.responsibility, p.team, p.phone].join(" "),
           ).includes(query)) &&
         (!filters.university || p.university === filters.university) &&
         (!filters.status || p.status === filters.status) &&

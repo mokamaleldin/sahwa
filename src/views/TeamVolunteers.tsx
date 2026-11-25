@@ -125,7 +125,7 @@ export default function TeamVolunteers() {
       </Helmet>
       <PageHeading
         title="أهل صحوة"
-        description="سجل المتطوعين وبياناتهم ومجالات مشاركتهم في صحوة."
+        description="سجل المتطوعين وبياناتهم وأدوارهم في صحوة."
       />
       <section aria-label="دليل المتطوعين">
         <div className="team-directory-toolbar">
@@ -180,7 +180,7 @@ export default function TeamVolunteers() {
               type="search"
               value={filters.query}
               onChange={(event) => update("query", event.target.value)}
-              placeholder="ابحث بالاسم…"
+              placeholder="ابحث بالاسم أو الدور أو اللجنة…"
               maxLength={120}
             />
           </label>
@@ -301,6 +301,7 @@ export default function TeamVolunteers() {
       {editing !== undefined && (
         <PersonForm
           person={editing}
+          volunteers={people}
           onSave={save}
           onClose={() => setEditing(undefined)}
         />
