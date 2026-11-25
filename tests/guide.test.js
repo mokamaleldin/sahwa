@@ -13,6 +13,7 @@ const at = compileUI(output, [
   "src/components/shared/PageIdentity.tsx",
   "src/components/Team/TeamDialog.tsx",
   "src/components/Team/GuideStructure.tsx",
+  "src/components/Team/GuideIdentity.tsx",
   "src/components/Team/GuideTabs.tsx",
   "src/components/Team/GuideText.tsx",
   "src/components/Team/GuideGovernance.tsx",
@@ -27,9 +28,12 @@ const [{ default: TeamGuide }, { responsibilityCards }, { governanceRoles, gover
 test("the guide opens the identity book and offers all three tabs", () => {
   const dom = new JSDOM(renderToStaticMarkup(h(TeamGuide)));
   const { document } = dom.window;
-  assert.equal(document.querySelectorAll('[role="tab"]:not(:disabled)').length, 3);
-  assert.equal(document.querySelector('[aria-selected="true"]').id, 'tab-guide-identity');
-  assert.equal(document.querySelectorAll('[role="tabpanel"]:not([hidden])').length, 1);
+  assert.equal(document.querySelectorAll('.guide-book-tabs [role="tab"]:not(:disabled)').length, 3);
+  assert.equal(document.querySelector('.guide-book-tabs [aria-selected="true"]').id, 'tab-guide-identity');
+  assert.equal(document.querySelectorAll('.guide-reading-panel:not([hidden])').length, 1);
+  assert.equal(document.querySelectorAll('.guide-identity-nav [role="tab"]').length, 5);
+  assert.equal(document.querySelector('.guide-identity-nav [aria-selected="true"]').textContent, 'التعريف بصحوة ونشأتها');
+  assert.equal(document.querySelectorAll('.guide-identity-tabpanel:not([hidden])').length, 1);
   assert.ok(document.querySelector('[data-book="1"]'));
   assert.ok(document.querySelector('[data-identity]'));
   assert.equal(document.querySelector('[data-book="2"]'), null);

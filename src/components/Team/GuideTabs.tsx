@@ -3,6 +3,7 @@
 import { useEffect, useState, type KeyboardEvent } from "react";
 import { BookOpen, ChevronDown, Network, ScrollText } from "lucide-react";
 import PageHeading from "../shared/PageIdentity";
+import GuideIdentity from "./GuideIdentity";
 import GuideText from "./GuideText";
 import GuideStructure from "./GuideStructure";
 
@@ -97,13 +98,8 @@ export default function GuideTabs({ books, identity }: { books: Book[]; identity
           tabIndex={0} className="guide-chapter-panel guide-reading-panel">
           {active === index && index === 0 && (
             <>
-              <article className="guide-reading-sheet" data-book={1}>
-                <h2 className="font-heading">{books[0].title}</h2>
-                <GuideText source={books[0].body} />
-              </article>
-              <article id="guide-identity-details" className="guide-reading-sheet" data-identity>
-                <GuideText source={identity} identity />
-              </article>
+              <GuideIdentity source={identity} />
+              <BookDetails book={books[0]} number={1} />
             </>
           )}
           {active === index && index === 1 && (

@@ -6,6 +6,7 @@ import { HOME_DESCRIPTION, SITE_URL } from "../lib/seo";
 import "../index.css";
 import "../team.css";
 import "../guide.css";
+import "../guide-identity.css";
 import "../guide-reading.css";
 
 export const metadata: Metadata = {
