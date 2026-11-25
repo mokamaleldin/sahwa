@@ -8,6 +8,7 @@ import "../team.css";
 import "../guide.css";
 import "../guide-identity.css";
 import "../guide-reading.css";
+import "../platform.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

@@ -3,18 +3,23 @@ import { Pencil, UserRound, Phone, Trash2, Loader2 } from "lucide-react";
 import TeamDialog from "./TeamDialog";
 import { ageFromBirthDate } from "../../../shared/team-options.js";
 import { roleForVolunteer, volunteerRoleLabel } from "../../../shared/volunteer-roles.js";
-import { displayDate, type Volunteer } from "../../lib/team";
+import { displayDate, type Volunteer, type VolunteerMeta } from "../../lib/team";
+import PersonAccess from "./PersonAccess";
 
 export default function PersonDetails({
   person,
   onClose,
   onEdit,
   onDelete,
+  meta,
+  onChanged,
 }: {
   person: Volunteer;
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => Promise<void>;
+  meta?: VolunteerMeta;
+  onChanged?: () => Promise<void> | void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -26,7 +31,7 @@ export default function PersonDetails({
     try {
       await onDelete();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "تعذر حذف المتطوع.");
+      setError(reason instanceof Error ? reason.message : "تعذر أرشفة المتطوع.");
       setDeleting(false);
     }
   }
@@ -80,13 +85,14 @@ export default function PersonDetails({
             </div>
           ))}
         </dl>
+        {meta && onChanged && <PersonAccess person={person} meta={meta} onChanged={onChanged} />}
         {error && (
           <p className="team-error mt-5" role="alert">{error}</p>
         )}
         {confirmDelete && (
           <div className="team-delete-confirm" role="alert">
-            <p>هل تريد حذف «{person.fullName}» نهائيًا من سجل المتطوعين؟</p>
-            <p className="mt-2 text-sm">لن تُحذف الفعاليات المرتبطة به، لكن سيُزال اسمه من حقل المسؤول عنها إذا كان مرتبطًا بها.</p>
+            <p>هل تريد أرشفة «{person.fullName}» من سجل المتطوعين؟</p>
+            <p className="mt-2 text-sm">يختفي السجل من القوائم ويتوقف دخول حسابه إن وُجد، وتبقى بياناته وأدواره ومشاركاته محفوظة، ويمكن لمسؤول صحوة استرجاعه.</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
@@ -95,7 +101,7 @@ export default function PersonDetails({
                 disabled={deleting}
               >
                 {deleting && <Loader2 size={17} className="animate-spin" aria-hidden="true" />}
-                {deleting ? "جارٍ الحذف…" : "نعم، احذف المتطوع"}
+                {deleting ? "جارٍ الأرشفة…" : "نعم، أرشف المتطوع"}
               </button>
               <button
                 type="button"
@@ -110,22 +116,22 @@ export default function PersonDetails({
         )}
       </div>
       <div className="team-dialog-footer">
-        <button className="team-button" onClick={onEdit} disabled={deleting || confirmDelete}>
+        {person.allowed?.edit !== false && <button className="team-button" onClick={onEdit} disabled={deleting || confirmDelete}>
           <Pencil size={17} />
           تعديل البيانات الأساسية
-        </button>
+        </button>}
         <button className="team-button team-button-secondary" onClick={onClose} disabled={deleting}>
           إغلاق
         </button>
-        <button
+        {person.allowed?.archive !== false && <button
           type="button"
           className="team-text-button team-delete-action"
           onClick={() => setConfirmDelete(true)}
           disabled={deleting || confirmDelete}
         >
           <Trash2 size={16} aria-hidden="true" />
-          حذف المتطوع
-        </button>
+          أرشفة المتطوع
+        </button>}
       </div>
     </TeamDialog>
   );

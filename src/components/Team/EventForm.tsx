@@ -5,7 +5,13 @@ import type {
   SahwaEvent,
   SahwaEventInput,
   ResponsibleVolunteer,
+  EventExtra,
+  EventScope,
 } from "../../lib/team";
+
+const SECTOR: Record<string, string> = { youth: "الشباب", women: "الطالبات" };
+export const scopeLabel = (s: EventScope) =>
+  [s.university === "*central*" ? "مركزي" : s.university || "كل الجامعات", s.sector ? SECTOR[s.sector] : "كل القطاعات"].join(" — ");
 
 export default function EventForm({
   event,
@@ -13,13 +19,17 @@ export default function EventForm({
   onSave,
   onDelete,
   onClose,
+  scopes = [],
 }: {
   event: SahwaEvent | null;
   volunteers: ResponsibleVolunteer[];
-  onSave: (input: SahwaEventInput) => Promise<void>;
+  onSave: (input: SahwaEventInput, extra?: EventExtra) => Promise<void>;
   onDelete: () => Promise<void>;
   onClose: () => void;
+  scopes?: EventScope[];
 }) {
+  const [scopeIndex, setScopeIndex] = useState(0);
+  const [shared, setShared] = useState(event?.audience === "internal");
   const [input, setInput] = useState<SahwaEventInput>(
     event
       ? { ...event }
@@ -49,7 +59,7 @@ export default function EventForm({
           responsibleId:
             responsible === "__legacy__" ? null : responsible || null,
           preserveLegacyResponsible: responsible === "__legacy__",
-        });
+        }, { audience: shared ? "internal" : "private", ...(!event && scopes[scopeIndex] ? { scope: scopes[scopeIndex] } : {}) });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "تعذر حفظ التعديل.");
       setBusy(false);
@@ -68,6 +78,14 @@ export default function EventForm({
       <form onSubmit={submit} aria-busy={busy}>
         <fieldset className="team-form-body" disabled={busy}>
           <div className="team-form-grid">
+            {!event && scopes.length > 1 && (
+              <label className="team-field team-field-full">
+                <span>نطاق الفعالية</span>
+                <select value={scopeIndex} onChange={(e) => setScopeIndex(Number(e.target.value))}>
+                  {scopes.map((s, i) => <option key={i} value={i}>{scopeLabel(s)}</option>)}
+                </select>
+              </label>
+            )}
             <label className="team-field team-field-full">
               <span>اسم الفعالية *</span>
               <input
@@ -150,6 +168,10 @@ export default function EventForm({
                 }
                 placeholder="سطر أو اثنان عن الفعالية، إذا احتجت."
               />
+            </label>
+            <label className="platform-check team-field-full">
+              <input type="checkbox" checked={shared} onChange={(e) => setShared(e.target.checked)} />
+              مشاركة الفعالية مع أهل صحوة داخليًا (الاسم والتاريخ والمسؤول فقط؛ لا الحضور ولا الملاحظات)
             </label>
           </div>
           {error && (

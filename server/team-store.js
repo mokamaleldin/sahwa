@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { getSql } from "./db.js";
 import { TeamError } from "./team-data.js";
-const VOLUNTEER_FIELDS = `id, full_name AS "fullName", university, major, study_year AS "studyYear", COALESCE(birth_date::text,'') AS "birthDate", gender, team, responsibility, role_id AS "roleId", phone, status, revision`;
-const EVENT_FIELDS = `e.id, e.title, COALESCE(e.event_date::text,'') AS "eventDate", e.responsible_id AS "responsibleId", COALESCE(v.full_name,e.responsible,'') AS responsible, e.attendance, e.notes, e.revision`;
+const VOLUNTEER_FIELDS = `id, full_name AS "fullName", university, major, study_year AS "studyYear", COALESCE(birth_date::text,'') AS "birthDate", gender, team, responsibility, role_id AS "roleId", phone, status, revision, membership_level AS "membershipLevel"`;
+const EVENT_FIELDS = `e.id, e.title, COALESCE(e.event_date::text,'') AS "eventDate", e.responsible_id AS "responsibleId", COALESCE(v.full_name,e.responsible,'') AS responsible, e.attendance, e.notes, e.revision, e.university, e.sector, e.audience, e.is_test AS "isTest"`;
 const conflict = () =>
   new TeamError(
     "تم تعديل السجل من جهاز آخر، أو لم يعد موجودًا. حدّث القائمة وافتحه من جديد.",
@@ -36,19 +36,20 @@ export function createTeamStore(getClient = getSql) {
   return {
     async listVolunteers() {
       return query(
-        `SELECT ${VOLUNTEER_FIELDS} FROM sahwa_volunteers ORDER BY full_name,id`,
+        `SELECT ${VOLUNTEER_FIELDS} FROM sahwa_volunteers WHERE archived_at IS NULL ORDER BY full_name,id`,
       );
     },
-    async listResponsibleVolunteers() {
+    async listResponsibleVolunteers(isTest = false) {
       return query(
-        `SELECT id, full_name AS "fullName", university, status FROM sahwa_volunteers ORDER BY full_name,id`,
+        `SELECT id, full_name AS "fullName", university, status, gender FROM sahwa_volunteers WHERE is_test=$1 AND archived_at IS NULL ORDER BY full_name,id`,
+        [isTest],
       );
     },
-    async createVolunteer(person) {
+    async createVolunteer(person, { isTest = false } = {}) {
       return (
         await query(
-          `INSERT INTO sahwa_volunteers(id,full_name,university,birth_date,gender,status,team,responsibility,phone,major,study_year,role_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING ${VOLUNTEER_FIELDS}`,
-          [randomUUID(), ...values(person)],
+          `INSERT INTO sahwa_volunteers(id,full_name,university,birth_date,gender,status,team,responsibility,phone,major,study_year,role_id,is_test) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING ${VOLUNTEER_FIELDS}`,
+          [randomUUID(), ...values(person), isTest],
         )
       )[0];
     },
@@ -113,15 +114,17 @@ export function createTeamStore(getClient = getSql) {
       ]);
       return results[1][0].attempts <= 10 && results[2][0].attempts <= 50;
     },
-    async listEvents() {
+    async listEvents(isTest = false) {
       return query(
-        `SELECT ${EVENT_FIELDS} FROM sahwa_events e LEFT JOIN sahwa_volunteers v ON v.id=e.responsible_id ORDER BY e.event_date DESC NULLS LAST,e.created_at DESC`,
+        `SELECT ${EVENT_FIELDS} FROM sahwa_events e LEFT JOIN sahwa_volunteers v ON v.id=e.responsible_id WHERE e.is_test=$1 ORDER BY e.event_date DESC NULLS LAST,e.created_at DESC`,
+        [isTest],
       );
     },
-    async createEvent(event) {
+    eventById,
+    async createEvent(event, scope = {}) {
       const id = randomUUID();
       await query(
-        `INSERT INTO sahwa_events(id,title,event_date,responsible_id,responsible,attendance,notes) VALUES ($1,$2,$3,$4,'',$5,$6)`,
+        `INSERT INTO sahwa_events(id,title,event_date,responsible_id,responsible,attendance,notes,university,sector,audience,is_test) VALUES ($1,$2,$3,$4,'',$5,$6,$7,$8,$9,$10)`,
         [
           id,
           event.title,
@@ -129,8 +132,16 @@ export function createTeamStore(getClient = getSql) {
           event.responsibleId,
           event.attendance,
           event.notes,
+          scope.university ?? null,
+          scope.sector ?? null,
+          scope.audience ?? "private",
+          Boolean(scope.isTest),
         ],
       );
+      return eventById(id);
+    },
+    async setEventScope(id, scope) {
+      await query("UPDATE sahwa_events SET university=$2, sector=$3, audience=$4 WHERE id=$1", [id, scope.university ?? null, scope.sector ?? null, scope.audience ?? "private"]);
       return eventById(id);
     },
     async updateEvent(id, revision, event) {

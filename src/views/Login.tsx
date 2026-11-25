@@ -9,10 +9,10 @@ import PageHeading, { PageEmblem } from '../components/shared/PageIdentity';
 export default function Login() {
   const [search] = useSearchParams();
   const requestedPath = search.get('next');
-  const destination = requestedPath && ['/team', '/team/guide', '/team/events', '/team/volunteers', '/team/files', '/team/forms', '/studio'].includes(requestedPath) ? requestedPath : '/team';
+  const destination = requestedPath && /^\/(?:team(?:\/[a-z-]+){0,2}|studio)$/.test(requestedPath) ? requestedPath : '/team';
   const navigate = useNavigate();
   const { status, error: sessionError, signIn, refresh } = useSession();
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
@@ -26,7 +26,7 @@ export default function Login() {
     setSubmitting(true);
     setError('');
     try {
-      await signIn({ email, password, remember });
+      await signIn({ identifier, password, remember });
       navigate(destination, { replace: true });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'تعذر الاتصال. تحقق من الإنترنت وحاول مرة أخرى.');
@@ -44,7 +44,7 @@ export default function Login() {
 
         <div className="page-container relative z-10">
           <div className="mx-auto max-w-md">
-            <PageHeading title="مساحة فريق صحوة" description="للمسؤولين: ادخل بحساب صحوة الأساسي للوصول إلى أدوات الفريق." />
+            <PageHeading title="منصة صحوة الداخلية" description="ادخل باسم المستخدم الذي استلمته من المسؤول. في أول دخول ستختار كلمة مرورك الخاصة." />
 
             <section className="section-card p-6 sm:p-9" aria-labelledby="login-heading">
               <div className="flex items-center gap-3 mb-7">
@@ -56,10 +56,11 @@ export default function Login() {
 
               <form onSubmit={handleSubmit} className="space-y-5" aria-busy={busy}>
                 <div>
-                  <label htmlFor="login-email" className="block text-sm font-medium text-[#350E15] mb-2">البريد الإلكتروني</label>
-                  <input id="login-email" type="email" name="email" dir="ltr" autoComplete="username"
-                    value={email} onChange={event => setEmail(event.target.value)} required maxLength={254}
-                    disabled={busy} className="login-input" />
+                  <label htmlFor="login-identifier" className="block text-sm font-medium text-[#350E15] mb-2">اسم المستخدم</label>
+                  <input id="login-identifier" type="text" name="username" dir="ltr" autoComplete="username" autoCapitalize="none" spellCheck={false}
+                    value={identifier} onChange={event => setIdentifier(event.target.value)} required maxLength={254}
+                    disabled={busy} className="login-input" aria-describedby="login-identifier-hint" />
+                  <p id="login-identifier-hint" className="mt-1.5 text-xs text-gray-500">مثل: ahmed.mohamed — ويمكن للمسؤولين الدخول ببريد حساب صحوة المشترك.</p>
                 </div>
                 <div>
                   <label htmlFor="login-password" className="block text-sm font-medium text-[#350E15] mb-2">كلمة المرور</label>
@@ -84,7 +85,7 @@ export default function Login() {
                 <button type="submit" disabled={busy}
                   className="tap-target w-full flex items-center justify-center gap-3 rounded-xl bg-[#752026] px-5 py-3.5 text-[#F2E9E2] font-medium hover:bg-[#350E15] disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
                   {busy ? <Loader2 size={19} className="animate-spin" aria-hidden="true" /> : <ArrowLeft size={19} aria-hidden="true" />}
-                  {checking ? 'جارٍ التحقق…' : submitting ? 'جارٍ الدخول…' : 'الدخول إلى مساحة الفريق'}
+                  {checking ? 'جارٍ التحقق…' : submitting ? 'جارٍ الدخول…' : 'الدخول إلى المنصة'}
                 </button>
               </form>
             </section>

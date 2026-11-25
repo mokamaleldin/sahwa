@@ -1,0 +1,10 @@
+import { createPostsHandler } from "../../../../server/account-api.js";
+import { teamStore } from "../../../../server/team-store.js";
+import { platformStore } from "../../../../server/platform/store.js";
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+const handle = createPostsHandler(teamStore, platformStore);
+export const GET = handle;
+export const POST = handle;
+export const PUT = handle;
+export const DELETE = handle;

@@ -21,7 +21,7 @@ import PageHeading from "../components/shared/PageIdentity";
 import PersonForm from "../components/Team/PersonForm";
 import PersonDetails from "../components/Team/PersonDetails";
 import VolunteerCard from "../components/Team/VolunteerCard";
-import { teamRequest, type Volunteer, type VolunteerInput } from "../lib/team";
+import { teamRequest, type Volunteer, type VolunteerInput, type VolunteerMeta } from "../lib/team";
 const PAGE_SIZE = 12;
 export default function TeamVolunteers() {
   const [people, setPeople] = useState<Volunteer[]>([]),
@@ -36,14 +36,19 @@ export default function TeamVolunteers() {
       studyYear: "",
     }),
     [page, setPage] = useState(1);
+  const [meta, setMeta] = useState<VolunteerMeta | undefined>(undefined);
   const [selected, setSelected] = useState<Volunteer | null>(null),
     [editing, setEditing] = useState<Volunteer | null | undefined>(undefined);
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setError("");
     try {
-      const result = await teamRequest<{ volunteers: Volunteer[] }>({ signal });
-      if (!signal?.aborted) setPeople(result.volunteers);
+      const result = await teamRequest<{ volunteers: Volunteer[]; meta?: VolunteerMeta }>({ signal });
+      if (!signal?.aborted) {
+        setPeople(result.volunteers);
+        setMeta(result.meta);
+        setSelected((current) => (current ? result.volunteers.find((v) => v.id === current.id) || null : null));
+      }
     } catch (reason) {
       if (!signal?.aborted)
         setError(
@@ -93,7 +98,7 @@ export default function TeamVolunteers() {
     });
     setPeople((previous) => previous.filter((value) => value.id !== person.id));
     setSelected(null);
-    setNotice(`تم حذف «${person.fullName}» من سجل المتطوعين.`);
+    setNotice(`تمت أرشفة «${person.fullName}». يمكن لمسؤول صحوة استرجاعه من لوحة التحكم.`);
   }
   async function save(person: VolunteerInput) {
     const result = await teamRequest<{ person: Volunteer }>({
@@ -107,9 +112,9 @@ export default function TeamVolunteers() {
     setPeople((previous) =>
       editing
         ? previous.map((value) =>
-            value.id === result.person.id ? result.person : value,
+            value.id === result.person.id ? { ...value, ...result.person } : value,
           )
-        : [...previous, result.person],
+        : [...previous, { ...result.person, assignments: result.person.assignments ?? [] }],
     );
     setEditing(undefined);
     setNotice(editing ? "تم حفظ البيانات." : "تمت إضافة المتطوع إلى سجل صحوة.");
@@ -146,7 +151,7 @@ export default function TeamVolunteers() {
               <RefreshCw size={16} aria-hidden="true" />
               تحديث
             </button>
-            <button
+            {meta?.canCreate !== false && <button
               className="team-button"
               disabled={loading || Boolean(error)}
               onClick={() => {
@@ -156,7 +161,7 @@ export default function TeamVolunteers() {
             >
               <Plus size={18} aria-hidden="true" />
               إضافة متطوع
-            </button>
+            </button>}
           </div>
         </div>
         {notice && (
@@ -315,6 +320,8 @@ export default function TeamVolunteers() {
             setSelected(null);
           }}
           onDelete={() => remove(selected)}
+          meta={meta}
+          onChanged={() => load()}
         />
       )}
     </>

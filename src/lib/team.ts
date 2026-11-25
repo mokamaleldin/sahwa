@@ -12,10 +12,52 @@ export interface VolunteerInput {
   status: string;
   phone: string;
 }
+export interface VolunteerAssignment {
+  id: string;
+  roleId: string;
+  title: string;
+  scope: string;
+  university: string | null;
+  sector: string | null;
+  deferred: boolean;
+}
+export interface VolunteerAccount {
+  status: "none" | "active" | "suspended";
+  username?: string;
+  pending?: boolean;
+  lastLoginAt?: string | null;
+  lastResetAt?: string | null;
+}
+export interface VolunteerAllowed {
+  edit: boolean;
+  archive: boolean;
+  assign: boolean;
+  createAccount: boolean;
+  resetAccount: boolean;
+  suspendAccount: boolean;
+  level: boolean;
+}
+export interface RoleOptionMeta {
+  id: string;
+  title: string;
+  titleWomen: string | null;
+  scope: string;
+  sector: string;
+  deferred: boolean;
+}
+export interface VolunteerMeta {
+  canCreate: boolean;
+  assignableRoles: RoleOptionMeta[];
+  globalAdmin: boolean;
+}
 export interface Volunteer extends VolunteerInput {
   roleId?: string | null;
   id: string;
   revision: number;
+  membershipLevel?: string;
+  assignments: VolunteerAssignment[];
+  account?: VolunteerAccount | null;
+  allowed?: VolunteerAllowed;
 }
 export const EMPTY_PERSON: VolunteerInput = {
   fullName: "",
@@ -47,6 +89,19 @@ export interface SahwaEvent extends SahwaEventInput {
   responsible: string;
   id: string;
   revision: number;
+  university?: string | null;
+  sector?: string | null;
+  audience?: "private" | "internal";
+  canEdit?: boolean;
+  canDelete?: boolean;
+}
+export interface EventScope {
+  university: string | null;
+  sector: string | null;
+}
+export interface EventExtra {
+  scope?: EventScope;
+  audience: "private" | "internal";
 }
 export async function teamRequest<T>(
   options: RequestInit = {},

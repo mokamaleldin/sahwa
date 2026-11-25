@@ -1,6 +1,6 @@
 import Volunteers from "../../../views/TeamVolunteers";
-import { requirePageUser } from "../../../../server/page-auth";
+import { requirePageActor } from "../../../../server/page-auth";
 export default async function Page() {
-  await requirePageUser(true);
+  await requirePageActor({ permission: "volunteers.view" });
   return <Volunteers />;
 }
