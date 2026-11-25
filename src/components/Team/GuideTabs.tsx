@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, type KeyboardEvent } from "react";
-import { BookOpen, ChevronDown, Network, ScrollText } from "lucide-react";
+import { BookOpen, ChevronDown, Network, Scale, ScrollText } from "lucide-react";
 import PageHeading from "../shared/PageIdentity";
+import GuideDecisions from "./GuideDecisions";
 import GuideIdentity from "./GuideIdentity";
 import GuideText from "./GuideText";
 import GuideStructure from "./GuideStructure";
@@ -24,12 +25,14 @@ function BookDetails({ book, number, open = false }: { book: Book; number: numbe
 const tabs = [
   { id: "guide-identity", range: "الباب الأول", icon: BookOpen },
   { id: "guide-structure", range: "الباب الثاني", icon: Network },
-  { id: "guide-policies", range: "من الباب الثالث إلى السابع", icon: ScrollText },
+  { id: "guide-decisions", range: "الباب الثالث", icon: Scale },
+  { id: "guide-policies", range: "من الباب الرابع إلى السابع", icon: ScrollText },
 ] as const;
 
 function tabForHash(hash: string) {
   if (hash === "#guide-structure" || hash.startsWith("#guide-structure-")) return 1;
-  if (hash === "#guide-policies") return 2;
+  if (hash === "#guide-decisions" || hash.startsWith("#guide-decisions-")) return 2;
+  if (hash === "#guide-policies") return 3;
   return 0;
 }
 
@@ -37,10 +40,12 @@ export default function GuideTabs({
   books,
   identity,
   structure,
+  decisions,
 }: {
   books: Book[];
   identity: string;
   structure: string;
+  decisions: string;
 }) {
   const [active, setActive] = useState(0);
   useEffect(() => {
@@ -96,7 +101,7 @@ export default function GuideTabs({
           >
             <span className="guide-chapter-top"><span>{range}</span><Icon size={20} aria-hidden="true" /></span>
             <span className="guide-chapter-title">
-              {index < 2 ? books[index].title.replace(/^[^:]+: /, "") : "الميثاق والقيم والسياسات والإجراءات"}
+              {index < 3 ? books[index].title.replace(/^[^:]+: /, "") : "العضوية والتشغيل والسياسات والإجراءات"}
             </span>
           </button>
         ))}
@@ -110,8 +115,11 @@ export default function GuideTabs({
           {active === index && index === 1 && (
             <GuideStructure source={structure} />
           )}
-          {active === index && index === 2 && books.slice(2).map((book, i) => (
-            <BookDetails key={book.title} book={book} number={i + 3} open={i === 0} />
+          {active === index && index === 2 && (
+            <GuideDecisions source={decisions} />
+          )}
+          {active === index && index === 3 && books.slice(3).map((book, i) => (
+            <BookDetails key={book.title} book={book} number={i + 4} open={i === 0} />
           ))}
         </section>
       ))}

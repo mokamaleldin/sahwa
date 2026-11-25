@@ -1,11 +1,11 @@
 .guide-chapter-grid.guide-book-tabs {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   max-width: 1100px;
   margin: 0 auto 26px;
 }
 .guide-book-tabs .guide-chapter-card {
   min-height: 112px;
-  padding: 17px 22px;
+  padding: 16px 18px;
   text-align: start;
 }
 .guide-book-tabs .guide-chapter-top {
@@ -15,7 +15,7 @@
 }
 .guide-book-tabs .guide-chapter-title {
   margin: 0;
-  font-size: clamp(16px, 1.6vw, 20px);
+  font-size: clamp(15px, 1.35vw, 18px);
   line-height: 1.6;
 }
 
@@ -90,6 +90,9 @@
   outline: 3px solid var(--brand-gold);
   outline-offset: 2px;
   border-radius: 6px;
+}
+@media (max-width: 960px) {
+  .guide-chapter-grid.guide-book-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 700px) {
   .guide-chapter-grid.guide-book-tabs { grid-template-columns: 1fr; gap: 7px; margin-bottom: 14px; }

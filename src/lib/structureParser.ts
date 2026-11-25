@@ -150,6 +150,54 @@ function joinParts(...parts: string[]): GovernanceBlock[] {
   return parseMarkdownBlocks(combined);
 }
 
+const DECISIONS_BOUNDARIES: Array<{ id: string; label: string; marker: string }> = [
+  { id: "3.1", label: "مصفوفة الصلاحيات والاعتماد", marker: "الفصل 3.1 — مصفوفة الصلاحيات والاعتماد" },
+  { id: "3.2", label: "القرارات الخاصة بمجلس الإدارة المركزي", marker: "**الفصل 3.2 — القرارات الخاصة بمجلس الإدارة المركزي**" },
+  { id: "3.3", label: "اجتماعات المجلس والنصاب والتصويت", marker: "الباب الثالث — الفصل 3.4" },
+  { id: "3.4", label: "اتخاذ القرار داخل الفرق واللجان", marker: "# الفصل 3.4 — اتخاذ القرار داخل الفرق واللجان" },
+  { id: "3.5", label: "القرارات المشتركة بين الجهات", marker: "# الفصل 3.5 — القرارات المشتركة بين الجهات" },
+];
+
+const DECISION_CHAPTER_TITLE = /^(?:\*\*)?(?:الفصل\s+3\.\d+\s*—.+|الباب الثالث — الفصل 3\.4)(?:\*\*)?$/;
+const DECISION_ORDINAL_HEADING =
+  /^\*\*(?:أولًا|ثانيًا|ثالثًا|رابعًا|خامسًا|سادسًا|سابعًا|ثامنًا|تاسعًا|عاشرًا):[^*]+\*\*$/;
+
+function parseDecisionBlocks(markdown: string): GovernanceBlock[] {
+  return parseMarkdownBlocks(markdown).map((block) => {
+    if (block.kind !== "paragraph") return block;
+    if (DECISION_CHAPTER_TITLE.test(block.text) || DECISION_ORDINAL_HEADING.test(block.text)) {
+      return {
+        kind: "heading",
+        text: block.text.replace(/^\*\*/, "").replace(/\*\*$/, ""),
+      };
+    }
+    return block;
+  });
+}
+
+export function parseDecisionsBook(source: string): StructureChapter[] {
+  const normalized = source.replace(/\r\n/g, "\n");
+  const starts = DECISIONS_BOUNDARIES.map((item) => ({
+    ...item,
+    idx: normalized.indexOf(item.marker),
+  }));
+
+  return starts.map((item, i) => {
+    const next = starts[i + 1];
+    const raw =
+      item.idx === -1
+        ? ""
+        : normalized.slice(item.idx, next && next.idx !== -1 ? next.idx : normalized.length);
+    const markdown = trimDivider(raw);
+    return {
+      id: item.id,
+      label: item.label,
+      markdown,
+      blocks: parseDecisionBlocks(markdown),
+    };
+  });
+}
+
 export function parseIdentityBook(source: string): StructureChapter[] {
   const rawChapters = source
     .replace(/\r\n/g, "\n")

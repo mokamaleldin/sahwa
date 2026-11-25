@@ -10,10 +10,12 @@ const at = compileUI(output, [
   "src/data/sahwaGuide.ts",
   "src/data/sahwaStructure.ts",
   "src/data/sahwaGovernance.ts",
+  "src/lib/bookletHtml.ts",
   "src/lib/structureParser.ts",
   "src/components/shared/PageIdentity.tsx",
   "src/components/Team/TeamDialog.tsx",
   "src/components/Team/GuideBooklet.tsx",
+  "src/components/Team/GuideDecisions.tsx",
   "src/components/Team/GuideStructure.tsx",
   "src/components/Team/GuideIdentity.tsx",
   "src/components/Team/GuideTabs.tsx",
@@ -27,10 +29,10 @@ const [{ default: TeamGuide }, { responsibilityCards }, { governanceRoles, gover
   at("src/data/sahwaGovernance.js"),
 ]);
 
-test("the guide opens the identity book and offers all three tabs", () => {
+test("the guide opens the identity book and offers all four tabs", () => {
   const dom = new JSDOM(renderToStaticMarkup(h(TeamGuide)));
   const { document } = dom.window;
-  assert.equal(document.querySelectorAll('.guide-book-tabs [role="tab"]:not(:disabled)').length, 3);
+  assert.equal(document.querySelectorAll('.guide-book-tabs [role="tab"]:not(:disabled)').length, 4);
   assert.equal(document.querySelector('.guide-book-tabs [aria-selected="true"]').id, 'tab-guide-identity');
   assert.equal(document.querySelectorAll('.guide-reading-panel:not([hidden])').length, 1);
   assert.equal(document.querySelectorAll('.guide-identity-nav [role="tab"]').length, 7);

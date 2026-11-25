@@ -9,15 +9,18 @@ import { compileUI } from "./helpers/compile-ui.js";
 const outline = readFileSync("docs/guide/bylaws.md", "utf8");
 const identity = readFileSync("docs/guide/identity.md", "utf8");
 const structure = readFileSync("docs/guide/structure.md", "utf8");
+const decisions = readFileSync("docs/guide/decisions.md", "utf8");
 const books = outline.split(/(?=^# الباب )/m);
 const at = compileUI("tmp/bylaws-tests", [
   "src/components/shared/PageIdentity.tsx",
   "src/components/Team/GuideBooklet.tsx",
+  "src/components/Team/GuideDecisions.tsx",
   "src/components/Team/GuideIdentity.tsx",
   "src/components/Team/GuideText.tsx",
   "src/components/Team/GuideStructure.tsx",
   "src/components/Team/TeamDialog.tsx",
   "src/components/Team/GuideGovernance.tsx",
+  "src/lib/bookletHtml.ts",
   "src/lib/structureParser.ts",
   "src/data/sahwaGuide.ts",
   "src/data/sahwaStructure.ts",
@@ -26,8 +29,8 @@ const at = compileUI("tmp/bylaws-tests", [
   "src/views/TeamGuide.tsx",
 ]);
 const { default: TeamGuide } = await at("src/views/TeamGuide.js");
-const { parseIdentityBook, parseStructureBook } = await at("src/lib/structureParser.js");
-const { buildBookletHtml } = await at("src/components/Team/GuideBooklet.js");
+const { parseDecisionsBook, parseIdentityBook, parseStructureBook } = await at("src/lib/structureParser.js");
+const { buildBookletHtml } = await at("src/lib/bookletHtml.js");
 
 function sourceLines(source) {
   return source.split(/\r?\n/).filter(line => line.trim() && line !== "---")
@@ -71,14 +74,15 @@ function wordsFromMarkdown(markdown) {
   );
 }
 
-test("the two guide sources match the supplied UTF-8 files byte for byte", () => {
+test("the guide sources match the supplied UTF-8 files byte for byte", () => {
   const hash = source => createHash("sha256").update(source).digest("hex");
   assert.equal(hash(outline), "e304a76b4ea70eb072f53c40127b81569da3e4c914b58488c9652164d0d00edf");
   assert.equal(hash(identity), "94dac43f535482c8281b9c75345e1105c8decca6361ec4a94ffc416b991d2f29");
+  assert.equal(hash(decisions), "283cc3a4a76a146e5f5ae2eb7f0da0d0b679f1d6ad67018c215211eb255369cc");
   assert.equal(books.length, 7);
 });
 
-test("both booklets (Book 1 identity and Book 2 structure) preserve 100% verbatim text and build printable HTML", () => {
+test("all three booklets (Book 1 identity, Book 2 structure, Book 3 decisions) preserve 100% verbatim text and build printable HTML", () => {
   const idChapters = parseIdentityBook(identity);
   assert.equal(idChapters.length, 5);
   assert.equal(wordsFromBlocks(idChapters.flatMap((c) => c.blocks)), wordsFromMarkdown(identity));
@@ -90,10 +94,29 @@ test("both booklets (Book 1 identity and Book 2 structure) preserve 100% verbati
   for (const [id, entry] of parsed.entries) assert.ok(entry.blocks.length > 0, `empty entry: ${id}`);
   assert.equal(wordsFromBlocks(parsed.chapters.flatMap((c) => c.blocks)), wordsFromMarkdown(structure));
 
+  const decisionChapters = parseDecisionsBook(decisions);
+  assert.equal(decisionChapters.length, 5);
+  for (const chapter of decisionChapters) assert.ok(chapter.blocks.length > 0, chapter.id);
+  assert.equal(
+    wordsFromBlocks(decisionChapters.flatMap((c) => c.blocks)),
+    wordsFromMarkdown(decisions),
+  );
+  const decisionTables = decisionChapters.flatMap((c) => c.blocks).filter((b) => b.kind === "table");
+  assert.equal(decisionTables.length, 3);
+  assert.equal(decisionTables[0].rows.length, 14);
+  assert.equal(decisionTables[1].rows.length, 4);
+  assert.equal(decisionTables[2].rows.length, 12);
+
   const html = buildBookletHtml("الهوية والنظام الأساسي والمرجعية", idChapters);
   assert.match(html, /dir="rtl"/);
   assert.match(html, /صحوة مبادرة طلابية إسلامية تأسست عام 2025 في تركيا/);
   assert.match(html, /@media print/);
+
+  const decisionsHtml = buildBookletHtml("اتخاذ القرار والمجلس والتفويض", decisionChapters);
+  assert.match(decisionsHtml, /dir="rtl"/);
+  assert.match(decisionsHtml, /مصفوفة الصلاحيات والاعتماد/);
+  assert.match(decisionsHtml, /المقاعد المشغولة/);
+  assert.match(decisionsHtml, /مجلس المتابعة والمراجعة والتظلمات/);
 });
 
 test("Tab 1 offers simple overview and verbatim flip-through booklet; Tab 2 offers chart and booklet with no bottom BookDetails", async () => {
@@ -148,27 +171,54 @@ test("Tab 1 offers simple overview and verbatim flip-through booklet; Tab 2 offe
     });
     assert.equal(ch5.hasAttribute("hidden"), false);
 
-    // Tab 3 still holds books 3..7 verbatim
+    // Tab 4 holds books 4..7 verbatim
     await press("ArrowRight");
     assert.equal(document.activeElement, tab("policies"));
     assert.equal(current().id, "guide-policies");
     const grouped = [...current().querySelectorAll("details[data-book]")];
-    assert.equal(grouped.length, 5);
+    assert.equal(grouped.length, 4);
     for (const [i, section] of grouped.entries()) {
-      assert.equal(section.dataset.book, String(i + 3));
+      assert.equal(section.dataset.book, String(i + 4));
       if (!section.open) section.querySelector("summary").click();
       assert.ok(section.open);
-      checkContent(section, books[i + 2]);
+      checkContent(section, books[i + 3]);
     }
     assert.equal(grouped.at(-1).querySelector("p:last-child").textContent, "website");
 
-    // Hash deep-link to #guide-identity-story opens Tab 1 overview on Story
+    // Tab 3 opens Book 3 decisions booklet verbatim with no bottom BookDetails
+    await press("ArrowRight");
+    assert.equal(document.activeElement, tab("decisions"));
+    assert.equal(current().id, "guide-decisions");
+    assert.equal(current().querySelector('[data-book="3"]'), null);
+    const decBooklet = current().querySelector('[data-guide-booklet="sahwa-decisions-booklet"]');
+    assert.ok(decBooklet);
+    assert.equal(decBooklet.querySelectorAll("[data-booklet-chapter]").length, 5);
+    assert.equal(decBooklet.querySelector('[data-booklet-chapter="3.1"]').hasAttribute("hidden"), false);
+    assert.equal(decBooklet.querySelector('[data-booklet-chapter="3.3"]').getAttribute("hidden"), "until-found");
+    assert.match(decBooklet.querySelector('[data-booklet-chapter="3.1"]').textContent, /مصفوفة الصلاحيات/);
+
+    // beforematch flips Book 3 booklet to chapter 3.5
+    const decCh5 = decBooklet.querySelector('[data-booklet-chapter="3.5"]');
+    await act(async () => {
+      decCh5.dispatchEvent(new dom.window.Event("beforematch", { bubbles: true }));
+    });
+    assert.equal(decCh5.hasAttribute("hidden"), false);
+    assert.match(decCh5.textContent, /القرارات المشتركة بين الجهات/);
+
+    // Hash deep-link to #guide-decisions opens Tab 3 directly
     await act(async () => {
       dom.window.location.hash = "#guide-identity-story";
       dom.window.dispatchEvent(new dom.window.HashChangeEvent("hashchange"));
     });
     assert.equal(current().id, "guide-identity");
     assert.ok(current().querySelector("#guide-identity-story"));
+
+    await act(async () => {
+      dom.window.location.hash = "#guide-decisions";
+      dom.window.dispatchEvent(new dom.window.HashChangeEvent("hashchange"));
+    });
+    assert.equal(current().id, "guide-decisions");
+    assert.ok(current().querySelector('[data-guide-booklet="sahwa-decisions-booklet"]'));
   } finally {
     await act(async () => root.unmount());
     dom.window.close();
