@@ -105,16 +105,10 @@ export default function GuideTabs({
         <section key={id} id={id} role="tabpanel" aria-labelledby={`tab-${id}`} hidden={active !== index}
           tabIndex={0} className="guide-chapter-panel guide-reading-panel">
           {active === index && index === 0 && (
-            <>
-              <GuideIdentity source={identity} />
-              <BookDetails book={books[0]} number={1} />
-            </>
+            <GuideIdentity source={identity} />
           )}
           {active === index && index === 1 && (
-            <>
-              <GuideStructure source={structure} />
-              <BookDetails book={books[1]} number={2} />
-            </>
+            <GuideStructure source={structure} />
           )}
           {active === index && index === 2 && books.slice(2).map((book, i) => (
             <BookDetails key={book.title} book={book} number={i + 3} open={i === 0} />

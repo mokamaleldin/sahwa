@@ -35,7 +35,7 @@ test("organizational chart removes draft banner, proposed-unit labels and old go
     "guide-map-board-trigger",
     "guide-map-branches",
     "StructureDialog",
-    "StructureBookReader",
+    "GuideBooklet",
   ]) {
     assert.ok(view.includes(node), node);
   }

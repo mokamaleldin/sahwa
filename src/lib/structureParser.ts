@@ -150,6 +150,28 @@ function joinParts(...parts: string[]): GovernanceBlock[] {
   return parseMarkdownBlocks(combined);
 }
 
+export function parseIdentityBook(source: string): StructureChapter[] {
+  const rawChapters = source
+    .replace(/\r\n/g, "\n")
+    .trim()
+    .split(/\n---\n/);
+
+  return rawChapters.map((raw, index) => {
+    const markdown = trimDivider(raw);
+    const firstLine = markdown.split("\n")[0] || "";
+    const label = firstLine
+      .replace(/^#{1,4}\s+/, "")
+      .replace(/^الفصل\s+[\d.]+\s*—\s*/, "")
+      .trim();
+    return {
+      id: `1.${index + 1}`,
+      label: label || `الفصل ${index + 1}`,
+      markdown,
+      blocks: parseMarkdownBlocks(markdown),
+    };
+  });
+}
+
 export function parseStructureBook(source: string): ParsedStructureBook {
   const chapters = splitChapters(source);
   const byId = new Map(chapters.map((chapter) => [chapter.id, chapter.markdown]));

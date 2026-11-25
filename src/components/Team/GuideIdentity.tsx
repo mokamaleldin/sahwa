@@ -1,684 +1,219 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import {
   BookOpen,
   Compass,
   Globe2,
   GraduationCap,
+  Handshake,
   Heart,
   Leaf,
   Lightbulb,
-  Megaphone,
-  ShieldCheck,
   Sparkles,
-  Users,
 } from "lucide-react";
+import GuideBooklet from "./GuideBooklet";
+import { parseIdentityBook } from "../../lib/structureParser";
 
-type Block =
-  | { kind: "heading"; level: number; text: string }
-  | { kind: "paragraph"; text: string }
-  | { kind: "list"; items: string[] };
+const milestones = [
+  {
+    when: "2025",
+    title: "بذرة الفكرة",
+    detail:
+      "بدأ التفكير في تكوين مجتمع طلابي يجمع بين الصحبة الصالحة والقرآن والأخوة والعمل النافع، ويتجاوز حدود اللقاءات العابرة إلى علاقة مستمرة بين الطلاب.",
+  },
+  {
+    when: "9 ديسمبر 2025",
+    title: "بداية التأسيس",
+    detail:
+      "أُنشئت أول مجموعة لصحوة، وبدأ التواصل بين الشباب وتشكيل النواة الأولى للفريق.",
+  },
+  {
+    when: "12 ديسمبر 2025",
+    title: "الإعلان الرسمي الأول",
+    detail:
+      "ظهر أول إعلان رسمي عن صحوة، لتبدأ رحلتها من فكرة بين مجموعة من الطلاب إلى مبادرة تسعى للوصول إلى عدد أكبر من الشباب.",
+  },
+  {
+    when: "2026",
+    title: "من الفكرة إلى العمل",
+    detail:
+      "بدأت صحوة تتوسع في أنشطتها وفعالياتها، وتبني فرقها داخل الجامعات، وتجمع متطوعين ومتطوعات يعملون في مجالات مختلفة.",
+    extra:
+      "تنوعت الأعمال بين اللقاءات والندوات والأنشطة الطلابية والرحلات والمبادرات التعليمية والاجتماعية، مع بناء علاقات وتعاون مع جهات طلابية أخرى.",
+  },
+  {
+    when: "2026",
+    title: "نمو صحوة وتطورها",
+    detail:
+      "امتد حضور صحوة إلى ثلاث جامعات رئيسية، وتطورت فرق الشباب والطالبات، وأعمال الإعلام والعلاقات العامة، وبدأ العمل على تطوير المنصة الإلكترونية والأدوات التي تخدم الطلاب والمتطوعين.",
+    extra:
+      "ومع هذا النمو، أصبحت صحوة أكثر من مجموعة تنظم فعاليات؛ أصبحت مجتمعًا طلابيًا يجمع أشخاصًا من جامعات وخلفيات مختلفة، يعملون معًا على رسالة واحدة.",
+  },
+];
 
-interface SubSection {
-  title: string;
-  blocks: Block[];
-}
+const pillars = [
+  {
+    number: "01",
+    title: "القرآن مرجعنا",
+    icon: BookOpen,
+    intro:
+      "نسعى إلى أن يكون القرآن حاضرًا في تفكيرنا وقراراتنا ونظرتنا إلى الحياة، لا أن يقتصر حضوره على الدروس واللقاءات.",
+    detail:
+      "نتعلم كيف نفهمه ونتدبره بصورة صحيحة، ونرجع إلى أهل العلم فيما لا نعرف، ونستصحب هدايته في أخلاقنا وعلاقاتنا ودراستنا وعملنا ومسؤولياتنا.",
+    clarification:
+      "ولا يعني ذلك أن نستخرج كل العلوم والتخصصات من القرآن؛ بل أن نتعلم العلوم من مصادرها الصحيحة، ونستفيد من خبرات البشر وتجاربهم، مع المحافظة على مرجعيتنا وقيمنا.",
+    closing:
+      "فالغاية أن يسهم القرآن في بناء الإنسان الذي يعرف لماذا يعمل، وكيف يعمل، وما مسؤوليته تجاه الله والناس.",
+  },
+  {
+    number: "02",
+    title: "الصحبة الصالحة بيئتنا",
+    icon: Heart,
+    intro:
+      "نسعى إلى بناء علاقات أخوية حقيقية بين الشباب، يجد فيها كل شخص من يعينه ويسانده ويشاركه الخير.",
+    detail:
+      "نريد صحبة لا تنتهي بانتهاء الفعالية أو الاجتماع، ولا تقوم فقط على التكليفات والمسؤوليات، بل تمتد إلى حياتنا وعلاقاتنا واهتماماتنا.",
+    closing:
+      "نريد أن يشعر كل فرد أنه جزء من عائلة، لا مجرد اسم في قائمة المتطوعين.",
+  },
+  {
+    number: "03",
+    title: "الأمة الواحدة هويتنا",
+    icon: Globe2,
+    intro:
+      "نؤمن أن ما يجمعنا أكبر من اختلاف جنسياتنا ولغاتنا وخلفياتنا.",
+    detail:
+      "نسعى إلى تعزيز انتماء الشباب لأمتهم، وفهم قضاياها وتحدياتها، وبناء علاقات قائمة على الأخوة والتعاون والتكامل.",
+    closing:
+      "ونطمح إلى شباب يدركون أنهم جزء من أمة واحدة، وأن لكل منهم مسؤولية يستطيع القيام بها في موقعه ومجاله.",
+  },
+  {
+    number: "04",
+    title: "النفع والأثر غايتنا العملية",
+    icon: Compass,
+    intro:
+      "لا نريد أن تبقى القيم والأفكار مجرد كلام، بل أن تتحول إلى أعمال ومشروعات ومبادرات تنفع الناس.",
+    detail:
+      "نسعى إلى مساعدة الشباب على اكتشاف قدراتهم، والتقدم في تخصصاتهم، واختيار مجالات يستطيعون من خلالها خدمة مجتمعاتهم وأمتهم.",
+    clarification:
+      "قد يكون أثر أحدهم في التعليم، وآخر في الطب، أو التقنية، أو الاقتصاد، أو الإعلام، أو غيرها من المجالات.",
+    closing:
+      "لا نريد أن نصنع نسخة واحدة من الشباب، بل أشخاصًا مختلفين تجمعهم المبادئ ويكمل بعضهم بعضًا.",
+  },
+];
 
-interface Chapter {
-  key: string;
-  label: string;
-  sections: SubSection[];
-}
+const principles = [
+  {
+    name: "الإخلاص",
+    icon: Sparkles,
+    detail: "نعمل ابتغاء مرضاة الله، ونحرص على أن يكون نفع الناس أهم من الظهور والألقاب.",
+  },
+  {
+    name: "الأخوة",
+    icon: Heart,
+    detail: "نتعامل باعتبارنا عائلة تجمعها رسالة واحدة، ونحافظ على علاقاتنا حتى خارج العمل والأنشطة.",
+  },
+  {
+    name: "التعاون",
+    icon: Handshake,
+    detail: "نعمل معًا، ونتبادل الخبرات، ونساعد بعضنا على النجاح دون منافسة شخصية أو احتكار.",
+  },
+  {
+    name: "المبادرة",
+    icon: Lightbulb,
+    detail: "لكل فرد فرصة أن يقدم فكرة ويبدأ مشروعًا ويشارك في صنع القرار المناسب لمسؤوليته.",
+  },
+  {
+    name: "التعلم والتطور",
+    icon: GraduationCap,
+    detail: "نتعلم من تجاربنا وأخطائنا، ونستفيد من المعرفة والخبرات النافعة أينما وجدناها.",
+  },
+  {
+    name: "الاستمرارية",
+    icon: Leaf,
+    detail: "نبني أعمالًا وعلاقات ومشروعات تستطيع الاستمرار بعد تخرجنا أو انتقال مسؤولياتنا.",
+  },
+];
 
-const CHAPTER_KEYS = ["about", "vision", "audience", "principles", "fields"] as const;
+const numbers = [
+  { value: "61", label: "فعالية ونشاطًا" },
+  { value: "نحو 90", label: "فردًا في عائلة صحوة" },
+  { value: "3", label: "جامعات رئيسية تتمتع صحوة فيها باعتماد رسمي" },
+  { value: "800+", label: "طالب في مجموعات صحوة الطلابية" },
+  { value: "2025", label: "سنة تأسيس صحوة" },
+];
 
-const SECTION_ANCHORS: Record<string, string> = {
-  "أولًا: من نحن؟": "guide-identity-about",
-  "ثانيًا: كيف بدأت صحوة؟": "guide-identity-story",
-  "أولًا: رؤيتنا": "guide-identity-vision",
-  "ثالثًا: أهدافنا الأربعة": "guide-identity-goals",
-  "أولًا: من نستهدف؟": "guide-identity-audience",
-  "ثالثًا: مستويات العلاقة بصحوة": "guide-identity-community",
-  "ثانيًا: مبادئنا العامة": "guide-identity-principles",
-  "أولًا: منهجنا في اختيار الأنشطة": "guide-identity-fields",
-};
+const identityTabs = [
+  { key: "about", label: "من نحن؟" },
+  { key: "story", label: "قصتنا" },
+  { key: "vision", label: "الرؤية والرسالة" },
+  { key: "goals", label: "أهدافنا الأربعة" },
+  { key: "principles", label: "مبادئنا" },
+  { key: "community", label: "عائلة صحوة" },
+  { key: "numbers", label: "صحوة بالأرقام" },
+] as const;
 
-const HASH_TO_CHAPTER: Record<string, string> = {
-  "#guide-identity": "about",
-  "#guide-identity-details": "about",
-  "#guide-identity-about": "about",
-  "#guide-identity-story": "about",
-  "#guide-identity-vision": "vision",
-  "#guide-identity-goals": "vision",
-  "#guide-identity-audience": "audience",
-  "#guide-identity-community": "audience",
-  "#guide-identity-principles": "principles",
-  "#guide-identity-fields": "fields",
-};
-
-const GOAL_ICONS = [BookOpen, Heart, Globe2, Compass];
-const PRINCIPLE_ICONS = [Sparkles, Heart, Users, ShieldCheck, Lightbulb, GraduationCap, Leaf];
-const DOMAIN_ICONS = [BookOpen, Heart, GraduationCap, Compass, Lightbulb, Megaphone];
-
-function inline(text: string) {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, index) =>
-    part.startsWith("**") && part.endsWith("**")
-      ? <strong key={index}>{part.slice(2, -2)}</strong>
-      : part,
-  );
-}
-
-function isPureBold(block: Block | undefined): boolean {
-  return (
-    block?.kind === "paragraph" &&
-    block.text.startsWith("**") &&
-    block.text.endsWith("**") &&
-    block.text.indexOf("**", 2) === block.text.length - 2
-  );
-}
-
-function unwrapBold(text: string) {
-  return text.slice(2, -2);
-}
-
-function parseIdentity(source: string): Chapter[] {
-  const rawChapters = source
-    .replace(/^[\r\n]+|[\r\n]+$/g, "")
-    .split(/\r?\n---\r?\n/);
-
-  return rawChapters.map((rawChapter, index) => {
-    const rawBlocks = rawChapter
-      .replace(/^[\r\n]+|[\r\n]+$/g, "")
-      .split(/\r?\n(?:[ \t]*\r?\n)+/);
-
-    let label = "";
-    const sections: SubSection[] = [];
-    let current: SubSection | null = null;
-
-    for (const raw of rawBlocks) {
-      const heading = /^(#{1,4}) (.+)$/.exec(raw);
-      if (heading) {
-        const level = heading[1].length;
-        const text = heading[2];
-        if (level === 2) {
-          label = text.replace(/^الفصل\s+[\d.]+\s*—\s*/, "");
-          continue;
-        }
-        if (level === 3) {
-          current = { title: text, blocks: [] };
-          sections.push(current);
-          continue;
-        }
-        if (current) {
-          current.blocks.push({ kind: "heading", level, text });
-        }
-        continue;
-      }
-      if (!current) continue;
-      if (raw.startsWith("- ")) {
-        current.blocks.push({
-          kind: "list",
-          items: raw.split(/\r?\n/).map((line) => line.slice(2)),
-        });
-      } else {
-        current.blocks.push({ kind: "paragraph", text: raw });
-      }
-    }
-
-    return {
-      key: CHAPTER_KEYS[index] || `section-${index}`,
-      label,
-      sections,
-    };
-  });
-}
-
-function renderAboutSection(section: SubSection) {
-  const paragraphs = section.blocks.filter(
-    (block): block is { kind: "paragraph"; text: string } => block.kind === "paragraph",
-  );
-  return (
-    <article
-      id={SECTION_ANCHORS[section.title]}
-      className="guide-identity-hero"
-      aria-labelledby="guide-identity-about-heading"
-    >
-      <div className="guide-identity-hero-decoration" aria-hidden="true">
-        <span /><span /><span />
-      </div>
-      <div className="guide-identity-hero-content">
-        <h3 id="guide-identity-about-heading" className="font-heading">
-          {section.title}
-        </h3>
-        {paragraphs.map((block, index) => {
-          const pureBold = isPureBold(block);
-          const className =
-            index === 0 && pureBold
-              ? "guide-identity-hero-meta"
-              : pureBold
-                ? "guide-identity-hero-callout"
-                : undefined;
-          return (
-            <p key={index} className={className}>
-              {inline(block.text)}
-            </p>
-          );
-        })}
-      </div>
-    </article>
-  );
-}
-
-function renderStorySection(section: SubSection) {
-  const intro: string[] = [];
-  let timelineLabel = "";
-  const milestones: { when: string; title: string; paragraphs: string[] }[] = [];
-
-  for (const block of section.blocks) {
-    if (block.kind !== "paragraph") continue;
-    if (isPureBold(block)) {
-      const inner = unwrapBold(block.text);
-      if (inner.includes(" — ")) {
-        const [when, ...rest] = inner.split(" — ");
-        milestones.push({ when, title: rest.join(" — "), paragraphs: [] });
-      } else if (!timelineLabel) {
-        timelineLabel = inner;
-      }
-    } else if (milestones.length > 0) {
-      milestones[milestones.length - 1].paragraphs.push(block.text);
-    } else {
-      intro.push(block.text);
-    }
-  }
-
-  return (
-    <section
-      id={SECTION_ANCHORS[section.title]}
-      className="guide-identity-section"
-      aria-labelledby="guide-identity-story-heading"
-    >
-      <div className="guide-identity-heading">
-        <h3 id="guide-identity-story-heading" className="font-heading">
-          {section.title}
-        </h3>
-      </div>
-      <div className="guide-identity-story-intro">
-        {intro.map((text, index) => (
-          <p key={index}>{inline(text)}</p>
-        ))}
-      </div>
-      {timelineLabel && (
-        <h4 className="guide-identity-timeline-label">{timelineLabel}</h4>
-      )}
-      <ol className="guide-identity-timeline">
-        {milestones.map((milestone, index) => (
-          <li key={index}>
-            <span className="guide-identity-timeline-point" aria-hidden="true" />
-            <article>
-              <time>{milestone.when}</time>
-              <h5>{milestone.title}</h5>
-              {milestone.paragraphs.map((text, pIndex) => (
-                <p key={pIndex}>{inline(text)}</p>
-              ))}
-            </article>
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
-function renderVisionMission(vision: SubSection, mission: SubSection) {
-  const cards = [
-    { section: vision, primary: true },
-    { section: mission, primary: false },
-  ];
-  return (
-    <div id={SECTION_ANCHORS[vision.title]} className="guide-identity-vision-grid">
-      {cards.map(({ section, primary }) => (
-        <article
-          key={section.title}
-          className={`guide-identity-vision-card${primary ? " guide-identity-vision-card-primary" : ""}`}
-        >
-          <h3 className="font-heading">{section.title}</h3>
-          {section.blocks.map((block, index) =>
-            block.kind === "paragraph" ? (
-              <p
-                key={index}
-                className={index === 0 && isPureBold(block) ? "guide-identity-vision-lead" : undefined}
-              >
-                {inline(block.text)}
-              </p>
-            ) : null,
-          )}
-        </article>
-      ))}
-    </div>
-  );
-}
-
-function renderGoalsSection(section: SubSection) {
-  const intro: string[] = [];
-  const goals: { number: string; title: string; paragraphs: { text: string; pureBold: boolean }[] }[] = [];
-
-  for (const block of section.blocks) {
-    if (block.kind === "heading") {
-      const [number, ...rest] = block.text.split(" — ");
-      goals.push({
-        number: rest.length ? number : "",
-        title: rest.length ? rest.join(" — ") : block.text,
-        paragraphs: [],
-      });
-    } else if (block.kind === "paragraph") {
-      if (goals.length === 0) intro.push(block.text);
-      else goals[goals.length - 1].paragraphs.push({ text: block.text, pureBold: isPureBold(block) });
-    }
-  }
-
-  return (
-    <section
-      id={SECTION_ANCHORS[section.title]}
-      className="guide-identity-section"
-      aria-labelledby="guide-identity-goals-heading"
-    >
-      <div className="guide-identity-heading">
-        <h3 id="guide-identity-goals-heading" className="font-heading">
-          {section.title}
-        </h3>
-        {intro.map((text, index) => (
-          <p key={index}>{inline(text)}</p>
-        ))}
-      </div>
-      <div className="guide-identity-goal-grid">
-        {goals.map((goal, index) => {
-          const Icon = GOAL_ICONS[index % GOAL_ICONS.length];
-          const last = goal.paragraphs.at(-1);
-          const hasClosing = Boolean(last?.pureBold);
-          const body = hasClosing ? goal.paragraphs.slice(0, -1) : goal.paragraphs;
-          return (
-            <article className="guide-identity-goal" key={goal.title}>
-              <div className="guide-identity-goal-top">
-                <span className="guide-identity-goal-icon">
-                  <Icon size={24} strokeWidth={1.7} aria-hidden="true" />
-                </span>
-                {goal.number && (
-                  <span className="guide-identity-goal-number">{goal.number}</span>
-                )}
-              </div>
-              <h4>{goal.title}</h4>
-              {body.map((paragraph, pIndex) => (
-                <p key={pIndex}>{inline(paragraph.text)}</p>
-              ))}
-              {hasClosing && last && (
-                <p className="guide-identity-goal-closing">{inline(last.text)}</p>
-              )}
-            </article>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function renderHighlightCard(section: SubSection, headingId: string) {
-  return (
-    <section
-      id={SECTION_ANCHORS[section.title]}
-      className="guide-identity-community"
-      aria-labelledby={headingId}
-    >
-      <div className="guide-identity-community-body">
-        <h3 id={headingId} className="font-heading">
-          {section.title}
-        </h3>
-        {section.blocks.map((block, index) =>
-          block.kind === "paragraph" ? (
-            <p key={index}>{inline(block.text)}</p>
-          ) : null,
-        )}
-      </div>
-    </section>
-  );
-}
-
-function renderPrioritiesSection(section: SubSection) {
-  const cards: { badge: string; title: string; paragraphs: string[] }[] = [];
-  const notes: string[] = [];
-
-  for (const block of section.blocks) {
-    if (block.kind !== "paragraph") continue;
-    if (isPureBold(block) && block.text.includes(" — ")) {
-      const [badge, ...rest] = unwrapBold(block.text).split(" — ");
-      cards.push({ badge, title: rest.join(" — "), paragraphs: [] });
-    } else if (block.text.startsWith("**")) {
-      notes.push(block.text);
-    } else if (cards.length > 0) {
-      cards[cards.length - 1].paragraphs.push(block.text);
-    } else {
-      notes.push(block.text);
-    }
-  }
-
-  return (
-    <section
-      className="guide-identity-section"
-      aria-labelledby="guide-identity-priorities-heading"
-    >
-      <div className="guide-identity-heading">
-        <h3 id="guide-identity-priorities-heading" className="font-heading">
-          {section.title}
-        </h3>
-      </div>
-      <div className="guide-identity-priorities-grid">
-        {cards.map((card, index) => (
-          <article className="guide-identity-priority-card" key={index}>
-            <span className="guide-identity-badge">{card.badge}</span>
-            <h4>{card.title}</h4>
-            {card.paragraphs.map((text, pIndex) => (
-              <p key={pIndex}>{inline(text)}</p>
-            ))}
-          </article>
-        ))}
-      </div>
-      {notes.map((text, index) => (
-        <p key={index} className="guide-identity-callout">
-          {inline(text)}
-        </p>
-      ))}
-    </section>
-  );
-}
-
-function renderLevelsSection(section: SubSection) {
-  const intro: string[] = [];
-  const levels: { number: string; title: string; paragraphs: string[] }[] = [];
-  let footerNote = "";
-
-  for (let i = 0; i < section.blocks.length; i += 1) {
-    const block = section.blocks[i];
-    if (block.kind !== "paragraph") continue;
-    if (isPureBold(block)) {
-      const inner = unwrapBold(block.text);
-      const numbered = /^(\d+)\.\s*(.+)$/.exec(inner);
-      if (numbered) {
-        levels.push({ number: numbered[1], title: numbered[2], paragraphs: [] });
-        continue;
-      }
-    }
-    if (levels.length === 0) {
-      intro.push(block.text);
-    } else if (i === section.blocks.length - 1 && block.text.includes("الباب الرابع")) {
-      footerNote = block.text;
-    } else {
-      levels[levels.length - 1].paragraphs.push(block.text);
-    }
-  }
-
-  return (
-    <section
-      id={SECTION_ANCHORS[section.title]}
-      className="guide-identity-section"
-      aria-labelledby="guide-identity-levels-heading"
-    >
-      <div className="guide-identity-heading">
-        <h3 id="guide-identity-levels-heading" className="font-heading">
-          {section.title}
-        </h3>
-        {intro.map((text, index) => (
-          <p key={index}>{inline(text)}</p>
-        ))}
-      </div>
-      <ol className="guide-identity-levels">
-        {levels.map((level) => (
-          <li key={level.number} className="guide-identity-level-card">
-            <span className="guide-identity-level-num">{level.number}</span>
-            <div className="guide-identity-level-body">
-              <h4>{level.title}</h4>
-              {level.paragraphs.map((text, pIndex) => (
-                <p key={pIndex}>{inline(text)}</p>
-              ))}
-            </div>
-          </li>
-        ))}
-      </ol>
-      {footerNote && <p className="guide-identity-callout">{inline(footerNote)}</p>}
-    </section>
-  );
-}
-
-function renderPrinciplesSection(section: SubSection) {
-  const principles: { name: string; detail: string }[] = [];
-  for (const block of section.blocks) {
-    if (block.kind !== "paragraph") continue;
-    if (isPureBold(block)) {
-      principles.push({ name: unwrapBold(block.text), detail: "" });
-    } else if (principles.length > 0) {
-      const last = principles[principles.length - 1];
-      last.detail = last.detail ? `${last.detail} ${block.text}` : block.text;
-    }
-  }
-
-  return (
-    <section
-      id={SECTION_ANCHORS[section.title]}
-      className="guide-identity-section"
-      aria-labelledby="guide-identity-principles-heading"
-    >
-      <div className="guide-identity-heading">
-        <h3 id="guide-identity-principles-heading" className="font-heading">
-          {section.title}
-        </h3>
-      </div>
-      <div className="guide-identity-principles">
-        {principles.map((principle, index) => {
-          const Icon = PRINCIPLE_ICONS[index % PRINCIPLE_ICONS.length];
-          return (
-            <article key={principle.name} className="guide-identity-principle">
-              <span className="guide-identity-principle-icon">
-                <Icon size={20} strokeWidth={1.8} aria-hidden="true" />
-              </span>
-              <div>
-                <h4>{principle.name}</h4>
-                <p>{inline(principle.detail)}</p>
-              </div>
-            </article>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function renderConstantsSection(section: SubSection) {
-  const items = section.blocks.filter(
-    (block): block is { kind: "paragraph"; text: string } => block.kind === "paragraph",
-  );
-  return (
-    <section
-      className="guide-identity-section"
-      aria-labelledby="guide-identity-constants-heading"
-    >
-      <div className="guide-identity-heading">
-        <h3 id="guide-identity-constants-heading" className="font-heading">
-          {section.title}
-        </h3>
-      </div>
-      <div className="guide-identity-split-grid">
-        {items.map((block, index) => {
-          const match = /^\*\*([^*]+)\*\*\s*(.+)$/.exec(block.text);
-          return (
-            <article
-              key={index}
-              className={`guide-identity-split-card${index === 0 ? " guide-identity-split-card-primary" : ""}`}
-            >
-              {match ? (
-                <>
-                  <h4>{match[1]}</h4>
-                  <p>{inline(match[2])}</p>
-                </>
-              ) : (
-                <p>{inline(block.text)}</p>
-              )}
-            </article>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function renderDomainsSection(section: SubSection) {
-  const domains: { number: string; title: string; items: string[] }[] = [];
-  for (const block of section.blocks) {
-    if (block.kind === "paragraph" && isPureBold(block)) {
-      const inner = unwrapBold(block.text);
-      const numbered = /^(\d+)\.\s*(.+)$/.exec(inner);
-      domains.push({
-        number: numbered ? numbered[1] : "",
-        title: numbered ? numbered[2] : inner,
-        items: [],
-      });
-    } else if (block.kind === "list" && domains.length > 0) {
-      domains[domains.length - 1].items.push(...block.items);
-    }
-  }
-
-  return (
-    <section
-      className="guide-identity-section"
-      aria-labelledby="guide-identity-domains-heading"
-    >
-      <div className="guide-identity-heading">
-        <h3 id="guide-identity-domains-heading" className="font-heading">
-          {section.title}
-        </h3>
-      </div>
-      <div className="guide-identity-domains-grid">
-        {domains.map((domain, index) => {
-          const Icon = DOMAIN_ICONS[index % DOMAIN_ICONS.length];
-          return (
-            <article key={domain.title} className="guide-identity-domain-card">
-              <div className="guide-identity-domain-head">
-                <span className="guide-identity-principle-icon">
-                  <Icon size={19} strokeWidth={1.8} aria-hidden="true" />
-                </span>
-                {domain.number && (
-                  <span className="guide-identity-domain-num">{domain.number}</span>
-                )}
-              </div>
-              <h4>{domain.title}</h4>
-              <ul>
-                {domain.items.map((item, itemIndex) => (
-                  <li key={itemIndex}>{inline(item)}</li>
-                ))}
-              </ul>
-            </article>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function renderCriteriaSection(section: SubSection) {
-  const intro: string[] = [];
-  const listItems: string[] = [];
-  const closing: string[] = [];
-
-  for (const block of section.blocks) {
-    if (block.kind === "list") {
-      listItems.push(...block.items);
-    } else if (block.kind === "paragraph") {
-      if (listItems.length === 0) intro.push(block.text);
-      else closing.push(block.text);
-    }
-  }
-
-  return (
-    <section
-      className="guide-identity-section"
-      aria-labelledby="guide-identity-criteria-heading"
-    >
-      <div className="guide-identity-heading">
-        <h3 id="guide-identity-criteria-heading" className="font-heading">
-          {section.title}
-        </h3>
-        {intro.map((text, index) => (
-          <p key={index}>{inline(text)}</p>
-        ))}
-      </div>
-      <div className="guide-identity-criteria-card">
-        <ul className="guide-identity-criteria-list">
-          {listItems.map((item, index) => (
-            <li key={index}>{inline(item)}</li>
-          ))}
-        </ul>
-      </div>
-      {closing.map((text, index) => (
-        <p key={index} className="guide-identity-callout">
-          {inline(text)}
-        </p>
-      ))}
-    </section>
-  );
-}
-
-function renderChapterBody(chapter: Chapter) {
-  if (chapter.key === "about") {
-    return (
-      <>
-        {chapter.sections[0] && renderAboutSection(chapter.sections[0])}
-        {chapter.sections[1] && renderStorySection(chapter.sections[1])}
-      </>
-    );
-  }
-  if (chapter.key === "vision") {
-    return (
-      <>
-        {chapter.sections[0] && chapter.sections[1] && renderVisionMission(chapter.sections[0], chapter.sections[1])}
-        {chapter.sections[2] && renderGoalsSection(chapter.sections[2])}
-      </>
-    );
-  }
-  if (chapter.key === "audience") {
-    return (
-      <>
-        {chapter.sections[0] && renderHighlightCard(chapter.sections[0], "guide-identity-audience-heading")}
-        {chapter.sections[1] && renderPrioritiesSection(chapter.sections[1])}
-        {chapter.sections[2] && renderLevelsSection(chapter.sections[2])}
-      </>
-    );
-  }
-  if (chapter.key === "principles") {
-    return (
-      <>
-        {chapter.sections[0] && renderHighlightCard(chapter.sections[0], "guide-identity-reference-heading")}
-        {chapter.sections[1] && renderPrinciplesSection(chapter.sections[1])}
-        {chapter.sections[2] && renderConstantsSection(chapter.sections[2])}
-      </>
-    );
-  }
-  if (chapter.key === "fields") {
-    return (
-      <>
-        {chapter.sections[0] && renderHighlightCard(chapter.sections[0], "guide-identity-approach-heading")}
-        {chapter.sections[1] && renderDomainsSection(chapter.sections[1])}
-        {chapter.sections[2] && renderCriteriaSection(chapter.sections[2])}
-      </>
-    );
-  }
-  return null;
-}
+type IdentityMode = "overview" | "booklet";
 
 export default function GuideIdentity({ source }: { source: string }) {
-  const chapters = useMemo(() => parseIdentity(source), [source]);
-  const [activeKey, setActiveKey] = useState<string>(chapters[0]?.key || "about");
-  const panelsRef = useRef<HTMLDivElement>(null);
+  const chapters = useMemo(() => parseIdentityBook(source), [source]);
+  const [mode, setMode] = useState<IdentityMode>("overview");
+  const [activeSection, setActiveSection] = useState<string>("about");
 
-  const revealTab = useCallback((key: string, updateHash = false) => {
-    setActiveKey(key);
-    if (updateHash && typeof window !== "undefined") {
+  useEffect(() => {
+    const syncSectionFromHash = () => {
+      const hash = window.location.hash;
+      if (hash === "#guide-identity-booklet") {
+        setMode("booklet");
+        return;
+      }
+      if (hash === "#guide-identity" || hash === "#guide-identity-details") {
+        setMode("overview");
+        setActiveSection("about");
+        return;
+      }
+      const tab = identityTabs.find((item) => hash === `#guide-identity-${item.key}`);
+      if (tab) {
+        setMode("overview");
+        setActiveSection(tab.key);
+      }
+    };
+    syncSectionFromHash();
+    window.addEventListener("hashchange", syncSectionFromHash);
+    return () => window.removeEventListener("hashchange", syncSectionFromHash);
+  }, []);
+
+  const chooseMode = (next: IdentityMode) => {
+    setMode(next);
+    if (typeof window !== "undefined") {
+      const hash = next === "booklet" ? "#guide-identity-booklet" : "#guide-identity";
+      window.history.replaceState(
+        window.history.state,
+        "",
+        window.location.pathname + window.location.search + hash,
+      );
+    }
+  };
+
+  function onModeKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const next: IdentityMode =
+      event.key === "Home"
+        ? "overview"
+        : event.key === "End"
+          ? "booklet"
+          : mode === "overview"
+            ? "booklet"
+            : "overview";
+    chooseMode(next);
+    document.getElementById(`guide-identity-mode-${next}`)?.focus();
+  }
+
+  const changeSection = (key: string) => {
+    setActiveSection(key);
+    if (typeof window !== "undefined") {
       const hash = key === "about" ? "#guide-identity" : `#guide-identity-${key}`;
       window.history.replaceState(
         window.history.state,
@@ -690,65 +225,7 @@ export default function GuideIdentity({ source }: { source: string }) {
       block: "nearest",
       inline: "nearest",
     });
-  }, []);
-
-  useEffect(() => {
-    const syncFromHash = () => {
-      const hash = window.location.hash;
-      const target = HASH_TO_CHAPTER[hash];
-      if (!target) return;
-      setActiveKey(target);
-      if (hash !== "#guide-identity" && hash !== "#guide-identity-details") {
-        const scroll = () => {
-          document.getElementById(hash.slice(1))?.scrollIntoView?.({ block: "start" });
-        };
-        if (typeof window.requestAnimationFrame === "function") {
-          window.requestAnimationFrame(scroll);
-        } else {
-          scroll();
-        }
-      }
-    };
-    syncFromHash();
-    window.addEventListener("hashchange", syncFromHash);
-    return () => window.removeEventListener("hashchange", syncFromHash);
-  }, []);
-
-  useEffect(() => {
-    const container = panelsRef.current;
-    if (!container) return;
-    for (const panel of container.querySelectorAll<HTMLElement>("[data-chapter-key]")) {
-      if (panel.dataset.chapterKey === activeKey) panel.removeAttribute("hidden");
-      else panel.setAttribute("hidden", "until-found");
-    }
-  }, [activeKey]);
-
-  useEffect(() => {
-    const container = panelsRef.current;
-    if (!container) return;
-    const onBeforeMatch = (event: Event) => {
-      const panel = (event.target as HTMLElement | null)?.closest?.<HTMLElement>("[data-chapter-key]");
-      const key = panel?.dataset.chapterKey;
-      if (key) revealTab(key, false);
-    };
-    container.addEventListener("beforematch", onBeforeMatch);
-    return () => container.removeEventListener("beforematch", onBeforeMatch);
-  }, [revealTab]);
-
-  function onTabListKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-    event.preventDefault();
-    const currentIndex = chapters.findIndex((chapter) => chapter.key === activeKey);
-    const nextIndex =
-      event.key === "Home"
-        ? 0
-        : event.key === "End"
-          ? chapters.length - 1
-          : (currentIndex + (event.key === "ArrowLeft" ? 1 : -1) + chapters.length) % chapters.length;
-    const next = chapters[nextIndex].key;
-    revealTab(next, true);
-    document.getElementById(`guide-identity-tab-${next}`)?.focus();
-  }
+  };
 
   return (
     <section
@@ -758,50 +235,316 @@ export default function GuideIdentity({ source }: { source: string }) {
       aria-label="الهوية والنظام الأساسي والمرجعية"
     >
       <div
-        className="guide-identity-nav"
+        className="guide-structure-modes"
         role="tablist"
-        aria-label="أقسام الهوية والنظام الأساسي والمرجعية"
-        onKeyDown={onTabListKeyDown}
+        aria-label="طريقة عرض الهوية والنظام الأساسي"
+        onKeyDown={onModeKeyDown}
       >
-        {chapters.map((chapter) => {
-          const selected = chapter.key === activeKey;
-          return (
-            <button
-              key={chapter.key}
-              type="button"
-              id={`guide-identity-tab-${chapter.key}`}
-              role="tab"
-              aria-selected={selected}
-              tabIndex={selected ? 0 : -1}
-              className="guide-identity-tab"
-              onClick={() => revealTab(chapter.key, true)}
-            >
-              {chapter.label}
-            </button>
-          );
-        })}
+        <button
+          type="button"
+          id="guide-identity-mode-overview"
+          role="tab"
+          aria-selected={mode === "overview"}
+          tabIndex={mode === "overview" ? 0 : -1}
+          className="guide-structure-mode-tab"
+          onClick={() => chooseMode("overview")}
+        >
+          <Sparkles size={17} aria-hidden="true" />
+          <span>تعريف بصحوة</span>
+        </button>
+        <button
+          type="button"
+          id="guide-identity-mode-booklet"
+          role="tab"
+          aria-selected={mode === "booklet"}
+          tabIndex={mode === "booklet" ? 0 : -1}
+          className="guide-structure-mode-tab"
+          onClick={() => chooseMode("booklet")}
+        >
+          <BookOpen size={17} aria-hidden="true" />
+          <span>الكتيب</span>
+        </button>
       </div>
-      <div ref={panelsRef} className="guide-identity-panels">
-        {chapters.map((chapter) => {
-          const selected = chapter.key === activeKey;
-          return (
-            <div
-              key={chapter.key}
-              id={`guide-identity-panel-${chapter.key}`}
-              data-chapter-key={chapter.key}
-              role="tabpanel"
-              tabIndex={selected ? 0 : undefined}
-              aria-labelledby={`guide-identity-tab-${chapter.key}`}
-              hidden={selected ? undefined : ("until-found" as unknown as boolean)}
-              className="guide-identity-tabpanel"
-            >
-              <div className="guide-identity-panel-inner">
-                {renderChapterBody(chapter)}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+
+      {mode === "overview" && (
+        <div role="tabpanel" aria-labelledby="guide-identity-mode-overview">
+          <header className="guide-identity-chapter-heading">
+            <span className="guide-identity-eyebrow">01 / هوية صحوة</span>
+            <h2 id="guide-identity-title">تعرف على صحوة</h2>
+            <p>اختر القسم الذي تريد قراءته، وسيظهر محتواه هنا دون عرض بقية الأقسام في نفس الصفحة.</p>
+          </header>
+          <div
+            className="guide-identity-nav"
+            role="tablist"
+            aria-label="أقسام هوية صحوة"
+            onKeyDown={(event) => {
+              if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+              event.preventDefault();
+              const currentIndex = identityTabs.findIndex((tab) => tab.key === activeSection);
+              const nextIndex =
+                event.key === "Home"
+                  ? 0
+                  : event.key === "End"
+                    ? identityTabs.length - 1
+                    : (currentIndex + (event.key === "ArrowLeft" ? 1 : -1) + identityTabs.length) %
+                      identityTabs.length;
+              const next = identityTabs[nextIndex].key;
+              changeSection(next);
+              document.getElementById(`guide-identity-tab-${next}`)?.focus();
+            }}
+          >
+            {identityTabs.map(({ key, label }) => (
+              <button
+                key={key}
+                type="button"
+                id={`guide-identity-tab-${key}`}
+                role="tab"
+                aria-selected={activeSection === key}
+                tabIndex={activeSection === key ? 0 : -1}
+                className="guide-identity-tab"
+                onClick={() => changeSection(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div
+            id="guide-identity-tab-panel"
+            role="tabpanel"
+            tabIndex={0}
+            aria-labelledby={`guide-identity-tab-${activeSection}`}
+            className="guide-identity-tab-panel"
+          >
+            {activeSection === "about" && (
+              <header id="guide-identity-about" className="guide-identity-hero">
+                <div className="guide-identity-hero-decoration" aria-hidden="true">
+                  <span /><span /><span />
+                </div>
+                <div className="guide-identity-hero-content">
+                  <span className="guide-identity-eyebrow">من نحن؟</span>
+                  <h3 id="guide-identity-about-title">
+                    صحوة <em>من نحن؟</em>
+                  </h3>
+                  <p className="guide-identity-hero-meta">
+                    مبادرة طلابية إسلامية تأسست عام 2025 في تركيا
+                  </p>
+                  <p>
+                    صحوة مبادرة يقودها طلاب وطالبات جمعهم هدف واحد:
+                    <strong>
+                      {" "}
+                      بناء بيئة متكاملة للشباب، داخل الجامعات وخارجها، تجمع بين القرآن والصحبة الصالحة والوعي والعمل النافع.
+                    </strong>
+                  </p>
+                  <p>
+                    نؤمن أن مرحلة الشباب ليست مجرد سنوات للدراسة والحصول على شهادة، بل مرحلة لبناء الإنسان وتشكيل وعيه وشخصيته وعلاقته بدينه وأمته ومجتمعه.
+                  </p>
+                  <p>
+                    ولهذا نسعى إلى بناء مجتمع يجد فيه الشاب الصحبة التي تعينه، والبيئة التي ينمو فيها، والفرص التي يكتشف من خلالها قدراته، ويتعلم كيف يكون نافعًا في المجال الذي يختاره.
+                  </p>
+                </div>
+              </header>
+            )}
+
+            {activeSection === "story" && (
+              <section
+                id="guide-identity-story"
+                className="guide-identity-section"
+                aria-labelledby="guide-identity-story-title"
+              >
+                <div className="guide-identity-heading">
+                  <span>البداية والمسار</span>
+                  <h3 id="guide-identity-story-title">
+                    قصتنا <i>كيف بدأت صحوة؟</i>
+                  </h3>
+                </div>
+                <div className="guide-identity-story-intro">
+                  <p>
+                    بدأت صحوة من حاجة شعر بها مجموعة من الطلاب: الحاجة إلى بيئة تجمع الشباب على الخير، وتعينهم على الثبات والنمو، وتربطهم بالقرآن وببعضهم وبقضايا أمتهم.
+                  </p>
+                  <p>
+                    لم تبدأ صحوة بمؤسسة كبيرة أو إمكانات واسعة، وإنما بفكرة آمن بها طلاب أرادوا أن يصنعوا لأنفسهم ولغيرهم بيئة أفضل.
+                  </p>
+                </div>
+                <h4 className="guide-identity-timeline-label">محطات من تاريخ صحوة</h4>
+                <ol className="guide-identity-timeline">
+                  {milestones.map((milestone, index) => (
+                    <li key={index}>
+                      <span className="guide-identity-timeline-point" aria-hidden="true" />
+                      <article>
+                        <time>{milestone.when}</time>
+                        <h5>{milestone.title}</h5>
+                        <p>{milestone.detail}</p>
+                        {milestone.extra && <p>{milestone.extra}</p>}
+                      </article>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
+
+            {activeSection === "vision" && (
+              <section
+                id="guide-identity-vision"
+                className="guide-identity-section"
+                aria-labelledby="guide-identity-vision-title"
+              >
+                <div className="guide-identity-heading">
+                  <span>إلى أين نمضي؟</span>
+                  <h3 id="guide-identity-vision-title">رؤيتنا ورسالتنا</h3>
+                </div>
+                <div className="guide-identity-vision-grid">
+                  <article className="guide-identity-vision-card guide-identity-vision-card-primary">
+                    <span className="guide-identity-card-index">01 / الرؤية</span>
+                    <h4>رؤيتنا</h4>
+                    <p className="guide-identity-vision-lead">
+                      أن نبني بيئة شبابية إسلامية متكاملة، تنطلق من الجامعات وتمتد إلى خارجها، تسهم في إعداد شباب أقوياء في دينهم ووعيهم وتخصصاتهم، قادرين على تحمل مسؤولياتهم وصناعة أثر نافع في مجتمعاتهم وأمتهم.
+                    </p>
+                    <p>
+                      ولا يقتصر طموحنا على ما يُنجز داخل صحوة نفسها، بل نطمح أن يخرج من هذه البيئة طلاب وأصحاب تخصصات ومبادرات ومشروعات وقيادات نافعة في مجالات مختلفة.
+                    </p>
+                  </article>
+                  <article className="guide-identity-vision-card">
+                    <span className="guide-identity-card-index">02 / الرسالة</span>
+                    <h4>رسالتنا</h4>
+                    <p className="guide-identity-vision-lead">
+                      بناء مجتمع شبابي يجمع بين القرآن والصحبة الصالحة ومعنى الأمة الواحدة، من خلال البرامج والأنشطة والمبادرات والعلاقات التي تساعد الشباب على النمو علميًا وإيمانيًا واجتماعيًا، واكتشاف قدراتهم، وتحويل ما يتعلمونه إلى نفع وأثر حقيقي.
+                    </p>
+                  </article>
+                </div>
+              </section>
+            )}
+
+            {activeSection === "goals" && (
+              <section
+                id="guide-identity-goals"
+                className="guide-identity-section"
+                aria-labelledby="guide-identity-goals-title"
+              >
+                <div className="guide-identity-heading">
+                  <span>ما الذي يجمعنا؟</span>
+                  <h3 id="guide-identity-goals-title">أهدافنا الأربعة</h3>
+                  <p>أربعة معانٍ تشكّل مرجعيتنا وبيئتنا وهويتنا وغايتنا العملية.</p>
+                </div>
+                <div className="guide-identity-goal-grid">
+                  {pillars.map(({ number, title, icon: Icon, intro, detail, clarification, closing }) => (
+                    <article className="guide-identity-goal" key={number}>
+                      <div className="guide-identity-goal-top">
+                        <span className="guide-identity-goal-icon">
+                          <Icon size={25} strokeWidth={1.7} aria-hidden="true" />
+                        </span>
+                        <span className="guide-identity-goal-number">{number}</span>
+                      </div>
+                      <h4>{title}</h4>
+                      <p>{intro}</p>
+                      <p>{detail}</p>
+                      {clarification && <p>{clarification}</p>}
+                      <div className="guide-identity-goal-closing">{closing}</div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {activeSection === "principles" && (
+              <section
+                id="guide-identity-principles"
+                className="guide-identity-section"
+                aria-labelledby="guide-identity-principles-title"
+              >
+                <div className="guide-identity-heading">
+                  <span>كيف نعمل ونتعامل؟</span>
+                  <h3 id="guide-identity-principles-title">مبادئنا العامة</h3>
+                </div>
+                <div className="guide-identity-principles">
+                  {principles.map(({ name, icon: Icon, detail }) => (
+                    <article key={name} className="guide-identity-principle">
+                      <span className="guide-identity-principle-icon">
+                        <Icon size={20} strokeWidth={1.8} aria-hidden="true" />
+                      </span>
+                      <div>
+                        <h4>{name}</h4>
+                        <p>{detail}</p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {activeSection === "community" && (
+              <section
+                id="guide-identity-community"
+                className="guide-identity-section guide-identity-community"
+                aria-labelledby="guide-identity-community-title"
+              >
+                <div className="guide-identity-community-body">
+                  <span className="guide-identity-eyebrow">لك مكان بيننا</span>
+                  <h3 id="guide-identity-community-title">ماذا يعني أن تكون جزءًا من صحوة؟</h3>
+                  <strong>بانضمامك إلى صحوة، تصبح جزءًا من عائلتنا.</strong>
+                  <p>
+                    هنا تجد طلابًا يشبهونك في طموحاتهم وتحدياتهم، يتعلمون ويخطئون ويتطورون، ويعين بعضهم بعضًا على الخير، ويكونون لك عونًا وصحبةً وأخوة.
+                  </p>
+                  <p>
+                    يمكنك أن تشارك في نشاط، أو تقترح فكرة، أو تتعلم مهارة، أو تنضم إلى فريق، أو تقود مشروعًا يناسب اهتماماتك وقدراتك.
+                  </p>
+                  <p>
+                    ونريد أن تبقى علاقتك بصحوة ممتدة؛ لأن ما يجمعنا أكبر من مجرد العمل، فنحن عائلة.
+                  </p>
+                  <div className="guide-identity-community-last">
+                    نحن لا نبني فريق عمل فقط، بل نبني بيئة نتعلم وننمو فيها معًا، وننطلق منها لنصنع أثرًا سويًا في كل مكان تصل إليه أيدينا.
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {activeSection === "numbers" && (
+              <>
+                <section
+                  id="guide-identity-numbers"
+                  className="guide-identity-section guide-identity-statistics"
+                  aria-labelledby="guide-identity-numbers-title"
+                >
+                  <div className="guide-identity-heading guide-identity-heading-center">
+                    <span>أثر يتسع</span>
+                    <h3 id="guide-identity-numbers-title">صحوة بالأرقام</h3>
+                    <p>حصيلة المبادرة حتى إعداد هذا التعريف.</p>
+                  </div>
+                  <div className="guide-identity-stats-grid">
+                    {numbers.map(({ value, label }) => (
+                      <div className="guide-identity-stat" key={label}>
+                        <strong dir="auto">{value}</strong>
+                        <span>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+                <footer className="guide-identity-closing">
+                  <span>صحوة في كلمات</span>
+                  <div className="guide-identity-motto">
+                    <strong>القرآن مرجعنا.</strong>
+                    <strong>الصحبة الصالحة بيئتنا.</strong>
+                    <strong>الأمة الواحدة هويتنا.</strong>
+                    <strong>والنفع والأثر غايتنا العملية.</strong>
+                  </div>
+                  <p>
+                    نبني الإنسان بالقرآن والصحبة ومعنى الأمة، ثم نساعده أن يعرف مسؤوليته ومجاله ويصنع أثره.
+                  </p>
+                </footer>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {mode === "booklet" && (
+        <div role="tabpanel" aria-labelledby="guide-identity-mode-booklet">
+          <GuideBooklet
+            title="الهوية والنظام الأساسي والمرجعية"
+            filename="sahwa-identity-booklet"
+            chapters={chapters}
+          />
+        </div>
+      )}
     </section>
   );
 }

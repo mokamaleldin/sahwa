@@ -12,6 +12,7 @@ const structure = readFileSync("docs/guide/structure.md", "utf8");
 const books = outline.split(/(?=^# الباب )/m);
 const at = compileUI("tmp/bylaws-tests", [
   "src/components/shared/PageIdentity.tsx",
+  "src/components/Team/GuideBooklet.tsx",
   "src/components/Team/GuideIdentity.tsx",
   "src/components/Team/GuideText.tsx",
   "src/components/Team/GuideStructure.tsx",
@@ -25,7 +26,8 @@ const at = compileUI("tmp/bylaws-tests", [
   "src/views/TeamGuide.tsx",
 ]);
 const { default: TeamGuide } = await at("src/views/TeamGuide.js");
-const { parseStructureBook } = await at("src/lib/structureParser.js");
+const { parseIdentityBook, parseStructureBook } = await at("src/lib/structureParser.js");
+const { buildBookletHtml } = await at("src/components/Team/GuideBooklet.js");
 
 function sourceLines(source) {
   return source.split(/\r?\n/).filter(line => line.trim() && line !== "---")
@@ -38,51 +40,9 @@ function checkContent(container, source) {
 function normalizeWords(text) {
   return text.replace(/\s+/g, " ").trim();
 }
-function expectedIdentityText(source) {
+function wordsFromBlocks(blocks) {
   return normalizeWords(
-    sourceLines(source)
-      .map((line) => line.replace(/^الفصل\s+[\d.]+\s*—\s*/, ""))
-      .map((line) => line.replace(/^(\d+)\.\s+/, "$1 ").replace(/ — /g, " "))
-      .join(" "),
-  );
-}
-function renderedIdentityText(container) {
-  const chapters = [...container.querySelectorAll(".guide-identity-tab")];
-  const panels = [...container.querySelectorAll(".guide-identity-tabpanel")];
-  assert.equal(chapters.length, 5);
-  assert.equal(panels.length, 5);
-  const parts = [];
-  for (let i = 0; i < chapters.length; i += 1) {
-    parts.push(chapters[i].textContent);
-    const leaves = panels[i].querySelectorAll("h3,h4,h5,p,li,time,.guide-identity-goal-number,.guide-identity-badge,.guide-identity-level-num,.guide-identity-domain-num");
-    for (const node of leaves) {
-      if (node.tagName === "LI" && node.querySelector("h4,p")) continue;
-      parts.push(node.textContent);
-    }
-  }
-  return normalizeWords(parts.join(" "));
-}
-
-test("the two guide sources match the supplied UTF-8 files byte for byte", () => {
-  const hash = source => createHash("sha256").update(source).digest("hex");
-  assert.equal(hash(outline), "e304a76b4ea70eb072f53c40127b81569da3e4c914b58488c9652164d0d00edf");
-  assert.equal(hash(identity), "94dac43f535482c8281b9c75345e1105c8decca6361ec4a94ffc416b991d2f29");
-  assert.equal(books.length, 7);
-});
-
-test("every chapter and every chart entry in Book 2 parses verbatim without dropping content", () => {
-  const parsed = parseStructureBook(structure);
-  assert.equal(parsed.chapters.length, 9);
-  for (const chapter of parsed.chapters) {
-    assert.ok(chapter.blocks.length > 0, chapter.id);
-  }
-  assert.ok(parsed.entries.size >= 45);
-  for (const [id, entry] of parsed.entries) {
-    assert.ok(entry.blocks.length > 0, `empty structure entry: ${id}`);
-  }
-  const renderedBookWords = normalizeWords(
-    parsed.chapters
-      .flatMap((chapter) => chapter.blocks)
+    blocks
       .flatMap((block) => {
         if (block.kind === "heading" || block.kind === "paragraph") return [block.text.replaceAll("**", "")];
         if (block.kind === "list") return block.items.map((item) => item.replaceAll("**", ""));
@@ -91,8 +51,10 @@ test("every chapter and every chart entry in Book 2 parses verbatim without drop
       })
       .join(" "),
   );
-  const expectedBookWords = normalizeWords(
-    structure
+}
+function wordsFromMarkdown(markdown) {
+  return normalizeWords(
+    markdown
       .replace(/\r\n/g, "\n")
       .split("\n")
       .map((line) => line.trim())
@@ -107,10 +69,34 @@ test("every chapter and every chart entry in Book 2 parses verbatim without drop
       .join(" ")
       .replaceAll("**", ""),
   );
-  assert.equal(renderedBookWords, expectedBookWords);
+}
+
+test("the two guide sources match the supplied UTF-8 files byte for byte", () => {
+  const hash = source => createHash("sha256").update(source).digest("hex");
+  assert.equal(hash(outline), "e304a76b4ea70eb072f53c40127b81569da3e4c914b58488c9652164d0d00edf");
+  assert.equal(hash(identity), "94dac43f535482c8281b9c75345e1105c8decca6361ec4a94ffc416b991d2f29");
+  assert.equal(books.length, 7);
 });
 
-test("all source text is reachable verbatim in the three tabs, with interactive identity sections", async () => {
+test("both booklets (Book 1 identity and Book 2 structure) preserve 100% verbatim text and build printable HTML", () => {
+  const idChapters = parseIdentityBook(identity);
+  assert.equal(idChapters.length, 5);
+  assert.equal(wordsFromBlocks(idChapters.flatMap((c) => c.blocks)), wordsFromMarkdown(identity));
+
+  const parsed = parseStructureBook(structure);
+  assert.equal(parsed.chapters.length, 9);
+  for (const chapter of parsed.chapters) assert.ok(chapter.blocks.length > 0, chapter.id);
+  assert.ok(parsed.entries.size >= 45);
+  for (const [id, entry] of parsed.entries) assert.ok(entry.blocks.length > 0, `empty entry: ${id}`);
+  assert.equal(wordsFromBlocks(parsed.chapters.flatMap((c) => c.blocks)), wordsFromMarkdown(structure));
+
+  const html = buildBookletHtml("الهوية والنظام الأساسي والمرجعية", idChapters);
+  assert.match(html, /dir="rtl"/);
+  assert.match(html, /صحوة مبادرة طلابية إسلامية تأسست عام 2025 في تركيا/);
+  assert.match(html, /@media print/);
+});
+
+test("Tab 1 offers simple overview and verbatim flip-through booklet; Tab 2 offers chart and booklet with no bottom BookDetails", async () => {
   const dom = new JSDOM('<div id="root"></div>', {
     url: "https://sahwa.world/team/guide#guide-structure-map", pretendToBeVisual: true,
   });
@@ -127,55 +113,45 @@ test("all source text is reachable verbatim in the three tabs, with interactive 
   try {
     await act(async () => root.render(h(TeamGuide)));
     assert.equal(current().id, "guide-structure");
-    checkContent(current().querySelector('[data-book="2"]'), books[1]);
-    const outlineBook = current().querySelector('[data-book="2"]');
-    await act(async () => outlineBook.querySelector("summary").click());
-    assert.equal(outlineBook.open, true);
-    const jump = outlineBook.querySelector('a[href="#guide-structure-map"]');
-    assert.equal(jump.textContent, "رسم خطوط القيادة والتبعية والتنسيق.");
-    assert.equal(jump.pathname, "/team/guide");
-    assert.ok(current().querySelector(jump.hash));
+    assert.equal(current().querySelector('[data-book="2"]'), null);
+    assert.ok(current().querySelector(".guide-map"));
 
     await press("Home");
     assert.equal(document.activeElement, tab("identity"));
-    assert.equal(dom.window.location.hash, "#guide-identity");
-    checkContent(current().querySelector('[data-book="1"]'), books[0]);
-    assert.equal(current().querySelector('[data-book="1"]').open, false);
+    assert.equal(current().querySelector('[data-book="1"]'), null);
 
+    // Simple intro view ("تعريف بصحوة")
     const identitySection = current().querySelector("[data-identity]");
     assert.ok(identitySection);
-    assert.equal(renderedIdentityText(identitySection), expectedIdentityText(identity));
+    assert.equal(identitySection.querySelectorAll(".guide-identity-nav .guide-identity-tab").length, 7);
+    assert.ok(identitySection.querySelector("#guide-identity-about"));
 
-    const sectionTabs = [...identitySection.querySelectorAll(".guide-identity-tab")];
-    assert.deepEqual(sectionTabs.map((btn) => btn.textContent), [
-      "التعريف بصحوة ونشأتها",
-      "الرؤية والرسالة والأهداف",
-      "الجمهور المستهدف",
-      "القيم والمبادئ والثوابت",
-      "مجالات عمل صحوة وأولوياتها",
-    ]);
-    assert.ok(!identitySection.textContent.includes("الفصل 1."));
-    assert.equal(identitySection.querySelectorAll(".guide-identity-tabpanel:not([hidden])").length, 1);
-    assert.equal(identitySection.querySelector(".guide-identity-tabpanel:not([hidden])").id, "guide-identity-panel-about");
+    // Switch Tab 1 to flip-through booklet ("الكتيب")
+    await act(async () => identitySection.querySelector("#guide-identity-mode-booklet").click());
+    const idBooklet = identitySection.querySelector('[data-guide-booklet="sahwa-identity-booklet"]');
+    assert.ok(idBooklet);
+    assert.equal(idBooklet.querySelectorAll("[data-booklet-chapter]").length, 5);
+    assert.equal(idBooklet.querySelector('[data-booklet-chapter="1.1"]').hasAttribute("hidden"), false);
+    assert.equal(idBooklet.querySelector('[data-booklet-chapter="1.2"]').getAttribute("hidden"), "until-found");
 
-    await act(async () => sectionTabs[1].click());
-    assert.equal(sectionTabs[1].getAttribute("aria-selected"), "true");
-    assert.equal(identitySection.querySelector(".guide-identity-tabpanel:not([hidden])").id, "guide-identity-panel-vision");
-    assert.ok(identitySection.querySelector("#guide-identity-goals"));
+    // Flip to page 2 with "الصفحة التالية"
+    const nextBtn = [...idBooklet.querySelectorAll("button")].find((b) => b.textContent.includes("الصفحة التالية"));
+    assert.ok(nextBtn);
+    await act(async () => nextBtn.click());
+    assert.equal(idBooklet.querySelector('[data-booklet-chapter="1.2"]').hasAttribute("hidden"), false);
+    assert.match(idBooklet.textContent, /أهدافنا الأربعة/);
 
-    // Find-in-page beforematch reveals the matching hidden="until-found" panel and syncs tab state.
-    const principlesPanel = identitySection.querySelector("#guide-identity-panel-principles");
-    assert.equal(principlesPanel.getAttribute("hidden"), "until-found");
+    // beforematch flips booklet automatically to chapter 1.5
+    const ch5 = idBooklet.querySelector('[data-booklet-chapter="1.5"]');
     await act(async () => {
-      principlesPanel.dispatchEvent(new dom.window.Event("beforematch", { bubbles: true }));
+      ch5.dispatchEvent(new dom.window.Event("beforematch", { bubbles: true }));
     });
-    assert.equal(sectionTabs[3].getAttribute("aria-selected"), "true");
-    assert.equal(principlesPanel.hasAttribute("hidden"), false);
+    assert.equal(ch5.hasAttribute("hidden"), false);
 
+    // Tab 3 still holds books 3..7 verbatim
     await press("ArrowRight");
     assert.equal(document.activeElement, tab("policies"));
     assert.equal(current().id, "guide-policies");
-    assert.equal(document.querySelector(".guide-map"), null);
     const grouped = [...current().querySelectorAll("details[data-book]")];
     assert.equal(grouped.length, 5);
     for (const [i, section] of grouped.entries()) {
@@ -185,16 +161,13 @@ test("all source text is reachable verbatim in the three tabs, with interactive 
       checkContent(section, books[i + 2]);
     }
     assert.equal(grouped.at(-1).querySelector("p:last-child").textContent, "website");
-    await press("ArrowLeft");
-    assert.equal(document.activeElement, tab("identity"));
-    await act(async () => tab("structure").click());
-    assert.equal(current().id, "guide-structure");
+
+    // Hash deep-link to #guide-identity-story opens Tab 1 overview on Story
     await act(async () => {
       dom.window.location.hash = "#guide-identity-story";
       dom.window.dispatchEvent(new dom.window.HashChangeEvent("hashchange"));
     });
     assert.equal(current().id, "guide-identity");
-    assert.equal(current().querySelector(".guide-identity-tabpanel:not([hidden])").id, "guide-identity-panel-about");
     assert.ok(current().querySelector("#guide-identity-story"));
   } finally {
     await act(async () => root.unmount());

@@ -13,6 +13,7 @@ const at = compileUI(output, [
   "src/lib/structureParser.ts",
   "src/components/shared/PageIdentity.tsx",
   "src/components/Team/TeamDialog.tsx",
+  "src/components/Team/GuideBooklet.tsx",
   "src/components/Team/GuideStructure.tsx",
   "src/components/Team/GuideIdentity.tsx",
   "src/components/Team/GuideTabs.tsx",
@@ -32,10 +33,9 @@ test("the guide opens the identity book and offers all three tabs", () => {
   assert.equal(document.querySelectorAll('.guide-book-tabs [role="tab"]:not(:disabled)').length, 3);
   assert.equal(document.querySelector('.guide-book-tabs [aria-selected="true"]').id, 'tab-guide-identity');
   assert.equal(document.querySelectorAll('.guide-reading-panel:not([hidden])').length, 1);
-  assert.equal(document.querySelectorAll('.guide-identity-nav [role="tab"]').length, 5);
-  assert.equal(document.querySelector('.guide-identity-nav [aria-selected="true"]').textContent, 'التعريف بصحوة ونشأتها');
-  assert.equal(document.querySelectorAll('.guide-identity-tabpanel:not([hidden])').length, 1);
-  assert.ok(document.querySelector('[data-book="1"]'));
+  assert.equal(document.querySelectorAll('.guide-identity-nav [role="tab"]').length, 7);
+  assert.equal(document.querySelector('.guide-identity-nav [aria-selected="true"]').textContent, 'من نحن؟');
+  assert.equal(document.querySelector('[data-book="1"]'), null);
   assert.ok(document.querySelector('[data-identity]'));
   assert.equal(document.querySelector('[data-book="2"]'), null);
   assert.equal(document.querySelector(".guide-map"), null);
@@ -166,10 +166,8 @@ test("the guide shows each role's full source-specific duties and keeps team and
       document.querySelector("#tab-guide-structure").click(),
     );
     const chapter = document.getElementById("guide-structure");
-    const outline = chapter.querySelector('[data-book="2"]');
     const chart = chapter.querySelector("#guide-structure-map");
-    assert.equal(outline.open, false);
-    assert.equal(chart.nextElementSibling, outline);
+    assert.equal(chapter.querySelector('[data-book="2"]'), null);
     assert.ok(chart.querySelector(".guide-map"));
     assert.equal(chart.closest("details"), null);
     assert.equal(document.querySelectorAll("#guide-structure").length, 1);
@@ -243,15 +241,18 @@ test("the guide shows each role's full source-specific duties and keeps team and
     assert.match(mediaDialog.textContent, /لا يُنشأ منصب مستقل/);
     await React.act(async () => mediaDialog.querySelector('[aria-label="إغلاق"]').click());
 
-    // Switch to Book view ("الكتاب") and verify all 9 chapters are selectable and verbatim
+    // Switch to flip-through Booklet ("الكتيب") and verify all 9 chapters, TOC, pager and download/print actions
     await React.act(async () => document.querySelector("#guide-structure-mode-book").click());
     assert.equal(document.querySelector(".guide-map"), null);
-    const bookTabs = [...document.querySelectorAll('[data-structure-book] .guide-identity-tab')];
-    assert.equal(bookTabs.length, 9);
-    assert.equal(bookTabs[0].textContent, "الهيكل التنظيمي العام لصحوة");
-    assert.equal(bookTabs[8].textContent, "قواعد التبعية والتنسيق والإنابة");
-    await React.act(async () => bookTabs[8].click());
-    const activeBookPanel = document.querySelector('[data-structure-chapter="2.9"]');
+    const booklet = document.querySelector('[data-guide-booklet="sahwa-structure-booklet"]');
+    assert.ok(booklet);
+    assert.equal(booklet.querySelectorAll("[data-booklet-chapter]").length, 9);
+    assert.ok(booklet.textContent.includes("طباعة / PDF"));
+    assert.ok(booklet.textContent.includes("تحميل الكتيب"));
+    const dots = [...booklet.querySelectorAll(".guide-booklet-dot")];
+    assert.equal(dots.length, 9);
+    await React.act(async () => dots[8].click());
+    const activeBookPanel = booklet.querySelector('[data-booklet-chapter="2.9"]');
     assert.equal(activeBookPanel.hasAttribute("hidden"), false);
     assert.match(activeBookPanel.textContent, /وضوح التبعية لا يعني تقييد التواصل/);
   } finally {

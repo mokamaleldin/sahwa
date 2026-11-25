@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import {
   ArrowUpLeft,
   BadgeCheck,
@@ -12,10 +12,10 @@ import {
   UsersRound,
 } from "lucide-react";
 import TeamDialog from "./TeamDialog";
+import GuideBooklet from "./GuideBooklet";
 import { GuideGovernanceBlocks } from "./GuideGovernance";
 import {
   parseStructureBook,
-  type StructureChapter,
   type StructureEntry,
 } from "../../lib/structureParser";
 
@@ -168,107 +168,6 @@ function StructureDialog({
   );
 }
 
-function StructureBookReader({ chapters }: { chapters: StructureChapter[] }) {
-  const [activeId, setActiveId] = useState(chapters[0]?.id || "2.1");
-  const panelsRef = useRef<HTMLDivElement>(null);
-
-  const selectChapter = useCallback((id: string) => {
-    setActiveId(id);
-    document.getElementById(`guide-structure-chapter-tab-${id}`)?.scrollIntoView?.({
-      block: "nearest",
-      inline: "nearest",
-    });
-  }, []);
-
-  useEffect(() => {
-    const container = panelsRef.current;
-    if (!container) return;
-    for (const panel of container.querySelectorAll<HTMLElement>("[data-structure-chapter]")) {
-      if (panel.dataset.structureChapter === activeId) panel.removeAttribute("hidden");
-      else panel.setAttribute("hidden", "until-found");
-    }
-  }, [activeId]);
-
-  useEffect(() => {
-    const container = panelsRef.current;
-    if (!container) return;
-    const onBeforeMatch = (event: Event) => {
-      const panel = (event.target as HTMLElement | null)?.closest?.<HTMLElement>(
-        "[data-structure-chapter]",
-      );
-      const id = panel?.dataset.structureChapter;
-      if (id) selectChapter(id);
-    };
-    container.addEventListener("beforematch", onBeforeMatch);
-    return () => container.removeEventListener("beforematch", onBeforeMatch);
-  }, [selectChapter]);
-
-  function onChaptersKeyDown(event: KeyboardEvent<HTMLDivElement>) {
-    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-    event.preventDefault();
-    const index = chapters.findIndex((chapter) => chapter.id === activeId);
-    const nextIndex =
-      event.key === "Home"
-        ? 0
-        : event.key === "End"
-          ? chapters.length - 1
-          : (index + (event.key === "ArrowLeft" ? 1 : -1) + chapters.length) % chapters.length;
-    const next = chapters[nextIndex].id;
-    selectChapter(next);
-    document.getElementById(`guide-structure-chapter-tab-${next}`)?.focus();
-  }
-
-  return (
-    <div className="guide-structure-book" data-structure-book="">
-      <div
-        className="guide-identity-nav"
-        role="tablist"
-        aria-label="فصول الباب الثاني"
-        onKeyDown={onChaptersKeyDown}
-      >
-        {chapters.map((chapter) => {
-          const selected = chapter.id === activeId;
-          return (
-            <button
-              key={chapter.id}
-              type="button"
-              id={`guide-structure-chapter-tab-${chapter.id}`}
-              role="tab"
-              aria-selected={selected}
-              tabIndex={selected ? 0 : -1}
-              className="guide-identity-tab"
-              onClick={() => selectChapter(chapter.id)}
-            >
-              {chapter.label}
-            </button>
-          );
-        })}
-      </div>
-      <div ref={panelsRef} className="guide-structure-book-panels">
-        {chapters.map((chapter) => {
-          const selected = chapter.id === activeId;
-          return (
-            <div
-              key={chapter.id}
-              id={`guide-structure-chapter-panel-${chapter.id}`}
-              data-structure-chapter={chapter.id}
-              role="tabpanel"
-              tabIndex={selected ? 0 : undefined}
-              aria-labelledby={`guide-structure-chapter-tab-${chapter.id}`}
-              hidden={selected ? undefined : ("until-found" as unknown as boolean)}
-              className="guide-identity-tabpanel"
-            >
-              <article className="guide-structure-book-sheet">
-                <GuideGovernanceBlocks blocks={chapter.blocks} />
-              </article>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 export default function GuideStructure({ source }: { source: string }) {
   const { chapters, entries } = useMemo(() => parseStructureBook(source), [source]);
   const [mode, setMode] = useState<ViewMode>("map");
@@ -352,7 +251,7 @@ export default function GuideStructure({ source }: { source: string }) {
             onClick={() => chooseMode("book")}
           >
             <BookOpen size={18} aria-hidden="true" />
-            <span>الكتاب</span>
+            <span>الكتيب</span>
           </button>
         </div>
 
@@ -591,7 +490,11 @@ export default function GuideStructure({ source }: { source: string }) {
 
         {mode === "book" && (
           <div role="tabpanel" aria-labelledby="guide-structure-mode-book">
-            <StructureBookReader chapters={chapters} />
+            <GuideBooklet
+              title="الهيكل الإداري والأدوار والصلاحيات"
+              filename="sahwa-structure-booklet"
+              chapters={chapters}
+            />
           </div>
         )}
       </section>
