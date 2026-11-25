@@ -38,20 +38,42 @@
 .team-filter-heading > span { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-muted); }
 .team-filter-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:15px 20px; }
 .team-field { display:flex; flex-direction:column; gap:7px; font-size:13px; min-width:0; }
-.team-field > span,.team-role-field > label { color:var(--brand-primary-dark); font-weight:500; }
-.team-field small { color:var(--text-muted); font-size:11px; margin-right:5px; font-weight:400; }
+.team-field > span,.team-field > label { color:var(--brand-primary-dark); font-weight:500; }
+.team-field small { color:var(--text-muted); font-size:11px; font-weight:400; }
+.team-field :is(span,label) small { margin-inline-start:5px; }
 .team-field input,.team-field select,.team-field textarea { display:block; width:100%; min-height:45px; border:1px solid var(--line); border-radius:10px; background:var(--bg-base); padding:10px 12px; font:inherit; color:var(--text-main); }
-.team-field select { padding-left:27px; text-overflow:ellipsis; }
+.team-field :is(input,select,textarea):focus-visible { border-color:var(--brand-primary); outline:2px solid var(--brand-primary); outline-offset:2px; }
+.team-field select { padding-inline-end:27px; text-overflow:ellipsis; }
 .team-field textarea { resize:vertical; line-height:1.8; }
-.team-role-input { position:relative; }
-.team-role-field .team-role-input input { padding-inline-end:48px; }
-.team-role-toggle { position:absolute; inset-inline-end:1px; inset-block:1px; width:43px; display:grid; place-items:center; color:var(--brand-primary); }
-.team-role-list { max-height:min(280px,38dvh); overflow-y:auto; overscroll-behavior:contain; border:1px solid var(--line); border-radius:10px; background:var(--bg-base); }
-.team-role-group { margin:0; padding:7px 12px; background:var(--bg-soft); color:var(--brand-primary); font-size:12px; font-weight:600; }
-.team-role-option { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:42px; padding:8px 12px; cursor:pointer; overflow-wrap:anywhere; }
-.team-role-option:hover,.team-role-active { background:#7520260c; }
-.team-role-option[aria-selected="true"] { color:var(--brand-primary); font-weight:600; }
-.team-role-option small { flex-shrink:0; }
+@supports (appearance: base-select) {
+  .team-field select,.team-field select::picker(select) { appearance:base-select; }
+  .team-field select { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; cursor:pointer; }
+  .team-field select::picker-icon { color:var(--brand-primary); transition:rotate .18s ease; }
+  .team-field select:open::picker-icon { rotate:180deg; }
+  .team-field select::picker(select) { margin-block:6px; padding:4px; min-inline-size:anchor-size(width); max-block-size:min(280px,38dvh); overflow-y:auto; overscroll-behavior:contain; border:1px solid var(--line); border-radius:12px; background:var(--bg-base); color:var(--text-main); box-shadow:0 14px 30px -14px rgba(53,14,21,.24); }
+  .team-field select option { display:flex; align-items:center; gap:8px; min-height:40px; padding:8px 12px; border-radius:8px; color:var(--text-main); cursor:pointer; }
+  .team-field select option:hover,.team-field select option:focus-visible { background:#7520260c; }
+  .team-field select option:checked { color:var(--brand-primary); font-weight:600; background:#7520260a; }
+  .team-field select option::checkmark { color:var(--brand-primary); margin-inline-start:auto; }
+}
+.team-combo-input { position:relative; }
+.team-combo-field .team-combo-input input { padding-inline-end:48px; }
+.team-combo-toggle { position:absolute; inset-inline-end:1px; inset-block:1px; width:43px; display:grid; place-items:center; border-radius:9px; color:var(--brand-primary); }
+.team-combo-toggle svg { transition:rotate .18s ease; }
+.team-combo-toggle[aria-expanded="true"] svg { rotate:180deg; }
+.team-combo-list { position:absolute; inset-inline:0; top:calc(100% + 6px); z-index:25; max-height:min(280px,38dvh); overflow-y:auto; overscroll-behavior:contain; padding:4px; border:1px solid var(--line); border-radius:12px; background:var(--bg-base); box-shadow:0 14px 30px -14px rgba(53,14,21,.24); }
+.team-combo-list-up { top:auto; bottom:calc(100% + 6px); }
+.team-combo-group { margin:4px 0 2px; padding:6px 10px; border-radius:8px; background:var(--bg-soft); color:var(--brand-primary); font-size:12px; font-weight:600; }
+.team-combo-list > :first-child .team-combo-group { margin-top:0; }
+.team-combo-option { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:40px; padding:8px 10px; border-radius:8px; cursor:pointer; overflow-wrap:anywhere; color:var(--text-main); }
+.team-combo-option:hover,.team-combo-active { background:#7520260c; }
+.team-combo-option[aria-selected="true"] { color:var(--brand-primary); font-weight:600; background:#7520260a; }
+.team-combo-option small,.team-combo-check { flex-shrink:0; }
+.team-combo-check { color:var(--brand-primary); }
+@media (pointer: coarse) {
+  .team-field input,.team-field select,.team-field textarea { min-height:48px; font-size:max(1rem,1em); }
+  .team-combo-option { min-height:44px; }
+}
 .team-results-count { margin:24px 2px 17px; font-size:13px; color:var(--text-muted); }
 .team-people-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
 .team-person-card { text-align:right; min-width:0; display:flex; flex-direction:column; padding:23px; border:1px solid var(--line); border-radius:20px; background:#fff8; transition:border-color .2s,background .2s; }
@@ -115,5 +137,5 @@
   .team-people-grid { grid-template-columns:1fr; gap:15px; }.team-person-card { padding:22px; }.team-person-card-top { margin-bottom:12px; }.team-status { font-size:11px; }
   .team-form-grid { grid-template-columns:1fr; }.team-dialog-heading { padding:12px 17px; }.team-dialog-heading h2 { font-size:23px; }.team-form-body { padding:20px 17px; }.team-dialog-footer { padding:14px 17px; }.team-detail-grid { gap:18px 12px; }.team-person-intro { gap:15px; }.team-person-intro h3 { font-size:20px; }.team-pagination { gap:10px; }
 }
-@media(prefers-reduced-motion:reduce) { .team-portal-card { transition:none; }.team-portal-card:hover { transform:none; } }
+@media(prefers-reduced-motion:reduce) { .team-portal-card,.team-field select::picker-icon,.team-combo-toggle svg { transition:none; }.team-portal-card:hover { transform:none; } }
 .team-person-tags { display:flex; flex-direction:column; align-items:flex-end; gap:7px; }.team-age { color:var(--brand-primary); font-size:12px; font-weight:500; }

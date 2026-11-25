@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
 import TeamDialog from "./TeamDialog";
+import TeamComboField, { type ComboGroup, type ComboOption } from "./TeamComboField";
 import VolunteerRoleField from "./VolunteerRoleField";
 import { roleForTitle, roleForVolunteer, volunteerRoleLabel } from "../../../shared/volunteer-roles.js";
 import {
@@ -14,10 +15,37 @@ import {
   UNIVERSITIES,
   STUDY_YEARS,
   MAJORS,
+  MAJOR_SEARCH_KEYWORDS,
   normalizeMajor,
   normalizeSearch,
   todayInIstanbul,
 } from "../../../shared/team-options.js";
+
+const UNIVERSITY_GROUPS: ComboGroup[] = [
+  {
+    options: UNIVERSITIES.map((title, index) => ({
+      id: `university-${index}`,
+      title,
+    })),
+  },
+];
+
+const MAJOR_OPTIONS: ComboOption[] = MAJORS.map((title, index) => ({
+  id: `major-${index}`,
+  title,
+  keywords: MAJOR_SEARCH_KEYWORDS.get(title),
+}));
+
+const MAJOR_GROUPS: ComboGroup[] = [{ options: MAJOR_OPTIONS }];
+
+const MAJOR_BY_TITLE = new Map(
+  MAJOR_OPTIONS.map((option) => [normalizeSearch(option.title), option]),
+);
+
+function exactMajor(raw: string): ComboOption | undefined {
+  const normalized = normalizeMajor(raw);
+  return normalized ? MAJOR_BY_TITLE.get(normalizeSearch(normalized)) : undefined;
+}
 
 export default function PersonForm({
   person,
@@ -30,6 +58,7 @@ export default function PersonForm({
   onSave: (input: VolunteerInput) => Promise<void>;
   onClose: () => void;
 }) {
+  const idPrefix = useId();
   const [input, setInput] = useState<VolunteerInput>({
     ...EMPTY_PERSON,
     ...person,
@@ -52,6 +81,7 @@ export default function PersonForm({
           && roleForVolunteer(other)?.detailLabel === selectedRole.detailLabel)
         .map((other) => other.team).filter(Boolean))]
     : [];
+  const detailRequired = !person || roleChanged || Boolean(originalDetail);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const update = (key: keyof VolunteerInput, value: string) =>
@@ -81,6 +111,15 @@ export default function PersonForm({
   const studyYears = [
     ...new Set([...STUDY_YEARS, ...(input.studyYear && !STUDY_YEARS.includes(input.studyYear) ? [input.studyYear] : [])]),
   ];
+  const nameId = `${idPrefix}-name`;
+  const statusId = `${idPrefix}-status`;
+  const genderId = `${idPrefix}-gender`;
+  const detailId = `${idPrefix}-detail`;
+  const birthDateId = `${idPrefix}-birth-date`;
+  const birthHintId = `${idPrefix}-birth-hint`;
+  const phoneId = `${idPrefix}-phone`;
+  const studyYearId = `${idPrefix}-study-year`;
+
   return (
     <TeamDialog
       title={person ? "تعديل ملف المتطوع" : "إضافة متطوع"}
@@ -92,9 +131,11 @@ export default function PersonForm({
           <div className="team-form-section">
             <h3>البيانات الأساسية</h3>
             <div className="team-form-grid">
-              <label className="team-field">
-                <span>اسم المتطوع *</span>
+              <div className="team-field">
+                <label htmlFor={nameId}>اسم المتطوع *</label>
                 <input
+                  id={nameId}
+                  name="fullName"
                   required
                   autoFocus
                   autoComplete="name"
@@ -102,47 +143,48 @@ export default function PersonForm({
                   onChange={(e) => update("fullName", e.target.value)}
                   maxLength={120}
                 />
-              </label>
-              <label className="team-field">
-                <span>الجامعة *</span>
-                <input
-                  required
-                  list="sahwa-universities"
-                  value={input.university}
-                  onChange={(e) => update("university", e.target.value)}
-                  maxLength={120}
-                />
-                <datalist id="sahwa-universities">
-                  {UNIVERSITIES.map((university) => (
-                    <option key={university} value={university} />
-                  ))}
-                </datalist>
-              </label>
-              <label className="team-field">
-                <span>الحالة الحالية *</span>
+              </div>
+              <TeamComboField
+                label="الجامعة"
+                name="university"
+                required
+                value={input.university}
+                onChange={(value) => update("university", value)}
+                groups={UNIVERSITY_GROUPS}
+                placeholder="اختر الجامعة أو اكتب جامعة أخرى"
+                listLabel="الجامعات"
+                openLabel="عرض الجامعات"
+                closeLabel="إغلاق قائمة الجامعات"
+              />
+              <div className="team-field">
+                <label htmlFor={statusId}>الحالة الحالية *</label>
                 <select
+                  id={statusId}
+                  name="status"
                   required
                   value={input.status}
                   onChange={(e) => update("status", e.target.value)}
                 >
                   {statuses.map((status) => (
-                    <option key={status}>{status}</option>
+                    <option key={status} value={status}>{status}</option>
                   ))}
                 </select>
-              </label>
-              <label className="team-field">
-                <span>شاب أو بنت *</span>
+              </div>
+              <div className="team-field">
+                <label htmlFor={genderId}>شاب أو بنت *</label>
                 <select
+                  id={genderId}
+                  name="gender"
                   required
                   value={input.gender}
                   onChange={(e) => update("gender", e.target.value)}
                 >
                   <option value="">اختر</option>
                   {GENDERS.map((gender) => (
-                    <option key={gender}>{gender}</option>
+                    <option key={gender} value={gender}>{gender}</option>
                   ))}
                 </select>
-              </label>
+              </div>
               <VolunteerRoleField
                 value={roleTitle}
                 onChange={(title) => {
@@ -152,21 +194,42 @@ export default function PersonForm({
                 }}
               />
               {selectedRole?.detailLabel && (
-                <label className="team-field team-field-full">
-                  <span>{selectedRole.detailLabel}</span>
-                  <input
-                    required={!person || roleChanged || Boolean(originalDetail)}
+                detailSuggestions.length > 0 ? (
+                  <TeamComboField
+                    label={selectedRole.detailLabel}
+                    name="roleDetail"
+                    required={detailRequired}
+                    fullWidth
                     maxLength={80}
-                    list={detailSuggestions.length ? "sahwa-role-details" : undefined}
                     value={roleDetail}
-                    onChange={(event) => setRoleDetail(event.target.value)}
+                    onChange={setRoleDetail}
+                    groups={[
+                      {
+                        options: detailSuggestions.map((detail, index) => ({
+                          id: `detail-${index}`,
+                          title: detail,
+                        })),
+                      },
+                    ]}
+                    placeholder="اختر لجنة مسجّلة أو اكتب اسم اللجنة"
+                    listLabel={selectedRole.detailLabel}
                   />
-                  {detailSuggestions.length > 0 && (
-                    <datalist id="sahwa-role-details">
-                      {detailSuggestions.map((detail) => <option key={detail} value={detail} />)}
-                    </datalist>
-                  )}
-                </label>
+                ) : (
+                  <div className="team-field team-field-full">
+                    <label htmlFor={detailId}>
+                      {selectedRole.detailLabel}
+                      {detailRequired ? " *" : ""}
+                    </label>
+                    <input
+                      id={detailId}
+                      name="roleDetail"
+                      required={detailRequired}
+                      maxLength={80}
+                      value={roleDetail}
+                      onChange={(event) => setRoleDetail(event.target.value)}
+                    />
+                  </div>
+                )
               )}
             </div>
           </div>
@@ -175,24 +238,29 @@ export default function PersonForm({
               بيانات إضافية <small>اختيارية</small>
             </h3>
             <div className="team-form-grid">
-              <label className="team-field">
-                <span>
+              <div className="team-field">
+                <label htmlFor={birthDateId}>
                   تاريخ الميلاد <small>اختياري</small>
-                </span>
+                </label>
                 <input
+                  id={birthDateId}
+                  name="birthDate"
                   type="date"
                   min="1900-01-01"
                   max={todayInIstanbul()}
+                  aria-describedby={birthHintId}
                   value={input.birthDate}
                   onChange={(e) => update("birthDate", e.target.value)}
                 />
-                <small>نحسب العمر تلقائيًا ونظهره في كارت المتطوع.</small>
-              </label>
-              <label className="team-field">
-                <span>
+                <small id={birthHintId}>نحسب العمر تلقائيًا ونظهره في كارت المتطوع.</small>
+              </div>
+              <div className="team-field">
+                <label htmlFor={phoneId}>
                   رقم الهاتف <small>اختياري</small>
-                </span>
+                </label>
                 <input
+                  id={phoneId}
+                  name="phone"
                   type="tel"
                   dir="ltr"
                   autoComplete="tel"
@@ -201,31 +269,29 @@ export default function PersonForm({
                   onChange={(e) => update("phone", e.target.value)}
                   placeholder="+90 ..."
                 />
-              </label>
-              <label className="team-field">
-                <span>
-                  التخصص <small>اختياري</small>
-                </span>
-                <input
-                  list="sahwa-majors"
-                  maxLength={120}
-                  value={input.major}
-                  onChange={(e) => update("major", e.target.value)}
-                  onBlur={() => update("major", normalizeMajor(input.major))}
-                  placeholder="اختر تخصصًا أو اكتب تخصصًا جديدًا"
-                />
-                <datalist id="sahwa-majors">
-                  {MAJORS.map((major) => (
-                    <option key={major} value={major} />
-                  ))}
-                </datalist>
-                <small>اقتراحات عربية موحّدة، ويمكن إضافة تخصص غير موجود.</small>
-              </label>
-              <label className="team-field">
-                <span>
+              </div>
+              <TeamComboField
+                label="التخصص"
+                name="major"
+                optional
+                value={input.major}
+                onChange={(value) => update("major", value)}
+                onBlurValue={() => update("major", normalizeMajor(input.major))}
+                groups={MAJOR_GROUPS}
+                exactMatch={exactMajor}
+                placeholder="اختر تخصصًا أو اكتب تخصصًا جديدًا"
+                listLabel="التخصصات"
+                openLabel="عرض التخصصات"
+                closeLabel="إغلاق قائمة التخصصات"
+                hint="اقتراحات عربية موحّدة، ويمكن إضافة تخصص غير موجود."
+              />
+              <div className="team-field">
+                <label htmlFor={studyYearId}>
                   السنة الدراسية <small>اختياري</small>
-                </span>
+                </label>
                 <select
+                  id={studyYearId}
+                  name="studyYear"
                   value={input.studyYear}
                   onChange={(e) => update("studyYear", e.target.value)}
                 >
@@ -234,7 +300,7 @@ export default function PersonForm({
                     <option key={year} value={year}>{year}</option>
                   ))}
                 </select>
-              </label>
+              </div>
             </div>
           </div>
           {error && (
@@ -244,7 +310,7 @@ export default function PersonForm({
           )}
         </fieldset>
         <div className="team-dialog-footer">
-          <button className="team-button" disabled={busy}>
+          <button type="submit" className="team-button" disabled={busy}>
             {busy && (
               <Loader2 className="animate-spin" size={17} aria-hidden="true" />
             )}

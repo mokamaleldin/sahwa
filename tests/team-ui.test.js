@@ -6,7 +6,7 @@ import {JSDOM} from 'jsdom';
 import {compileUI} from './helpers/compile-ui.js';
 import {person} from './helpers/database.js';
 import {ageFromBirthDate} from '../shared/team-options.js';
-const at=compileUI('tmp/forms-tests',['shared/team-options.js','shared/volunteer-roles.js','src/components/Team/VolunteerRoleField.tsx','src/lib/team.ts','src/components/shared/PageIdentity.tsx','src/components/Team/TeamDialog.tsx','src/components/Team/PersonForm.tsx','src/components/Team/PersonDetails.tsx','src/components/Team/VolunteerCard.tsx','src/components/Team/EventForm.tsx','src/views/TeamVolunteers.tsx']);
+const at=compileUI('tmp/forms-tests',['shared/team-options.js','shared/volunteer-roles.js','src/components/Team/TeamComboField.tsx','src/components/Team/VolunteerRoleField.tsx','src/lib/team.ts','src/components/shared/PageIdentity.tsx','src/components/Team/TeamDialog.tsx','src/components/Team/PersonForm.tsx','src/components/Team/PersonDetails.tsx','src/components/Team/VolunteerCard.tsx','src/components/Team/EventForm.tsx','src/views/TeamVolunteers.tsx']);
 const{default:PersonForm}=await at('src/components/Team/PersonForm.js');
 const{default:EventForm}=await at('src/components/Team/EventForm.js');
 const{default:VolunteerCard}=await at('src/components/Team/VolunteerCard.js');
@@ -18,12 +18,13 @@ test('volunteer modal has exactly four required fields and no login controls',()
  for(const label of ['اسم المتطوع','الجامعة','الحالة الحالية','شاب أو بنت','تاريخ الميلاد','رقم الهاتف','الدور في صحوة'])assert.ok(html.includes(label),label);
  for(const excluded of ['البريد الإلكتروني','كلمة المرور','الصلاحيات','تاريخ الانضمام','المهارات','مجال التطوع','المسؤولية'])assert.ok(!html.includes(excluded),excluded);
  assert.equal(document.querySelector('input[type=date]').required,false);assert.equal(document.querySelector('input[type=tel]').required,false);
- assert.ok(document.querySelector('input[role=combobox]'));
+ assert.equal(document.querySelectorAll('input[role=combobox]').length,3);
+ assert.equal(document.querySelector('datalist'),null);
  assert.ok([...document.querySelectorAll('select option')].some(option=>option.textContent==='السنة الخامسة فأعلى'));
  assert.ok([...document.querySelectorAll('select option')].some(option=>option.textContent==='متخرج'));
- assert.ok(document.querySelector('input[list="sahwa-majors"]'));
- assert.ok([...document.querySelectorAll('#sahwa-majors option')].some(option=>option.value==='هندسة البرمجيات'));
- assert.ok([...document.querySelectorAll('select option')].some(option=>option.textContent==='متوقف مؤقتًا'));dom.window.close();
+ const statusSelect=document.querySelector('select[name="status"]');
+ assert.deepEqual([...statusSelect.querySelectorAll('option')].map(option=>option.textContent),['نشط','غير نشط']);
+ dom.window.close();
 });
 test('event modal requires only its name and selects responsible people from volunteers',()=>{
  const volunteer={id:'00000000-0000-4000-8000-000000000001',fullName:'متطوع تجريبي',university:'استنيا',status:'نشط'};
@@ -45,7 +46,7 @@ test('add volunteer opens a modal and saves a basic record without account field
  globalThis.fetch=async(path,options={})=>{assert.equal(path,'/api/team');if(options.method==='POST'){posted=JSON.parse(options.body).person;return Response.json({person:{...posted,id:'00000000-0000-4000-8000-000000000002',revision:1}});}return Response.json({volunteers:[]});};
  const React=await import('react'),{createRoot}=await import('react-dom/client'),{HelmetProvider}=await import('react-helmet-async');HelmetProvider.canUseDOM=false;
  const{default:Directory}=await at('src/views/TeamVolunteers.js'),root=createRoot(document.getElementById('root'));
- async function fill(prefix,value){const label=[...document.querySelectorAll('dialog label')].find(element=>element.textContent.startsWith(prefix));assert.ok(label,prefix);const input=label.querySelector('input,select');const proto=input.tagName==='SELECT'?dom.window.HTMLSelectElement.prototype:dom.window.HTMLInputElement.prototype;await React.act(async()=>{Object.getOwnPropertyDescriptor(proto,'value').set.call(input,value);input.dispatchEvent(new dom.window.Event('input',{bubbles:true}));input.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});}
+ async function fill(prefix,value){const label=[...document.querySelectorAll('dialog label')].find(element=>element.textContent.startsWith(prefix));assert.ok(label,prefix);const input=label.htmlFor?document.getElementById(label.htmlFor):label.querySelector('input,select');const proto=input.tagName==='SELECT'?dom.window.HTMLSelectElement.prototype:dom.window.HTMLInputElement.prototype;await React.act(async()=>{Object.getOwnPropertyDescriptor(proto,'value').set.call(input,value);input.dispatchEvent(new dom.window.Event('input',{bubbles:true}));input.dispatchEvent(new dom.window.Event('change',{bubbles:true}));});}
  try{
   await React.act(async()=>root.render(h(HelmetProvider,null,h(Directory))));
   const button=[...document.querySelectorAll('button')].find(element=>element.textContent==='إضافة متطوع');assert.ok(button);await React.act(async()=>button.click());assert.ok(document.querySelector('dialog').open);
@@ -70,7 +71,7 @@ test('volunteer details offer an explicit delete action with no immediate deleti
  assert.ok(!html.includes('نعم، احذف المتطوع'));
 });
 
-test('the role picker browses, searches, saves a committee or custom role and preserves old assignments', async () => {
+test('the Sahwa combobox pickers browse, search, allow custom values and preserve old assignments', async () => {
  const dom = new JSDOM('<div id="root"></div>', { url: 'https://sahwa.world/team/volunteers', pretendToBeVisual: true });
  const previous = { window: globalThis.window, document: globalThis.document, act: globalThis.IS_REACT_ACT_ENVIRONMENT };
  globalThis.window = dom.window;
@@ -86,9 +87,17 @@ test('the role picker browses, searches, saves a committee or custom role and pr
    { ...record, team: 'لجنة القراءة', roleId: 'additional-committee-lead' },
    { ...record, university: 'جليشيم', team: 'لجنة المسرح', roleId: 'additional-committee-member' },
  ];
+ function fieldByName(name) {
+   const input = document.querySelector(`input[name="${name}"]`);
+   assert.ok(input, name);
+   return input;
+ }
+ function listboxFor(input) {
+   return document.getElementById(input.getAttribute('aria-controls'));
+ }
  async function mount(key, volunteer) {
    await React.act(async () => root.render(h(PersonForm, { key, person: volunteer, volunteers: committees, onClose: noop, onSave: async (input) => saved.push(input) })));
-   return document.querySelector('input[role=combobox]');
+   return fieldByName('roleTitle');
  }
  async function type(input, text) {
    await React.act(async () => {
@@ -111,32 +120,62 @@ test('the role picker browses, searches, saves a committee or custom role and pr
    assert.equal(result.team, 'إعلام');
    assert.equal(result.responsibility, 'عضو');
 
-   input = await mount('committee', record);
+   input = await mount('pickers', record);
+   const universityInput = fieldByName('university');
+   await React.act(async () => universityInput.focus());
+   assert.deepEqual(
+     [...listboxFor(universityInput).querySelectorAll('[role=option]')].map(option => option.textContent),
+     ['استنيا', 'بيلجي', 'جليشيم'],
+   );
+   await type(universityInput, 'جامعة مرمرة');
+   assert.equal(listboxFor(universityInput).querySelector('[role=option]').textContent, 'استخدام «جامعة مرمرة»');
+   await React.act(async () => universityInput.blur());
+   await type(universityInput, 'استنيا');
+
+   const majorInput = fieldByName('major');
+   await React.act(async () => majorInput.focus());
+   await type(majorInput, 'Software');
+   assert.deepEqual(
+     [...listboxFor(majorInput).querySelectorAll('[role=option]')].map(option => option.textContent),
+     ['هندسة البرمجيات', 'استخدام «Software»'],
+   );
+   await React.act(async () => listboxFor(majorInput).querySelector('[role=option]').click());
+   assert.equal(majorInput.value, 'هندسة البرمجيات');
+
    await React.act(async () => input.focus());
    assert.equal(input.getAttribute('aria-expanded'), 'true');
-   assert.equal(document.querySelector('[aria-label="مجلس الإدارة المركزي"]').querySelectorAll('[role=option]').length, 6);
-   assert.ok(document.querySelector('[role=listbox]').textContent.includes('وحدة مقترحة'));
-   assert.ok(!document.querySelector('[role=listbox]').textContent.includes('مسؤول الإعلام الميداني'));
+   const roleList = listboxFor(input);
+   const groupLabels = [...roleList.querySelectorAll('[role=group]')].map(group => group.getAttribute('aria-label'));
+   assert.equal(groupLabels[0], 'العضوية العامة');
+   assert.equal(groupLabels.at(-1), 'مجلس الإدارة المركزي');
+   assert.equal(roleList.querySelector('[aria-label="مجلس الإدارة المركزي"]').querySelectorAll('[role=option]').length, 6);
+   for (const removed of ['وحدة مقترحة', 'وحدة قيد التنظيم', 'قيد الاعتماد', 'عضو الإعلام الميداني', 'المشاركة والتكليف']) {
+     assert.ok(!roleList.textContent.includes(removed), removed);
+   }
    await type(input, 'عضوة لجنة اخرى');
    await key(input, 'ArrowDown');
    await key(input, 'Enter');
-   assert.equal(input.value, 'عضوة لجنة جامعية أخرى');
+   assert.equal(input.value, 'عضو لجنة جامعية أخرى');
    assert.equal(input.getAttribute('aria-expanded'), 'false');
-   const detail = [...document.querySelectorAll('label')].find(label => label.textContent === 'اسم اللجنة').querySelector('input');
+   const detail = fieldByName('roleDetail');
    assert.equal(detail.required, true);
-   assert.deepEqual([...detail.list.options].map(option => option.value), ['لجنة القراءة']);
-   await type(detail, 'لجنة القراءة');
+   await React.act(async () => detail.focus());
+   assert.deepEqual([...listboxFor(detail).querySelectorAll('[role=option]')].map(option => option.textContent), ['لجنة القراءة']);
+   await React.act(async () => listboxFor(detail).querySelector('[role=option]').click());
    result = await submit();
-   assert.equal(result.roleTitle, 'عضوة لجنة جامعية أخرى');
+   assert.equal(result.roleTitle, 'عضو لجنة جامعية أخرى');
    assert.equal(result.roleDetail, 'لجنة القراءة');
+   assert.equal(result.major, 'هندسة البرمجيات');
 
    input = await mount('custom', { ...record, team: 'لجنة القراءة', responsibility: 'عضوة لجنة جامعية أخرى', roleId: 'additional-committee-women-member' });
+   assert.equal(input.value, 'عضو لجنة جامعية أخرى');
+   assert.equal(fieldByName('roleDetail').value, 'لجنة القراءة');
    await React.act(async () => input.focus());
    await type(input, 'منسقة حلقات القراءة');
-   const option = document.querySelector('[role=option]');
+   const option = listboxFor(input).querySelector('[role=option]');
    assert.equal(option.textContent, 'استخدام «منسقة حلقات القراءة»');
    await React.act(async () => option.click());
-   assert.ok(![...document.querySelectorAll('label')].some(label => label.textContent === 'اسم اللجنة'));
+   assert.equal(document.querySelector('input[name="roleDetail"]'), null);
    result = await submit();
    assert.equal(result.roleTitle, 'منسقة حلقات القراءة');
    assert.equal(result.roleDetail, '');

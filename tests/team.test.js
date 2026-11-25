@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validatePerson} from '../server/team-data.js';
-import {filterVolunteers,ageFromBirthDate,todayInIstanbul,normalizeMajor,PERSON_STATUSES,STUDY_YEARS} from '../shared/team-options.js';
+import {filterVolunteers,ageFromBirthDate,todayInIstanbul,normalizeMajor,PERSON_STATUSES,STUDY_YEARS,UNIVERSITIES} from '../shared/team-options.js';
+import {VOLUNTEER_ROLE_GROUPS,roleForVolunteer,volunteerRoleLabel} from '../shared/volunteer-roles.js';
 import {person} from './helpers/database.js';
 test('volunteers need only name, university, current status and gender',()=>{
  const value=validatePerson({fullName:'أحمد',university:'استنيا',status:'نشط',gender:'شاب'});
@@ -35,9 +36,11 @@ test('Arabic directory search combines with university and current-status filter
 });
 
 test('operational statuses remain separate from academic graduation',()=>{
- assert.deepEqual(PERSON_STATUSES,['نشط','متوقف مؤقتًا','غير نشط']);
+ assert.deepEqual(PERSON_STATUSES,['نشط','غير نشط']);
+ assert.deepEqual(UNIVERSITIES,['استنيا','بيلجي','جليشيم']);
  assert.ok(STUDY_YEARS.includes('متخرج'));
  assert.equal(validatePerson(person({status:'غير نشط',studyYear:'متخرج'})).status,'غير نشط');
+ assert.equal(validatePerson(person({university:'جامعة مرمرة'})).university,'جامعة مرمرة');
 });
 test('known English, Turkish and Arabic aliases are normalized without rejecting new majors',()=>{
  for(const [value,expected] of [
@@ -77,4 +80,19 @@ test('a named committee requires its name; free text is bounded and preserved', 
   assert.equal(custom.responsibility, 'منسق اللقاء الأسبوعي');
   assert.equal(custom.team, '');
   assert.equal(filterVolunteers([custom], { query: 'اللقاء', university: '', status: '' }).length, 1);
+});
+
+test('role groups put general membership first, board last, drop status tags and map legacy role IDs', () => {
+  assert.equal(VOLUNTEER_ROLE_GROUPS[0].title, 'العضوية العامة');
+  assert.deepEqual(VOLUNTEER_ROLE_GROUPS[0].roles.map((r) => r.title), ['عضو صحوة', 'متطوع', 'عضو سابق']);
+  assert.equal(VOLUNTEER_ROLE_GROUPS.at(-1).title, 'مجلس الإدارة المركزي');
+  assert.equal(VOLUNTEER_ROLE_GROUPS.at(-1).roles.length, 6);
+  const allRoles = VOLUNTEER_ROLE_GROUPS.flatMap((group) => group.roles);
+  assert.ok(allRoles.every((role) => !role.status));
+  for (const removed of ['عضو الإعلام الميداني بالجامعة', 'قائد فعالية', 'مكلّف بالإنابة', 'عضوة لجنة جامعية أخرى']) {
+    assert.ok(!allRoles.some((role) => role.title === removed), removed);
+  }
+  assert.equal(roleForVolunteer({ roleId: 'additional-committee-women-member', team: 'لجنة القراءة', responsibility: '' })?.id, 'additional-committee-member');
+  assert.equal(volunteerRoleLabel({ roleId: 'internal-women-activities', team: '', responsibility: '' }), 'مسؤول الأنشطة الداخلية');
+  assert.equal(volunteerRoleLabel({ roleId: 'central-women-member', team: '', responsibility: '' }), 'عضو الأنشطة المركزية');
 });

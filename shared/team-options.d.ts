@@ -3,6 +3,7 @@ export const GENDERS: string[];
 export const PERSON_STATUSES: string[];
 export const STUDY_YEARS: string[];
 export const MAJORS: string[];
+export const MAJOR_SEARCH_KEYWORDS: ReadonlyMap<string, string>;
 export function normalizeMajor(value: unknown): string;
 export function normalizeSearch(value: unknown): string;
 export function filterVolunteers<T extends { fullName: string; university: string; major: string; team: string; responsibility: string; phone: string; status: string; gender: string; studyYear: string }>(people: T[], filters: { query: string; university: string; status: string; gender?: string; studyYear?: string }): T[];

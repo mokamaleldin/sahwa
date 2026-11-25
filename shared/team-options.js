@@ -1,6 +1,6 @@
-export const UNIVERSITIES = ["استنيا", "بيلجي", "جليشيم", "عام / مركزي"];
+export const UNIVERSITIES = ["استنيا", "بيلجي", "جليشيم"];
 export const GENDERS = ["شاب", "بنت"];
-export const PERSON_STATUSES = ["نشط", "متوقف مؤقتًا", "غير نشط"];
+export const PERSON_STATUSES = ["نشط", "غير نشط"];
 export const STUDY_YEARS = [
   "سنة تحضيرية",
   "السنة الأولى",
@@ -72,6 +72,9 @@ const MAJOR_ALIASES = [
   ["اللغة الإنجليزية وآدابها", "Phd in english language and Literature"],
   ["السينما والتلفزيون", "Cinema and television"],
 ];
+export const MAJOR_SEARCH_KEYWORDS = new Map(
+  MAJOR_ALIASES.map(([canonical, ...aliases]) => [canonical, aliases.join(" ")]),
+);
 export function normalizeMajor(value) {
   const clean = String(value || "").trim();
   if (!clean) return "";

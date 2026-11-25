@@ -111,18 +111,22 @@ test('volunteer roles round-trip through the API, including named committees, fr
     assert.equal(response.status, previous ? 200 : 201);
     return (await response.json()).person;
   }
-  let saved = await save(person({ roleTitle: 'عضوة لجنة جامعية أخرى', roleDetail: 'لجنة القراءة' }));
-  assert.equal(saved.roleId, 'additional-committee-women-member');
+  let saved = await save(person({ roleTitle: 'عضو لجنة جامعية أخرى', roleDetail: 'لجنة القراءة' }));
+  assert.equal(saved.roleId, 'additional-committee-member');
   assert.equal(saved.team, 'لجنة القراءة');
-  assert.equal(saved.responsibility, 'عضوة لجنة جامعية أخرى');
+  assert.equal(saved.responsibility, 'عضو لجنة جامعية أخرى');
   saved = await save({ ...saved, fullName: 'اسم تجريبي' }, saved);
-  assert.equal(saved.roleId, 'additional-committee-women-member');
+  assert.equal(saved.roleId, 'additional-committee-member');
   saved = await save({ ...saved, team: 'إعلام', responsibility: 'عضو' }, saved);
   assert.equal(saved.roleId, null);
   saved = await save({ ...saved, roleTitle: 'مسؤول الاعلام المركزي' }, saved);
   assert.equal(saved.roleId, 'central-media-lead');
   assert.equal(saved.responsibility, 'مسؤول الإعلام المركزي');
   assert.equal(saved.team, '');
+  saved = await save({ ...saved, roleTitle: 'عضو صحوة', university: 'جامعة مرمرة' }, saved);
+  assert.equal(saved.roleId, 'sahwa-member');
+  assert.equal(saved.responsibility, 'عضو صحوة');
+  assert.equal(saved.university, 'جامعة مرمرة');
   saved = await save({ ...saved, roleTitle: 'منسق نادي القراءة' }, saved);
   assert.equal(saved.roleId, null);
   assert.equal(saved.responsibility, 'منسق نادي القراءة');
