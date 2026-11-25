@@ -91,7 +91,6 @@ export function createAccountHandler(teamStore, platformStore) {
       }
       if (profile.isPublic) {
         if (!profile.handle) throw new TeamError("اختر اسم مستخدم للصفحة قبل نشرها.");
-        if (actor.isTest) throw new TeamError("الحسابات التجريبية لا تنشر صفحات عامة.");
         const person = await platformStore.person(actor.volunteerId);
         const age = ageFromBirthDate(person.birthDate);
         // Public pages for minors need an approved policy first.

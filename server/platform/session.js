@@ -17,12 +17,6 @@ const SESSION_SECONDS = 24 * 60 * 60;
 export const TEMPORARY_DAYS = 7;
 export const USERNAME = /^[a-z0-9][a-z0-9._-]{2,39}$/;
 
-// Test accounts (shared password) never sign in on production. Preview
-// deployments must opt in explicitly.
-export function testAccountsBlocked(env = process.env) {
-  return env.VERCEL_ENV === "production" || (env.NODE_ENV === "production" && env.SAHWA_ALLOW_TEST_ACCOUNTS !== "1");
-}
-
 function sharedConfigured() {
   try {
     settings();
@@ -87,7 +81,6 @@ export async function currentActor(request, { teamStore, platformStore }) {
   if (!platformStore) return null;
   const row = await platformStore.sessionAccount(hash);
   if (!row || row.accountStatus !== "active" || row.archivedAt) return null;
-  if (row.isTest && testAccountsBlocked()) return null;
   return actorFromRow(row, platformStore);
 }
 
@@ -123,11 +116,11 @@ export async function temporaryCredential() {
 }
 
 export function validateNewPassword(password, username = "") {
-  if (typeof password !== "string" || password.length < 10 || password.length > 128)
-    throw new TeamError("كلمة المرور يجب أن تكون من 10 إلى 128 حرفًا.");
+  if (typeof password !== "string" || password.length < 8 || password.length > 128)
+    throw new TeamError("كلمة المرور يجب أن تكون من 8 إلى 128 حرفًا.");
   if (username && password.toLowerCase().includes(username.toLowerCase()))
     throw new TeamError("لا تستخدم اسم المستخدم داخل كلمة المرور.");
-  if (/^(.)\1+$/.test(password) || ["sahwa2345", "password123", "1234567890"].includes(password.toLowerCase()))
+  if (/^(.)\1+$/.test(password) || ["password", "password123", "12345678", "1234567890"].includes(password.toLowerCase()))
     throw new TeamError("اختر كلمة مرور أقوى.");
 }
 

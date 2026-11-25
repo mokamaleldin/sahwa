@@ -13,7 +13,7 @@ const EMPTY: Profile = { handle: "", displayName: "", bio: "", work: "", skills:
 const PUBLIC_OPTIONS = [["university", "الجامعة"], ["major", "التخصص"], ["work", "العمل أو المجال المهني"], ["skills", "المهارات والاهتمامات"], ["participation", "مشاركتي في صحوة"], ["links", "روابط التواصل"], ["roles", "الصفة التنظيمية"]] as const;
 const DIRECTORY_OPTIONS = [["major", "التخصص"], ["bio", "النبذة"], ["skills", "المهارات"], ["work", "العمل"]] as const;
 
-export default function ProfileEditor({ initial, person, roles, isTest }: { initial: Profile | null; person: { fullName: string; university: string; major: string }; roles: string[]; isTest: boolean }) {
+export default function ProfileEditor({ initial, person, roles }: { initial: Profile | null; person: { fullName: string; university: string; major: string }; roles: string[] }) {
   const [profile, setProfile] = useState<Profile>({ ...EMPTY, ...(initial || {}), handle: initial?.handle || "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -76,8 +76,7 @@ export default function ProfileEditor({ initial, person, roles, isTest }: { init
             <span>الحقول الاختيارية الظاهرة للزوار</span>
             {PUBLIC_OPTIONS.map(([id, label]) => <label key={id} className="platform-check"><input type="checkbox" checked={shown(id)} onChange={() => toggle("publicFields", id)} />{label}</label>)}
           </fieldset>
-          <label className="platform-check"><input type="checkbox" checked={profile.isPublic} disabled={isTest} onChange={(e) => set("isPublic", e.target.checked)} />نشر الصفحة العامة</label>
-          {isTest && <p className="platform-muted">الحسابات التجريبية لا تنشر صفحات عامة.</p>}
+          <label className="platform-check"><input type="checkbox" checked={profile.isPublic} onChange={(e) => set("isPublic", e.target.checked)} />نشر الصفحة العامة</label>
           <button type="button" className="team-button team-button-secondary" onClick={() => setPreview((v) => !v)}><Eye size={16} />{preview ? "إخفاء المعاينة" : "معاينة ما يراه الزائر"}</button>
           {preview && (
             <div className="platform-item" aria-label="معاينة">

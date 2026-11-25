@@ -37,7 +37,6 @@ export default function TeamNavigation() {
   const items = ITEMS.filter((item) => (nav ? nav[item.key] : item.key === "guide" || item.key === "workspace"));
   return (
     <>
-      {user?.isTest && <p className="platform-notice" role="note">أنت في حساب تجريبي معزول. البيانات هنا تجريبية ولا تظهر في سجلات صحوة الحقيقية.</p>}
       <div className="team-navigation-row">
         <nav className="team-navigation" aria-label="منصة صحوة">
           {items.map((item) => (

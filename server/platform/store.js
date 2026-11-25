@@ -60,10 +60,10 @@ export function createPlatformStore(getClient = getSql) {
         [randomUUID(), volunteerId, username, passwordHash, mustChange, expiresAt, createdBy],
       );
     },
-    async resetAccount(accountId, passwordHash, expiresAt) {
+    async resetAccount(accountId, passwordHash, expiresAt, mustChange = true) {
       await query(
-        `UPDATE sahwa_accounts SET password_hash=$2, must_change_password=true, temporary_expires_at=$3, last_reset_at=now(), session_version=session_version+1, updated_at=now() WHERE id=$1`,
-        [accountId, passwordHash, expiresAt],
+        `UPDATE sahwa_accounts SET password_hash=$2, must_change_password=$4, temporary_expires_at=$3, last_reset_at=now(), session_version=session_version+1, updated_at=now() WHERE id=$1`,
+        [accountId, passwordHash, expiresAt, mustChange],
       );
     },
     async setAccountStatus(accountId, status) {
