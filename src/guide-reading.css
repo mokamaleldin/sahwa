@@ -1,0 +1,100 @@
+.guide-chapter-grid.guide-book-tabs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 1100px;
+  margin: 0 auto 26px;
+}
+.guide-book-tabs .guide-chapter-card {
+  min-height: 112px;
+  padding: 17px 22px;
+  text-align: start;
+}
+.guide-book-tabs .guide-chapter-top {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.guide-book-tabs .guide-chapter-title {
+  margin: 0;
+  font-size: clamp(16px, 1.6vw, 20px);
+  line-height: 1.6;
+}
+
+.guide-reading-panel { scroll-margin-top: 100px; margin-bottom: 60px; }
+.guide-reading-sheet {
+  max-width: 840px;
+  margin: 0 auto 20px;
+  padding: clamp(18px, 4vw, 46px);
+  border: 1px solid var(--line);
+  border-radius: 19px;
+  background: #fffaf6;
+  color: var(--text-main);
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+.guide-reading-text, .guide-reading-sheet > h2, .guide-reading-book > summary {
+  white-space: pre-wrap;
+}
+.guide-reading-sheet > h2, .guide-reading-book > summary {
+  margin: 0;
+  color: var(--brand-primary);
+  font-size: clamp(20px, 2.5vw, 28px);
+  line-height: 1.65;
+  font-weight: 700;
+}
+.guide-reading-text {
+  font-size: clamp(15px, 1.5vw, 17px);
+  line-height: 1.95;
+}
+.guide-reading-text p, .guide-reading-text ul { margin: .85em 0; }
+.guide-reading-text ul { list-style: disc; padding-inline-start: 1.5em; }
+.guide-reading-text li + li { margin-top: .22em; }
+.guide-reading-text li::marker { color: var(--brand-primary); }
+.guide-reading-text :is(h2,h3,h4,h5) {
+  margin: 1.65em 0 .45em;
+  scroll-margin-top: 100px;
+  color: var(--brand-primary);
+  font-weight: 650;
+  line-height: 1.7;
+}
+.guide-reading-text :is(h2,h3) { font-size: 1.35em; }
+.guide-reading-text :is(h4,h5) { font-size: 1.12em; }
+.guide-reading-text hr { margin: 2em 0; border: 0; border-block-start: 1px solid var(--line); }
+.guide-reading-text > :first-child { margin-top: 0; }
+.guide-reading-text > :last-child { margin-bottom: 0; }
+.guide-reading-text a, .guide-structure .guide-section-heading > a {
+  color: var(--brand-primary);
+  text-decoration: underline;
+  text-underline-offset: .22em;
+}
+.guide-reading-sheet > h2 + .guide-reading-text,
+.guide-reading-book[open] > .guide-reading-text { margin-top: 1.1em; }
+.guide-reading-sheet[id] { scroll-margin-top: 100px; }
+.guide-reading-book { padding: 0; }
+.guide-reading-book > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 17px clamp(18px, 4vw, 46px);
+  cursor: pointer;
+  list-style: none;
+  font-size: clamp(17px, 2vw, 22px);
+}
+.guide-reading-book > summary::-webkit-details-marker { display: none; }
+.guide-reading-book > summary svg { flex: none; }
+.guide-reading-book[open] > summary svg { transform: rotate(180deg); }
+.guide-reading-book[open] > .guide-reading-text {
+  padding: 0 clamp(18px, 4vw, 46px) clamp(20px, 3vw, 36px);
+}
+.guide-reading-book summary:focus-visible, .guide-reading-text a:focus-visible {
+  outline: 3px solid var(--brand-gold);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+@media (max-width: 700px) {
+  .guide-chapter-grid.guide-book-tabs { grid-template-columns: 1fr; gap: 7px; margin-bottom: 14px; }
+  .guide-book-tabs .guide-chapter-card { min-height: 0; padding: 9px 14px; border-radius: 12px; }
+  .guide-book-tabs .guide-chapter-top { margin-bottom: 2px; font-size: 12px; }
+  .guide-book-tabs .guide-chapter-title { font-size: 16px; }
+  .guide-reading-sheet { border-radius: 14px; }
+}

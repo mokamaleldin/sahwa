@@ -1,7 +1,9 @@
 import TeamGuide from "../../views/TeamGuide";
 import { PageEmblem } from "../../components/shared/PageIdentity";
+import { requirePageUser } from "../../../server/page-auth";
 
-export default function GuideVisualPreview() {
+export default async function GuideVisualPreview() {
+  await requirePageUser();
   return (
     <main className="app-shell sahwa-page-surface pt-24 sm:pt-28 pb-12">
       <PageEmblem />

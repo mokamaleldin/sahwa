@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import ts from "typescript";
 
-const view = readFileSync("src/views/TeamGuide.tsx", "utf8");
+const view = readFileSync("src/components/Team/GuideStructure.tsx", "utf8");
 const units = readFileSync("src/data/sahwaStructure.ts", "utf8");
 const roles = readFileSync("src/data/sahwaGuide.ts", "utf8");
 const governance = readFileSync("src/data/sahwaGovernance.ts", "utf8");
@@ -11,7 +11,7 @@ const css = readFileSync("src/guide.css", "utf8");
 
 test("interactive guide source has valid TSX syntax", () => {
   const result = ts.transpileModule(view, {
-    fileName: "TeamGuide.tsx",
+    fileName: "GuideStructure.tsx",
     reportDiagnostics: true,
     compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX },
   });

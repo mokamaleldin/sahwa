@@ -12,7 +12,9 @@ const at = compileUI(output, [
   "src/data/sahwaGovernance.ts",
   "src/components/shared/PageIdentity.tsx",
   "src/components/Team/TeamDialog.tsx",
-  "src/components/Team/GuideIdentity.tsx",
+  "src/components/Team/GuideStructure.tsx",
+  "src/components/Team/GuideTabs.tsx",
+  "src/components/Team/GuideText.tsx",
   "src/components/Team/GuideGovernance.tsx",
   "src/views/TeamGuide.tsx",
 ]);
@@ -22,23 +24,18 @@ const [{ default: TeamGuide }, { responsibilityCards }, { governanceRoles, gover
   at("src/data/sahwaGovernance.js"),
 ]);
 
-test("guide exposes the identity and structure tabs without showing unselected content", () => {
-  const html = renderToStaticMarkup(h(TeamGuide));
-  const dom = new JSDOM(html);
+test("the guide opens the identity book and offers all three tabs", () => {
+  const dom = new JSDOM(renderToStaticMarkup(h(TeamGuide)));
   const { document } = dom.window;
-
-  assert.match(document.body.textContent, /دليل صحوة/);
-  assert.equal(document.querySelectorAll(".guide-chapter-card-soon").length, 2);
-  assert.equal(document.querySelectorAll(".guide-chapter-card-active").length, 2);
-  assert.equal(document.querySelectorAll(".guide-map").length, 0);
-  assert.ok(document.body.textContent.includes("الهيكل والصلاحيات"));
-  assert.ok(document.body.textContent.includes("هوية صحوة"));
-  for (const excluded of ["شؤون المتطوعين والخريجين", "الزبالة"]) {
-    assert.ok(!document.body.textContent.includes(excluded), excluded);
-  }
+  assert.equal(document.querySelectorAll('[role="tab"]:not(:disabled)').length, 3);
+  assert.equal(document.querySelector('[aria-selected="true"]').id, 'tab-guide-identity');
+  assert.equal(document.querySelectorAll('[role="tabpanel"]:not([hidden])').length, 1);
+  assert.ok(document.querySelector('[data-book="1"]'));
+  assert.ok(document.querySelector('[data-identity]'));
+  assert.equal(document.querySelector('[data-book="2"]'), null);
+  assert.equal(document.querySelector(".guide-map"), null);
   dom.window.close();
 });
-
 
 test("new governance data retains all eighteen source roles and four chapters", () => {
   const expected = [
@@ -161,8 +158,12 @@ test("the guide shows each role's full source-specific duties and keeps team and
       root.render(h(HelmetProvider, null, h(TeamGuide))),
     );
     await React.act(async () =>
-      document.querySelector("#guide-chapter-tab-03").click(),
+      document.querySelector("#tab-guide-structure").click(),
     );
+    const mapLink = document.querySelector('[data-book="2"] a[href="/team/guide/structure"]');
+    assert.equal(mapLink.textContent, "رسم خطوط القيادة والتبعية والتنسيق.");
+    const { default: GuideStructure } = await at("src/components/Team/GuideStructure.js");
+    await React.act(async () => root.render(h(GuideStructure)));
     assert.equal(document.querySelectorAll(".guide-map-council-member").length, 6);
     assert.equal(document.querySelectorAll(".guide-map-planned-item").length, 4);
     const roleButton = document.querySelector(
