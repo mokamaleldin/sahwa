@@ -30,3 +30,6 @@ out/
 !.env.example
 .vercel/
 tmp/
+
+# Local embedded database for npm run dev:local
+.local-db/

@@ -1,5 +1,6 @@
 export type SessionStatus = 'loading' | 'authenticated' | 'anonymous' | 'error';
-export interface SessionUser { id: string; fullName: string; email: string; accessRole: 'admin' | 'volunteer'; university: string }
+export interface SessionNav { dashboard: boolean; community: boolean; workspace: boolean; directory: boolean; guide: boolean; forms: boolean; profile: boolean; achievements: boolean; admin: boolean; globalAdmin: boolean }
+export interface SessionUser { id: string; fullName: string; email: string; accessRole: 'admin' | 'volunteer'; university: string; username?: string | null; kind?: 'shared' | 'account'; isTest?: boolean; mustChangePassword?: boolean; nav?: SessionNav }
 export interface SessionSnapshot { status: SessionStatus; error: string; user: SessionUser | null }
 const INITIAL: SessionSnapshot = { status: 'loading', error: '', user: null };
 const RECHECK_MS = 30_000;
@@ -57,7 +58,7 @@ export function createSessionClient(request: typeof fetch = (...args) => fetch(.
     void promise.finally(() => { if (pending === operation) pending = null; });
     return promise;
   }
-  async function signIn(input: { email: string; password: string; remember: boolean }) {
+  async function signIn(input: { identifier: string; password: string; remember: boolean }) {
     const requestVersion = ++version;
     const data = await responseData(await authRequest({
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),

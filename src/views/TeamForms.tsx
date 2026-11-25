@@ -1,16 +1,116 @@
 'use client';
 
-import { ArrowUpLeft, ClipboardList, Lightbulb, MessageSquare } from 'lucide-react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { ArrowUpLeft, ClipboardList, Inbox, Lightbulb, Loader2, Lock, MessageSquare } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import Link from 'next/link';
 import PageHeading from '../components/shared/PageIdentity';
+import TeamDialog from '../components/Team/TeamDialog';
 import { TEAM_FORMS } from '../data/teamForms';
+import { teamRequest } from '../lib/team';
+import { useSession } from '../auth/useSession';
+
+interface Field { id: string; label: string; type: 'short_text' | 'long_text' | 'select' | 'url'; required: boolean; options?: string[] }
+interface FormDef { id: string; slug: string; title: string; description: string; fields: Field[] }
+interface Submission { id: string; title: string; status: string; statusLabel: string; response: string; respondedBy: string; routeTitle: string; createdAt: string }
+interface Data { forms: FormDef[]; pending: { id: string; title: string; description: string; confidential: boolean }[]; submissions: Submission[] }
 
 const icons = [MessageSquare, Lightbulb];
 
+function FormDialog({ form, onClose, onSent }: { form: FormDef; onClose: () => void; onSent: (message: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const data = new FormData(event.currentTarget);
+    const answers = Object.fromEntries(form.fields.map((f) => [f.id, String(data.get(f.id) || '')]));
+    setBusy(true);
+    setError('');
+    try {
+      const result = await teamRequest<{ routeTitle: string }>({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ formId: form.id, answers }) }, '/api/forms');
+      onSent(`وصل طلبك إلى: ${result.routeTitle}. تابعه من «طلباتي».`);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'تعذر الإرسال.');
+      setBusy(false);
+    }
+  }
+  return (
+    <TeamDialog title={form.title} onClose={onClose} busy={busy}>
+      <form className="team-form-body platform-form" onSubmit={submit}>
+        {form.description && <p className="platform-muted">{form.description}</p>}
+        <p className="platform-muted">يُعرف مقدّم الطلب من حسابك تلقائيًا، فلا حاجة لكتابة اسمك أو جامعتك.</p>
+        {form.fields.map((f) => (
+          <label key={f.id} className="team-field">
+            <span>{f.label} {!f.required && <small>اختياري</small>}</span>
+            {f.type === 'long_text' ? <textarea name={f.id} required={f.required} maxLength={3000} />
+              : f.type === 'select' ? <select name={f.id} required={f.required} defaultValue=""><option value="" disabled>اختر</option>{f.options?.map((o) => <option key={o}>{o}</option>)}</select>
+              : <input name={f.id} type={f.type === 'url' ? 'url' : 'text'} dir={f.type === 'url' ? 'ltr' : undefined} required={f.required} maxLength={300} />}
+          </label>
+        ))}
+        {error && <p className="team-error" role="alert">{error}</p>}
+        <div className="team-dialog-footer">
+          <button type="button" className="team-button team-button-secondary" onClick={onClose} disabled={busy}>إلغاء</button>
+          <button className="team-button" disabled={busy}>{busy && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}إرسال</button>
+        </div>
+      </form>
+    </TeamDialog>
+  );
+}
+
 export default function TeamForms() {
+  const { user } = useSession();
+  const [data, setData] = useState<Data | null>(null);
+  const [error, setError] = useState('');
+  const [open, setOpen] = useState<FormDef | null>(null);
+  const [notice, setNotice] = useState('');
+  const load = useCallback(async () => {
+    try { setData(await teamRequest<Data>({}, '/api/forms')); } catch (reason) { setError(reason instanceof Error ? reason.message : 'تعذر تحميل النماذج.'); }
+  }, []);
+  useEffect(() => { void load(); }, [load]);
   return <>
-    <Helmet><title>النماذج المهمة | صحوة</title></Helmet>
-    <PageHeading title="النماذج المهمة" description="صوتك وأفكارك يساهمان في تطوير صحوة. اختر النموذج المناسب وشاركنا." />
+    <Helmet><title>النماذج والاقتراحات | صحوة</title></Helmet>
+    <PageHeading title="النماذج والاقتراحات" description="صوتك وأفكارك يساهمان في تطوير صحوة. اختر النموذج المناسب." />
+    <div className="platform-row mb-4">
+      <span />
+      <Link className="team-button team-button-secondary" href="/team/forms/inbox"><Inbox size={16} aria-hidden="true" />الطلبات الواردة إليّ</Link>
+    </div>
+    {notice && <p className="team-success" role="status">{notice}</p>}
+    {error && <p className="team-error" role="alert">{error}</p>}
+    {user?.kind === 'account' && (
+      <>
+        {!data && !error ? <p className="team-loading"><Loader2 className="animate-spin" aria-hidden="true" /> جارٍ التحميل…</p> : data && (
+          <>
+            <div className="platform-grid platform-grid-3">
+              {data.forms.map((form) => (
+                <button key={form.id} className="platform-card text-right hover:border-[#D6AD63]" onClick={() => { setNotice(''); setOpen(form); }}>
+                  <h3 className="font-heading">{form.title}</h3><p>{form.description}</p>
+                  <span className="team-card-action">تقديم <ArrowUpLeft size={16} aria-hidden="true" /></span>
+                </button>
+              ))}
+              {data.pending.map((form) => (
+                <div key={form.id} className="platform-card opacity-80">
+                  <h3 className="font-heading flex items-center gap-2">{form.confidential && <Lock size={16} aria-hidden="true" />}{form.title}</h3>
+                  <p>{form.confidential ? 'المسار السري المستقل غير مفعل بعد إلى أن تُعتمد جهة الاستقبال. استخدم المسار المعتمد الحالي أدناه.' : 'هذا النموذج غير مفعل حاليًا.'}</p>
+                </div>
+              ))}
+            </div>
+            <h2 className="platform-section-title font-heading">طلباتي</h2>
+            {data.submissions.length ? (
+              <div className="platform-list">
+                {data.submissions.map((s) => (
+                  <article key={s.id} className="platform-item">
+                    <div className="platform-row"><h4>{s.title}</h4><span className="platform-chip">{s.statusLabel}</span></div>
+                    <p>{new Date(s.createdAt).toLocaleDateString('ar-EG')} · إلى: {s.routeTitle}</p>
+                    {s.response && <p className="mt-1">الرد: {s.response}{s.respondedBy && ` — ${s.respondedBy}`}</p>}
+                  </article>
+                ))}
+              </div>
+            ) : <p className="platform-empty">لم تقدّم طلبات بعد.</p>}
+          </>
+        )}
+      </>
+    )}
+    <h2 className="platform-section-title font-heading"><ClipboardList size={20} aria-hidden="true" />النماذج الحالية</h2>
     <section className="team-portal-grid team-portal-grid-two" aria-label="نماذج صحوة المهمة">
       {TEAM_FORMS.map((form, index) => {
         const Icon = icons[index] || ClipboardList;
@@ -21,5 +121,6 @@ export default function TeamForms() {
         </a>;
       })}
     </section>
+    {open && <FormDialog form={open} onClose={() => setOpen(null)} onSent={(m) => { setOpen(null); setNotice(m); void load(); }} />}
   </>;
 }

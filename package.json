@@ -15,7 +15,9 @@
     "test:session": "node --test tests/session.test.js tests/navigation.test.js",
     "test:studio": "node --test tests/studio.test.js tests/edge-editor.test.js",
     "test:library": "node --test tests/library.test.js",
-    "test:team": "node --test tests/team.test.js tests/team-ui.test.js tests/events.test.js tests/database.test.js"
+    "test:team": "node --test tests/team.test.js tests/team-ui.test.js tests/events.test.js tests/database.test.js",
+    "dev:local": "node scripts/dev-local.mjs",
+    "seed:test": "node --env-file-if-exists=.env.local scripts/seed-test-accounts.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "1.2.0",

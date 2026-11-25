@@ -1,0 +1,69 @@
+/* Sahwa internal platform. Reuses the team-space tokens (team.css / index.css). */
+.platform-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; margin-bottom:28px; }
+.platform-grid-3 { grid-template-columns:repeat(3,minmax(0,1fr)); }
+.platform-card { min-width:0; padding:24px; background:#fff8; border:1px solid var(--line); border-radius:22px; box-shadow:var(--card-shadow); }
+.platform-card h2, .platform-card h3 { color:var(--brand-primary); line-height:1.6; }
+.platform-card h2 { font-size:21px; margin:0 0 12px; }
+.platform-card h3 { font-size:17px; margin:0 0 8px; }
+.platform-card p { color:var(--text-muted); font-size:14px; line-height:1.9; }
+.platform-section-title { display:flex; align-items:center; gap:10px; font-size:19px; color:var(--brand-primary); margin:34px 0 14px; }
+.platform-section-title small { font-size:12px; color:var(--text-muted); font-weight:400; }
+.platform-muted { color:var(--text-muted); font-size:13px; line-height:1.8; }
+.platform-person { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:18px; }
+.platform-person h1 { font-size:26px; color:var(--brand-primary); margin:0 0 6px; }
+.platform-chips { display:flex; flex-wrap:wrap; gap:7px; }
+.platform-chip { display:inline-flex; align-items:center; gap:5px; padding:4px 11px; border-radius:99px; background:#7520260a; border:1px solid #75202612; color:var(--brand-primary); font-size:12px; line-height:1.7; }
+.platform-chip-gold { background:#d6ad6324; border-color:#d6ad6355; color:#6b4d16; }
+.platform-chip-muted { background:#765c5e10; border-color:#765c5e20; color:var(--text-muted); }
+.platform-role-card { display:flex; flex-direction:column; gap:14px; }
+.platform-role-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.platform-role-number { font-size:13px; color:#75202660; font-variant-numeric:tabular-nums; }
+.platform-definition { padding:14px 16px; border-radius:14px; background:#f2e9e280; border:1px solid var(--line); font-size:14px; line-height:1.95; color:#350e15; }
+.platform-contacts { display:grid; gap:10px; }
+.platform-contact { display:grid; grid-template-columns:minmax(90px,140px) 1fr; gap:10px; align-items:start; padding:10px 0; border-top:1px dashed var(--line); font-size:13px; }
+.platform-contact:first-child { border-top:0; }
+.platform-contact-label { color:var(--text-muted); }
+.platform-contact-name { font-weight:600; color:#350e15; }
+.platform-contact-vacant { color:#8d2026; font-size:12px; }
+.platform-details { border:1px solid var(--line); border-radius:14px; background:#fff6; }
+.platform-details > summary { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:46px; padding:10px 16px; cursor:pointer; color:var(--brand-primary); font-size:14px; list-style:none; }
+.platform-details > summary::-webkit-details-marker { display:none; }
+.platform-details[open] > summary { border-bottom:1px solid var(--line); }
+.platform-details > div { padding:14px 16px; max-height:70vh; overflow:auto; }
+.platform-shortcuts { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.platform-shortcut { display:flex; align-items:center; gap:10px; min-height:58px; padding:12px 14px; border-radius:16px; border:1px solid var(--line); background:#fff8; color:var(--brand-primary); font-size:14px; }
+.platform-shortcut:hover { border-color:var(--brand-gold); }
+.platform-stat { font-size:34px; color:var(--brand-primary); font-variant-numeric:tabular-nums; line-height:1.2; }
+.platform-empty { padding:22px; border:1px dashed var(--line); border-radius:18px; text-align:center; color:var(--text-muted); font-size:14px; line-height:1.9; }
+.platform-tabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:18px; }
+.platform-tabs button { min-height:42px; padding:7px 16px; border-radius:99px; border:1px solid var(--line); color:var(--text-muted); font-size:13px; }
+.platform-tabs button[aria-selected="true"] { background:var(--brand-primary); color:var(--bg-base); border-color:var(--brand-primary); }
+.platform-list { display:grid; gap:12px; }
+.platform-item { padding:16px 18px; border:1px solid var(--line); border-radius:16px; background:#fff8; }
+.platform-item h4 { font-size:15px; color:#350e15; margin:0 0 4px; }
+.platform-item p { font-size:13px; color:var(--text-muted); line-height:1.85; margin:0; white-space:pre-line; }
+.platform-row { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
+.platform-table-wrap { overflow-x:auto; border:1px solid var(--line); border-radius:16px; background:#fff8; }
+.platform-table { width:100%; border-collapse:collapse; font-size:13px; }
+.platform-table th, .platform-table td { padding:10px 12px; text-align:right; border-bottom:1px solid var(--line); vertical-align:top; }
+.platform-table th { color:var(--text-muted); font-weight:500; background:#f2e9e260; white-space:nowrap; }
+.platform-table tr:last-child td { border-bottom:0; }
+.platform-badge-soon { display:inline-block; margin-inline-start:4px; padding:0 7px; border-radius:99px; font-size:10px; background:#d6ad6330; color:#6b4d16; }
+.platform-secret { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; direction:ltr; unicode-bidi:isolate; background:#350e150a; padding:2px 7px; border-radius:6px; }
+.platform-ltr { direction:ltr; unicode-bidi:isolate; }
+.platform-notice { padding:13px 16px; border-radius:14px; background:#d6ad631f; border:1px solid #d6ad6355; color:#5b4214; font-size:13px; line-height:1.9; margin-bottom:18px; }
+.platform-form { display:grid; gap:14px; }
+.platform-form .team-field textarea { min-height:110px; }
+.platform-check { display:flex; align-items:center; gap:8px; font-size:13px; color:#350e15; }
+.platform-check input { width:17px; height:17px; accent-color:var(--brand-primary); }
+.team-navigation .platform-nav-soon { opacity:.75; }
+@media (max-width: 900px) {
+  .platform-grid, .platform-grid-3 { grid-template-columns:minmax(0,1fr); }
+  .platform-shortcuts { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .team-navigation { flex-wrap:nowrap; overflow-x:auto; max-width:calc(100vw - 120px); scrollbar-width:none; }
+  .team-navigation a { white-space:nowrap; }
+}
+@media (max-width: 520px) {
+  .platform-contact { grid-template-columns:minmax(0,1fr); gap:3px; }
+  .platform-card { padding:18px; border-radius:18px; }
+}

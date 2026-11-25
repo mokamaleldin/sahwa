@@ -1,9 +1,9 @@
 import TeamGuide from "../../../views/TeamGuide";
-import { requirePageUser } from "../../../../server/page-auth";
+import { requirePageActor } from "../../../../server/page-auth";
 
 export const metadata = { title: "لائحة صحوة" };
 
 export default async function GuidePage() {
-  await requirePageUser();
+  await requirePageActor({ permission: "guide.view" });
   return <TeamGuide />;
 }

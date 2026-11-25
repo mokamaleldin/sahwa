@@ -2,8 +2,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { currentUser, privateHeaders } from "../../../../server/auth.js";
-import { teamStore } from "../../../../server/team-store.js";
+import { privateHeaders } from "../../../../server/auth.js";
+import { currentActor } from "../../../../server/platform/session.js";
+import { canAny } from "../../../../server/platform/access.js";
+import { stores } from "../../../../server/platform/stores.js";
 
 export async function GET(request) {
   const embedded = new URL(request.url).searchParams.get("embed") === "1";
@@ -14,7 +16,8 @@ export async function GET(request) {
     "Content-Security-Policy": "frame-ancestors 'self'",
   };
   try {
-    if (!(await currentUser(request, teamStore))) {
+    const actor = await currentActor(request, stores);
+    if (!actor || actor.mustChangePassword || !canAny(actor, "studio.use")) {
       if (embedded)
         return new Response(
           '<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><p>انتهت الجلسة. سجّل الدخول مجددًا.</p><script>parent.postMessage({type:"sahwa:studio:expired"},location.origin)</script></html>',

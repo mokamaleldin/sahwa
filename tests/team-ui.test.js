@@ -6,7 +6,7 @@ import {JSDOM} from 'jsdom';
 import {compileUI} from './helpers/compile-ui.js';
 import {person} from './helpers/database.js';
 import {ageFromBirthDate} from '../shared/team-options.js';
-const at=compileUI('tmp/forms-tests',['shared/team-options.js','shared/volunteer-roles.js','src/components/Team/TeamComboField.tsx','src/components/Team/VolunteerRoleField.tsx','src/lib/team.ts','src/components/shared/PageIdentity.tsx','src/components/Team/TeamDialog.tsx','src/components/Team/PersonForm.tsx','src/components/Team/PersonDetails.tsx','src/components/Team/VolunteerCard.tsx','src/components/Team/EventForm.tsx','src/views/TeamVolunteers.tsx']);
+const at=compileUI('tmp/forms-tests',['shared/team-options.js','shared/volunteer-roles.js','src/components/Team/TeamComboField.tsx','src/components/Team/VolunteerRoleField.tsx','src/lib/team.ts','src/components/shared/PageIdentity.tsx','src/components/Team/TeamDialog.tsx','src/components/Team/PersonForm.tsx','src/components/Team/PersonAccess.tsx','src/components/Team/PersonDetails.tsx','src/components/Team/VolunteerCard.tsx','src/components/Team/EventForm.tsx','src/views/TeamVolunteers.tsx']);
 const{default:PersonForm}=await at('src/components/Team/PersonForm.js');
 const{default:EventForm}=await at('src/components/Team/EventForm.js');
 const{default:VolunteerCard}=await at('src/components/Team/VolunteerCard.js');
@@ -30,7 +30,7 @@ test('volunteer modal has exactly five required fields and no login controls',()
 test('event modal requires only its name and selects responsible people from volunteers',()=>{
  const volunteer={id:'00000000-0000-4000-8000-000000000001',fullName:'متطوع تجريبي',university:'استنيا',status:'نشط'};
  const html=renderToStaticMarkup(h(EventForm,{event:null,volunteers:[volunteer],onSave:noop,onDelete:noop,onClose:noop})),dom=new JSDOM(html),document=dom.window.document;
- assert.equal(document.querySelectorAll('input,select,textarea').length,5);assert.equal(document.querySelectorAll(':required').length,1);assert.equal(document.querySelector('select').required,false);
+ assert.equal(document.querySelectorAll('input,select,textarea').length,6);assert.equal(document.querySelector('input[type=checkbox]').checked,false,'events stay private by default');assert.equal(document.querySelectorAll(':required').length,1);assert.equal(document.querySelector('select').required,false);
  assert.ok(document.querySelector(`option[value="${volunteer.id}"]`));assert.equal(document.querySelector('input[type=date]').value,'');assert.equal(document.querySelector('input[type=number]').value,'');dom.window.close();
 });
 test('volunteer card shows calculated age, status and the full legacy assignment',()=>{
@@ -68,8 +68,8 @@ test('directory exposes gender and academic year filters',async()=>{
 test('volunteer details offer an explicit delete action with no immediate deletion',()=>{
  const value=person({fullName:'عاطف'});
  const html=renderToStaticMarkup(h(PersonDetails,{person:value,onEdit:noop,onDelete:noop,onClose:noop}));
- assert.ok(html.includes('حذف المتطوع'));
- assert.ok(!html.includes('نعم، احذف المتطوع'));
+ assert.ok(html.includes('أرشفة المتطوع'));
+ assert.ok(!html.includes('نعم، أرشف المتطوع'));
 });
 
 test('the Sahwa combobox pickers browse, search, allow custom values and preserve old assignments', async () => {

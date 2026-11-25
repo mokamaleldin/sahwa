@@ -23,12 +23,16 @@ import {
   type SahwaEvent,
   type SahwaEventInput,
   type ResponsibleVolunteer,
+  type EventScope,
+  type EventExtra,
 } from "../lib/team";
 import { normalizeSearch } from "../../shared/team-options.js";
 
 const PAGE_SIZE = 12;
 export default function TeamEvents() {
   const [volunteers, setVolunteers] = useState<ResponsibleVolunteer[]>([]);
+  const [scopes, setScopes] = useState<EventScope[]>([]);
+  const [canCreate, setCanCreate] = useState(true);
   const [events, setEvents] = useState<SahwaEvent[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
@@ -45,10 +49,14 @@ export default function TeamEvents() {
       const data = await teamRequest<{
         events: SahwaEvent[];
         volunteers: ResponsibleVolunteer[];
+        scopes?: EventScope[];
+        canCreate?: boolean;
       }>({ signal }, "/api/events");
       if (!signal?.aborted) {
         setEvents(data.events);
         setVolunteers(data.volunteers);
+        setScopes(data.scopes || []);
+        setCanCreate(data.canCreate !== false);
       }
     } catch (e) {
       if (!signal?.aborted)
@@ -108,13 +116,14 @@ export default function TeamEvents() {
   }, [events]);
   const pages = Math.max(1, Math.ceil(results.length / PAGE_SIZE)),
     current = Math.min(page, pages);
-  async function save(event: SahwaEventInput) {
+  async function save(event: SahwaEventInput, extra?: EventExtra) {
     const data = await teamRequest<{ event: SahwaEvent }>(
       {
         method: editing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           event,
+          ...(extra || {}),
           ...(editing ? { id: editing.id, revision: editing.revision } : {}),
         }),
       },
@@ -174,7 +183,7 @@ export default function TeamEvents() {
               <RefreshCw size={16} />
               تحديث
             </button>
-            <button
+            {canCreate && <button
               className="team-button"
               onClick={() => {
                 setNotice("");
@@ -184,7 +193,7 @@ export default function TeamEvents() {
             >
               <Plus size={18} />
               إضافة فعالية
-            </button>
+            </button>}
           </div>
         </div>
         {notice && (
@@ -319,13 +328,13 @@ export default function TeamEvents() {
                         <span>التاريخ غير محدد</span>
                       )}
                     </span>
-                    <button
+                    {event.canEdit !== false && <button
                       className="team-icon-button"
                       onClick={() => setEditing(event)}
                       aria-label={`تعديل فعالية ${event.title}`}
                     >
                       <Pencil size={17} />
-                    </button>
+                    </button>}
                   </div>
                   <h2 className="font-heading">{event.title}</h2>
                   <div className="team-event-meta">
@@ -380,6 +389,7 @@ export default function TeamEvents() {
           onSave={save}
           onDelete={remove}
           onClose={() => setEditing(undefined)}
+          scopes={scopes}
         />
       )}
     </>
