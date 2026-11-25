@@ -37,7 +37,7 @@ export function CredentialsReport({ items, onClear }: { items: Credential[]; onC
           <button className="team-button team-button-secondary" onClick={onClear}>إخفاء</button>
         </div>
       </div>
-      <p className="platform-notice">سلّم كل شخص بياناته عبر وسيلة خاصة. كلمة المرور مؤقتة لأول دخول وتنتهي بعد 7 أيام، ويختار الشخص بعدها كلمة مروره. لا تُحفظ هذه البيانات في المنصة ولا في GitHub، ولا يمكن عرضها مرة أخرى؛ عند فقدانها أعد ضبط الحساب.</p>
+      <p className="platform-notice">سلّم كل شخص بياناته عبر وسيلة خاصة. الكلمات المولدة تلقائيًا تنتهي بعد 7 أيام. لا تُحفظ هذه البيانات في المنصة ولا في GitHub، ولا يمكن عرضها مرة أخرى؛ عند فقدانها أعد ضبط الحساب.</p>
       <div className="platform-table-wrap">
         <table className="platform-table">
           <thead><tr><th>اسم الشخص</th><th>الجامعة</th><th>الدور</th><th>اسم المستخدم</th><th>حالة الحساب</th><th>بيانات التفعيل</th></tr></thead>
@@ -61,6 +61,8 @@ function Officials({ onCredentials }: { onCredentials: (c: Credential[]) => void
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [password, setPassword] = useState("");
+  const [requireChange, setRequireChange] = useState(true);
   const load = useCallback(async () => {
     setError("");
     try { setGroups((await get<{ groups: { id: string; title: string; people: Official[] }[] }>("officials")).groups); } catch (r) { setError(r instanceof Error ? r.message : "تعذر التحميل."); }
@@ -74,8 +76,9 @@ function Officials({ onCredentials }: { onCredentials: (c: Credential[]) => void
     for (const id of ids) {
       const person = byId.get(id);
       try {
-        const r = await post<Json>({ action, volunteerId: id });
-        if (r.temporaryPassword || r.existing) results.push({ fullName: person?.fullName || "", university: person?.university, role: person?.role.title, username: String(r.username), status: r.existing ? ACCOUNT_STATUS[String(r.status)] || String(r.status) : "بانتظار التفعيل", temporaryPassword: r.temporaryPassword as string | undefined, expiresAt: r.expiresAt as string | undefined });
+        const withPassword = (action === "create-account" || action === "reset-account") && password ? { password, requireChange } : {};
+        const r = await post<Json>({ action, volunteerId: id, ...withPassword });
+        if (r.temporaryPassword || r.existing || r.chosenPassword) results.push({ fullName: person?.fullName || "", university: person?.university, role: person?.role.title, username: String(r.username), status: r.existing ? ACCOUNT_STATUS[String(r.status)] || String(r.status) : "فعال", temporaryPassword: (r.temporaryPassword as string | undefined) || (r.chosenPassword ? password : undefined), expiresAt: r.expiresAt as string | undefined });
       } catch (reason) {
         setError(`${person?.fullName}: ${reason instanceof Error ? reason.message : "تعذر التنفيذ"}`);
       }
@@ -95,6 +98,12 @@ function Officials({ onCredentials }: { onCredentials: (c: Credential[]) => void
           <button className="team-button team-button-secondary" onClick={() => void load()} disabled={busy}><RefreshCw size={15} />تحديث</button>
           <button className="team-button" disabled={busy || !creatable.length} onClick={() => void run("create-account", creatable)}>{busy ? <Loader2 size={15} className="animate-spin" /> : <UserPlus size={15} />}إنشاء حسابات للمحددين ({creatable.length.toLocaleString("ar-EG")})</button>
         </div>
+      </div>
+      <div className="platform-card platform-form mb-4" style={{ maxWidth: 560 }}>
+        <label className="team-field"><span>كلمة مرور للحسابات الجديدة أو المعاد ضبطها <small>اختياري — اتركها فارغة لإنشاء كلمة مؤقتة مختلفة لكل شخص</small></span>
+          <input type="text" dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} maxLength={128} autoComplete="off" placeholder="8 أحرف على الأقل" />
+        </label>
+        <label className="platform-check"><input type="checkbox" checked={requireChange} onChange={(e) => setRequireChange(e.target.checked)} />يُطلب من الشخص تغييرها عند أول دخول</label>
       </div>
       {error && <p className="team-error mb-3" role="alert">{error}</p>}
       {groups.map((g) => (

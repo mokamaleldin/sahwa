@@ -10,7 +10,7 @@ import { createAdminHandler } from "../server/admin-api.js";
 import { createAccountHandler, createPostsHandler } from "../server/account-api.js";
 import { createFormsHandler } from "../server/forms-api.js";
 import { createPlatformStore } from "../server/platform/store.js";
-import { currentActor, testAccountsBlocked } from "../server/platform/session.js";
+import { currentActor } from "../server/platform/session.js";
 import { loadRealm, dashboardData, directoryData } from "../server/platform/service.js";
 
 let db, store, platform, sharedHash;
@@ -196,20 +196,19 @@ test("explicit deny overrides a role default and archived people lose access", a
   assert.equal((await (await auth(req("auth", "GET", undefined, lead.cookie))).json()).authenticated, false);
 });
 
-test("test accounts live in an isolated realm and never sign in on production", async () => {
-  const { team } = handlers();
-  await store.createVolunteer(person({ fullName: "متطوع حقيقي" }));
-  const tester = await member("مسؤول تجريبي", { isTest: true, roles: [{ roleId: "sahwa-lead" }] });
-  const names = (await (await team(req("team", "GET", undefined, tester.cookie))).json()).volunteers.map((v) => v.fullName);
-  assert.deepEqual(names, ["مسؤول تجريبي"]);
-  const real = await member("رئيس حقيقي", { roles: [{ roleId: "sahwa-lead" }] });
-  const realNames = (await (await team(req("team", "GET", undefined, real.cookie))).json()).volunteers.map((v) => v.fullName);
-  assert.ok(!realNames.includes("مسؤول تجريبي"));
-  process.env.VERCEL_ENV = "production";
-  assert.equal(await currentActor(req("auth", "GET", undefined, tester.cookie), { teamStore: store, platformStore: platform }), null);
-  assert.equal(testAccountsBlocked({ NODE_ENV: "production" }), true);
-  assert.equal(testAccountsBlocked({ NODE_ENV: "production", SAHWA_ALLOW_TEST_ACCOUNTS: "1", VERCEL_ENV: "preview" }), false);
-  assert.equal(testAccountsBlocked({ NODE_ENV: "production", SAHWA_ALLOW_TEST_ACCOUNTS: "1", VERCEL_ENV: "production" }), true);
+test("the administrator can set the initial password and choose whether it must change", async () => {
+  const { admin, auth } = handlers();
+  const head = await member("رئيس", { roles: [{ roleId: "sahwa-lead" }] });
+  const lead = await member("خالد علي", { account: false, roles: [{ roleId: "media-lead" }] });
+  const created = await (await admin(req("admin", "POST", { action: "create-account", volunteerId: lead.id, password: "Sahwa2345", requireChange: false }, head.cookie))).json();
+  assert.equal(created.chosenPassword, true);
+  assert.ok(!("temporaryPassword" in created) || created.temporaryPassword === undefined);
+  const login = await auth(req("auth", "POST", { identifier: created.username, password: "Sahwa2345" }));
+  assert.equal(login.status, 200);
+  assert.equal((await login.json()).user.mustChangePassword, false);
+  assert.equal((await admin(req("admin", "POST", { action: "reset-account", volunteerId: lead.id, password: "short" }, head.cookie))).status, 400);
+  const stored = (await db.query("SELECT password_hash FROM sahwa_accounts WHERE volunteer_id=$1", [lead.id])).rows[0].password_hash;
+  assert.ok(!stored.includes("Sahwa2345"));
 });
 
 test("contacts resolve to the people actually assigned, update on reassignment, and show vacancies", async () => {

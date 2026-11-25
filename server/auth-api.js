@@ -9,7 +9,7 @@ import {
   settings,
 } from "./auth.js";
 import { json, readInput, errorResponse } from "./http.js";
-import { currentActor, createAccountSession, sessionUser, testAccountsBlocked, USERNAME } from "./platform/session.js";
+import { currentActor, createAccountSession, sessionUser, USERNAME } from "./platform/session.js";
 
 // Keeps timing similar when a username does not exist.
 const DUMMY_HASH = "scrypt$16384$00000000000000000000000000000000$" + "0".repeat(64);
@@ -71,7 +71,6 @@ export function createAuthHandler(store, platformStore) {
       const valid = await verifyPassword(input.password, account?.passwordHash || DUMMY_HASH);
       if (!account || !valid || account.archivedAt) return invalid();
       if (account.accountStatus !== "active") return json({ error: "هذا الحساب موقوف. تواصل مع المسؤول المختص." }, 403);
-      if (account.isTest && testAccountsBlocked()) return json({ error: "الحسابات التجريبية غير متاحة في هذه البيئة." }, 403);
       if (account.mustChangePassword && account.temporaryExpiresAt && new Date(account.temporaryExpiresAt) < new Date())
         return json({ error: "انتهت صلاحية بيانات التفعيل. اطلب من المسؤول إعادة ضبط الحساب." }, 401);
       const cookie = await createAccountSession(account.accountId, remember, request, platformStore);

@@ -15,7 +15,6 @@ export default async function Page() {
       initial={profile || null}
       person={{ fullName: person.fullName, university: person.university, major: person.major }}
       roles={actor.assignments.map((a: { roleId: string; university: string | null; sector: string | null; id: string }) => describeAssignment(a)).map((r: { title: string; scope: string }) => `${r.title} — ${r.scope}`)}
-      isTest={actor.isTest}
     />
   );
 }

@@ -36,8 +36,8 @@ export default function AccountSettings({ username, forced }: { username: string
         {done && !forced ? <p className="team-success" role="status">تم تغيير كلمة المرور.</p> : (
           <form className="platform-form" onSubmit={submit}>
             <label className="team-field"><span>{forced ? "كلمة المرور المؤقتة" : "كلمة المرور الحالية"}</span><input name="currentPassword" type="password" dir="ltr" autoComplete="current-password" required maxLength={256} /></label>
-            <label className="team-field"><span>كلمة المرور الجديدة <small>10 أحرف على الأقل</small></span><input name="newPassword" type="password" dir="ltr" autoComplete="new-password" required minLength={10} maxLength={128} /></label>
-            <label className="team-field"><span>تأكيد كلمة المرور الجديدة</span><input name="confirm" type="password" dir="ltr" autoComplete="new-password" required minLength={10} maxLength={128} /></label>
+            <label className="team-field"><span>كلمة المرور الجديدة <small>8 أحرف على الأقل</small></span><input name="newPassword" type="password" dir="ltr" autoComplete="new-password" required minLength={8} maxLength={128} /></label>
+            <label className="team-field"><span>تأكيد كلمة المرور الجديدة</span><input name="confirm" type="password" dir="ltr" autoComplete="new-password" required minLength={8} maxLength={128} /></label>
             {error && <p className="team-error" role="alert">{error}</p>}
             <button className="team-button" disabled={busy}>{busy ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : <KeyRound size={16} aria-hidden="true" />}حفظ كلمة المرور</button>
           </form>

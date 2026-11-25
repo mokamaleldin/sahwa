@@ -30,8 +30,6 @@ npm run db:migrate
 npm run dev
 ```
 
-للتجربة دون Neon: `npm run dev:local` يشغّل المنصة على قاعدة PostgreSQL مدمجة في `.local-db` مع الحسابات التجريبية المعزولة (كلمة المرور `Sahwa2345`، وهي مرفوضة على الإنتاج).
-
 متغيرات الخادم:
 
 - `DATABASE_URL`: اتصال Neon المجمّع لتشغيل التطبيق.

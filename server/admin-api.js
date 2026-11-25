@@ -1,6 +1,7 @@
 import { TeamError, UUID, date } from "./team-data.js";
 import { json, readInput, errorResponse } from "./http.js";
-import { requireActor, forbidden, temporaryCredential } from "./platform/session.js";
+import { requireActor, forbidden, temporaryCredential, validateNewPassword } from "./platform/session.js";
+import { hashPassword } from "./auth.js";
 import {
   PERMISSIONS,
   PERMISSION_KEYS,
@@ -234,21 +235,31 @@ export function createAdminHandler(teamStore, platformStore) {
         const permission = { "create-account": "accounts.create", "reset-account": "accounts.reset", "suspend-account": "accounts.suspend", "reactivate-account": "accounts.suspend" }[action];
         if (!can(actor, permission, targets)) throw forbidden();
         const account = await platformStore.accountForVolunteer(person.id);
+        // The administrator may set the initial password; otherwise a unique
+        // temporary one is generated. Only the hash is ever stored.
+        async function credentialFor() {
+          if (typeof input.password === "string" && input.password) {
+            validateNewPassword(input.password);
+            const mustChange = input.requireChange !== false;
+            return { chosen: true, hash: await hashPassword(input.password), expiresAt: null, mustChange };
+          }
+          return { ...(await temporaryCredential()), mustChange: true };
+        }
         if (action === "create-account") {
           // An existing account is reused; its password is never replaced here.
           if (account) return json({ existing: true, username: account.username, status: account.accountStatus }, 200);
           const username = await uniqueUsername(person.fullName, (u) => platformStore.usernameTaken(u));
-          const credential = await temporaryCredential();
-          await platformStore.createAccount({ volunteerId: person.id, username, passwordHash: credential.hash, mustChange: true, expiresAt: credential.expiresAt, createdBy: label });
+          const credential = await credentialFor();
+          await platformStore.createAccount({ volunteerId: person.id, username, passwordHash: credential.hash, mustChange: credential.mustChange, expiresAt: credential.expiresAt, createdBy: label });
           await audit("account.create", person.id, { username });
-          return json({ created: true, fullName: person.fullName, university: person.university, username, temporaryPassword: credential.password, expiresAt: credential.expiresAt }, 201);
+          return json({ created: true, fullName: person.fullName, university: person.university, username, temporaryPassword: credential.password, chosenPassword: Boolean(credential.chosen), expiresAt: credential.expiresAt }, 201);
         }
         if (!account) throw new TeamError("لا يوجد حساب لهذا الشخص بعد.", 404);
         if (action === "reset-account") {
-          const credential = await temporaryCredential();
-          await platformStore.resetAccount(account.accountId, credential.hash, credential.expiresAt);
+          const credential = await credentialFor();
+          await platformStore.resetAccount(account.accountId, credential.hash, credential.expiresAt, credential.mustChange);
           await audit("account.reset", person.id, { username: account.username });
-          return json({ reset: true, fullName: person.fullName, username: account.username, temporaryPassword: credential.password, expiresAt: credential.expiresAt });
+          return json({ reset: true, fullName: person.fullName, username: account.username, temporaryPassword: credential.password, chosenPassword: Boolean(credential.chosen), expiresAt: credential.expiresAt });
         }
         const status = action === "suspend-account" ? "suspended" : "active";
         await platformStore.setAccountStatus(account.accountId, status);

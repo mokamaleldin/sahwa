@@ -19,6 +19,7 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
   const [adding, setAdding] = useState(false);
   const [roleId, setRoleId] = useState("");
   const [issued, setIssued] = useState<IssuedCredential | null>(null);
+  const [password, setPassword] = useState("");
   const allowed = person.allowed;
   const role = meta.assignableRoles.find((r) => r.id === roleId);
   const women = person.gender === "بنت";
@@ -40,9 +41,11 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
     const form = new FormData(event.currentTarget);
     void act({ action: "assign-role", volunteerId: person.id, roleId, university: form.get("university"), startsOn: form.get("startsOn") }, () => { setAdding(false); setRoleId(""); });
   }
-  const credential = (r: { fullName: string; username: string; temporaryPassword?: string; expiresAt?: string }) => {
-    if (r.temporaryPassword) setIssued({ fullName: r.fullName, username: r.username, temporaryPassword: r.temporaryPassword, expiresAt: r.expiresAt || "" });
+  const credential = (r: { fullName: string; username: string; temporaryPassword?: string; chosenPassword?: boolean; expiresAt?: string | null }) => {
+    const secret = r.temporaryPassword || (r.chosenPassword ? password : "");
+    if (secret) setIssued({ fullName: r.fullName, username: r.username, temporaryPassword: secret, expiresAt: r.expiresAt || "" });
   };
+  const chosen = password ? { password } : {};
   if (!allowed) return null;
   return (
     <section className="mt-6" aria-label="الأدوار والحساب">
@@ -96,9 +99,14 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
             {person.account.pending && person.account.status === "active" && " · بانتظار أول دخول"}
             {person.account.lastResetAt && ` · آخر إعادة ضبط: ${new Date(person.account.lastResetAt).toLocaleDateString("ar-EG")}`}
           </p>
+          {(allowed.createAccount || allowed.resetAccount) && (
+            <label className="team-field mt-2" style={{ maxWidth: 320 }}><span>كلمة مرور تختارها <small>اختياري؛ فارغة = كلمة مؤقتة تلقائية</small></span>
+              <input type="text" dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} maxLength={128} autoComplete="off" />
+            </label>
+          )}
           <div className="flex flex-wrap gap-2 mt-2">
-            {person.account.status === "none" && allowed.createAccount && <button className="team-button" disabled={busy} onClick={() => void act({ action: "create-account", volunteerId: person.id }, credential)}><KeyRound size={15} />إنشاء حساب</button>}
-            {person.account.status !== "none" && allowed.resetAccount && <button className="team-button team-button-secondary" disabled={busy} onClick={() => confirm("إعادة ضبط الحساب؟ ستتوقف كلمة المرور الحالية وتنتهي الجلسات.") && void act({ action: "reset-account", volunteerId: person.id }, credential)}>إعادة ضبط كلمة المرور</button>}
+            {person.account.status === "none" && allowed.createAccount && <button className="team-button" disabled={busy} onClick={() => void act({ action: "create-account", volunteerId: person.id, ...chosen }, credential)}><KeyRound size={15} />إنشاء حساب</button>}
+            {person.account.status !== "none" && allowed.resetAccount && <button className="team-button team-button-secondary" disabled={busy} onClick={() => confirm("إعادة ضبط الحساب؟ ستتوقف كلمة المرور الحالية وتنتهي الجلسات.") && void act({ action: "reset-account", volunteerId: person.id, ...chosen }, credential)}>إعادة ضبط كلمة المرور</button>}
             {person.account.status === "active" && allowed.suspendAccount && <button className="team-button team-button-secondary" disabled={busy} onClick={() => confirm("إيقاف الحساب؟ يُمنع الدخول فورًا.") && void act({ action: "suspend-account", volunteerId: person.id })}>إيقاف الحساب</button>}
             {person.account.status === "suspended" && allowed.suspendAccount && <button className="team-button" disabled={busy} onClick={() => void act({ action: "reactivate-account", volunteerId: person.id })}>إعادة التفعيل</button>}
           </div>
@@ -110,7 +118,7 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
         <div className="platform-notice mt-3" role="status">
           <strong>بيانات التفعيل لـ {issued.fullName} (تظهر مرة واحدة):</strong><br />
           اسم المستخدم: <span className="platform-secret">{issued.username}</span> · كلمة المرور المؤقتة: <span className="platform-secret">{issued.temporaryPassword}</span><br />
-          تنتهي في {new Date(issued.expiresAt).toLocaleString("ar-EG")}. سلّمها للشخص عبر وسيلة خاصة؛ سيختار كلمة مروره عند أول دخول.
+          {issued.expiresAt && `تنتهي في ${new Date(issued.expiresAt).toLocaleString("ar-EG")}. `}سلّمها للشخص عبر وسيلة خاصة؛ سيختار كلمة مروره عند أول دخول.
         </div>
       )}
     </section>
