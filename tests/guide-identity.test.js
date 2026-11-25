@@ -12,6 +12,12 @@ const books = outline.split(/(?=^# الباب )/m);
 const at = compileUI("tmp/bylaws-tests", [
   "src/components/shared/PageIdentity.tsx",
   "src/components/Team/GuideText.tsx",
+  "src/components/Team/GuideStructure.tsx",
+  "src/components/Team/TeamDialog.tsx",
+  "src/components/Team/GuideGovernance.tsx",
+  "src/data/sahwaGuide.ts",
+  "src/data/sahwaStructure.ts",
+  "src/data/sahwaGovernance.ts",
   "src/components/Team/GuideTabs.tsx",
   "src/views/TeamGuide.tsx",
 ]);
@@ -35,7 +41,7 @@ test("the two guide sources match the supplied UTF-8 files byte for byte", () =>
 
 test("all source text is reachable verbatim in the three tabs, including detailed identity and appendices", async () => {
   const dom = new JSDOM('<div id="root"></div>', {
-    url: "https://sahwa.world/team/guide#guide-structure", pretendToBeVisual: true,
+    url: "https://sahwa.world/team/guide#guide-structure-map", pretendToBeVisual: true,
   });
   const previous = { window: globalThis.window, document: globalThis.document, act: globalThis.IS_REACT_ACT_ENVIRONMENT };
   globalThis.window = dom.window;
@@ -51,7 +57,13 @@ test("all source text is reachable verbatim in the three tabs, including detaile
     await act(async () => root.render(h(TeamGuide)));
     assert.equal(current().id, "guide-structure");
     checkContent(current().querySelector('[data-book="2"]'), books[1]);
-    assert.equal(current().querySelector("a").pathname, "/team/guide/structure");
+    const outline = current().querySelector('[data-book="2"]');
+    await act(async () => outline.querySelector("summary").click());
+    assert.equal(outline.open, true);
+    const jump = outline.querySelector('a[href="#guide-structure-map"]');
+    assert.equal(jump.textContent, "رسم خطوط القيادة والتبعية والتنسيق.");
+    assert.equal(jump.pathname, "/team/guide");
+    assert.ok(current().querySelector(jump.hash));
 
     await press("Home");
     assert.equal(document.activeElement, tab("identity"));
@@ -63,6 +75,7 @@ test("all source text is reachable verbatim in the three tabs, including detaile
     await press("ArrowRight");
     assert.equal(document.activeElement, tab("policies"));
     assert.equal(current().id, "guide-policies");
+    assert.equal(document.querySelector(".guide-map"), null);
     const grouped = [...current().querySelectorAll("details[data-book]")];
     assert.equal(grouped.length, 5);
     for (const [i, section] of grouped.entries()) {

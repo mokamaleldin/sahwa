@@ -160,10 +160,14 @@ test("the guide shows each role's full source-specific duties and keeps team and
     await React.act(async () =>
       document.querySelector("#tab-guide-structure").click(),
     );
-    const mapLink = document.querySelector('[data-book="2"] a[href="/team/guide/structure"]');
-    assert.equal(mapLink.textContent, "رسم خطوط القيادة والتبعية والتنسيق.");
-    const { default: GuideStructure } = await at("src/components/Team/GuideStructure.js");
-    await React.act(async () => root.render(h(GuideStructure)));
+    const chapter = document.getElementById("guide-structure");
+    const outline = chapter.querySelector('[data-book="2"]');
+    const chart = chapter.querySelector("#guide-structure-map");
+    assert.equal(outline.open, false);
+    assert.equal(outline.nextElementSibling, chart);
+    assert.ok(chart.querySelector(".guide-map"));
+    assert.equal(chart.closest("details"), null);
+    assert.equal(document.querySelectorAll("#guide-structure").length, 1);
     assert.equal(document.querySelectorAll(".guide-map-council-member").length, 6);
     assert.equal(document.querySelectorAll(".guide-map-planned-item").length, 4);
     const roleButton = document.querySelector(

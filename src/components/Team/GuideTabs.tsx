@@ -4,10 +4,20 @@ import { useEffect, useState, type KeyboardEvent } from "react";
 import { BookOpen, ChevronDown, Network, ScrollText } from "lucide-react";
 import PageHeading from "../shared/PageIdentity";
 import GuideText from "./GuideText";
+import GuideStructure from "./GuideStructure";
 
 interface Book {
   title: string;
   body: string;
+}
+
+function BookDetails({ book, number, open = false }: { book: Book; number: number; open?: boolean }) {
+  return (
+    <details className="guide-reading-sheet guide-reading-book" data-book={number} open={open}>
+      <summary><span className="font-heading">{book.title}</span><ChevronDown size={20} aria-hidden="true" /></summary>
+      <GuideText source={book.body} />
+    </details>
+  );
 }
 
 const tabs = [
@@ -17,7 +27,7 @@ const tabs = [
 ] as const;
 
 function tabForHash(hash: string) {
-  if (hash === "#guide-structure") return 1;
+  if (hash === "#guide-structure" || hash === "#guide-structure-map") return 1;
   if (hash === "#guide-policies") return 2;
   return 0;
 }
@@ -35,7 +45,7 @@ export default function GuideTabs({ books, identity }: { books: Book[]; identity
 
   useEffect(() => {
     const hash = window.location.hash;
-    if (active === 0 && hash.startsWith("#guide-identity-")) {
+    if ((active === 0 && hash.startsWith("#guide-identity-")) || (active === 1 && hash === "#guide-structure-map")) {
       document.getElementById(hash.slice(1))?.scrollIntoView?.({ block: "start" });
     }
   }, [active]);
@@ -85,24 +95,26 @@ export default function GuideTabs({ books, identity }: { books: Book[]; identity
       {tabs.map(({ id }, index) => (
         <section key={id} id={id} role="tabpanel" aria-labelledby={`tab-${id}`} hidden={active !== index}
           tabIndex={0} className="guide-chapter-panel guide-reading-panel">
-          {active === index && (index < 2 ? (
+          {active === index && index === 0 && (
             <>
-              <article className="guide-reading-sheet" data-book={index + 1}>
-                <h2 className="font-heading">{books[index].title}</h2>
-                <GuideText source={books[index].body} />
+              <article className="guide-reading-sheet" data-book={1}>
+                <h2 className="font-heading">{books[0].title}</h2>
+                <GuideText source={books[0].body} />
               </article>
-              {index === 0 && (
-                <article id="guide-identity-details" className="guide-reading-sheet" data-identity>
-                  <GuideText source={identity} identity />
-                </article>
-              )}
+              <article id="guide-identity-details" className="guide-reading-sheet" data-identity>
+                <GuideText source={identity} identity />
+              </article>
             </>
-          ) : books.slice(2).map((book, i) => (
-            <details key={book.title} className="guide-reading-sheet guide-reading-book" data-book={i + 3} open={i === 0}>
-              <summary><span className="font-heading">{book.title}</span><ChevronDown size={20} aria-hidden="true" /></summary>
-              <GuideText source={book.body} />
-            </details>
-          )))}
+          )}
+          {active === index && index === 1 && (
+            <>
+              <BookDetails book={books[1]} number={2} />
+              <GuideStructure />
+            </>
+          )}
+          {active === index && index === 2 && books.slice(2).map((book, i) => (
+            <BookDetails key={book.title} book={book} number={i + 3} open={i === 0} />
+          ))}
         </section>
       ))}
     </>

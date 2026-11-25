@@ -35,7 +35,7 @@ export default function GuideText({ source, identity = false }: { source: string
                 return (
                   <li key={i}>
                     {text === "رسم خطوط القيادة والتبعية والتنسيق."
-                      ? <a href="/team/guide/structure">{text}</a>
+                      ? <a href="#guide-structure-map">{text}</a>
                       : inline(text)}
                   </li>
                 );

@@ -247,7 +247,8 @@ export default function GuideStructure() {
   return (
     <>
       <section
-        id="guide-structure"
+        id="guide-structure-map"
+        tabIndex={-1}
         className="guide-structure"
         aria-labelledby="guide-structure-title"
       >
@@ -261,7 +262,7 @@ export default function GuideStructure() {
         </div>
       </div>
         <div className="guide-section-heading guide-section-heading-center">
-          <a href="/team/guide#guide-structure">الباب الثاني: الهيكل الإداري والأدوار والصلاحيات</a>
+          <a href="#guide-structure">الباب الثاني: الهيكل الإداري والأدوار والصلاحيات</a>
           <h2 id="guide-structure-title">مين مسؤول عن إيه في صحوة؟</h2>
           <p>
             اضغط على أي منصب لقراءة مهامه وصلاحياته وحدودها كاملة وفق المسودة الجديدة، أو اختر فريقًا لمعرفة اختصاصه. وأسفل الخريطة تجد قواعد العمل والقرارات والتقارير.

@@ -1,2 +1,5 @@
-export const metadata = { title: "الهيكل الإداري والأدوار والصلاحيات" };
-export { default } from "../../../../components/Team/GuideStructure";
+import { redirect } from "next/navigation";
+
+export default function StructurePage() {
+  redirect("/team/guide#guide-structure-map");
+}
