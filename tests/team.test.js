@@ -4,10 +4,14 @@ import {validatePerson} from '../server/team-data.js';
 import {filterVolunteers,ageFromBirthDate,todayInIstanbul,normalizeMajor,PERSON_STATUSES,STUDY_YEARS,UNIVERSITIES} from '../shared/team-options.js';
 import {VOLUNTEER_ROLE_GROUPS,roleForVolunteer,volunteerRoleLabel} from '../shared/volunteer-roles.js';
 import {person} from './helpers/database.js';
-test('volunteers need only name, university, current status and gender',()=>{
- const value=validatePerson({fullName:'أحمد',university:'استنيا',status:'نشط',gender:'شاب'});
- for(const field of ['birthDate','phone','responsibility','team','major','studyYear'])assert.equal(value[field],'');
- for(const field of ['fullName','university','status','gender'])assert.throws(()=>validatePerson({...value,[field]:''}));
+test('volunteers require name, university, current status, gender and role while other fields are optional',()=>{
+ const base={fullName:'أحمد',university:'استنيا',status:'نشط',gender:'شاب',roleTitle:'عضو صحوة'};
+ const value=validatePerson(base);
+ assert.equal(value.responsibility,'عضو صحوة');
+ assert.equal(value.roleId,'sahwa-member');
+ for(const field of ['birthDate','phone','team','major','studyYear'])assert.equal(value[field],'');
+ for(const field of ['fullName','university','status','gender','roleTitle'])assert.throws(()=>validatePerson({...base,[field]:''}));
+ assert.throws(()=>validatePerson({fullName:'أحمد',university:'استنيا',status:'نشط',gender:'شاب'}),/الدور في صحوة/);
 });
 test('volunteer input never creates or changes login credentials',()=>{
  const value=validatePerson({...person(),email:'ignored@example.invalid',password:'ignored-secret',accessRole:'admin'});
@@ -84,7 +88,7 @@ test('a named committee requires its name; free text is bounded and preserved', 
 
 test('role groups put general membership first, board last, drop status tags and map legacy role IDs', () => {
   assert.equal(VOLUNTEER_ROLE_GROUPS[0].title, 'العضوية العامة');
-  assert.deepEqual(VOLUNTEER_ROLE_GROUPS[0].roles.map((r) => r.title), ['عضو صحوة', 'متطوع', 'عضو سابق']);
+  assert.deepEqual(VOLUNTEER_ROLE_GROUPS[0].roles.map((r) => r.title), ['عضو صحوة']);
   assert.equal(VOLUNTEER_ROLE_GROUPS.at(-1).title, 'مجلس الإدارة المركزي');
   assert.equal(VOLUNTEER_ROLE_GROUPS.at(-1).roles.length, 6);
   const allRoles = VOLUNTEER_ROLE_GROUPS.flatMap((group) => group.roles);

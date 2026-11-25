@@ -12,9 +12,10 @@ const{default:EventForm}=await at('src/components/Team/EventForm.js');
 const{default:VolunteerCard}=await at('src/components/Team/VolunteerCard.js');
 const{default:PersonDetails}=await at('src/components/Team/PersonDetails.js');
 const noop=()=>{};
-test('volunteer modal has exactly four required fields and no login controls',()=>{
+test('volunteer modal has exactly five required fields and no login controls',()=>{
  const html=renderToStaticMarkup(h(PersonForm,{person:null,onSave:noop,onClose:noop}));const dom=new JSDOM(html),document=dom.window.document;
- assert.equal(document.querySelectorAll(':required').length,4);
+ assert.equal(document.querySelectorAll(':required').length,5);
+ assert.equal(document.querySelector('input[name="roleTitle"]').required,true);
  for(const label of ['اسم المتطوع','الجامعة','الحالة الحالية','شاب أو بنت','تاريخ الميلاد','رقم الهاتف','الدور في صحوة'])assert.ok(html.includes(label),label);
  for(const excluded of ['البريد الإلكتروني','كلمة المرور','الصلاحيات','تاريخ الانضمام','المهارات','مجال التطوع','المسؤولية'])assert.ok(!html.includes(excluded),excluded);
  assert.equal(document.querySelector('input[type=date]').required,false);assert.equal(document.querySelector('input[type=tel]').required,false);
@@ -50,9 +51,9 @@ test('add volunteer opens a modal and saves a basic record without account field
  try{
   await React.act(async()=>root.render(h(HelmetProvider,null,h(Directory))));
   const button=[...document.querySelectorAll('button')].find(element=>element.textContent==='إضافة متطوع');assert.ok(button);await React.act(async()=>button.click());assert.ok(document.querySelector('dialog').open);
-  await fill('اسم المتطوع','شخص تجريبي');await fill('الجامعة','استنيا');await fill('شاب أو بنت','شاب');await fill('تاريخ الميلاد','2000-11-03');
+  await fill('اسم المتطوع','شخص تجريبي');await fill('الجامعة','استنيا');await fill('شاب أو بنت','شاب');await fill('الدور في صحوة','عضو صحوة');await fill('تاريخ الميلاد','2000-11-03');
   await React.act(async()=>document.querySelector('dialog form').dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true})));
-  assert.equal(posted.fullName,'شخص تجريبي');assert.equal(posted.university,'استنيا');assert.equal(posted.roleTitle,'');for(const key of ['email','password','accessRole'])assert.ok(!(key in posted));
+  assert.equal(posted.fullName,'شخص تجريبي');assert.equal(posted.university,'استنيا');assert.equal(posted.roleTitle,'عضو صحوة');for(const key of ['email','password','accessRole'])assert.ok(!(key in posted));
   assert.equal(document.querySelector('dialog'),null);assert.ok(document.querySelector('.team-person-card'));assert.ok(document.querySelector('.team-age'));
  }finally{await React.act(async()=>root.unmount());dom.window.close();globalThis.window=previous.window;globalThis.document=previous.document;globalThis.fetch=previous.fetch;globalThis.IS_REACT_ACT_ENVIRONMENT=previous.act;}
 });

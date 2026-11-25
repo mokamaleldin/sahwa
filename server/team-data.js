@@ -35,12 +35,12 @@ export function date(value, label, required = false) {
 }
 function volunteerAssignment(input) {
   if (!Object.hasOwn(input, "roleTitle")) {
-    return {
-      team: text(input, "team", "الفريق", 80),
-      responsibility: text(input, "responsibility", "الدور", 120),
-    };
+    const team = text(input, "team", "الفريق", 80);
+    const responsibility = text(input, "responsibility", "الدور في صحوة", 120);
+    if (!responsibility && !team) throw new TeamError("أدخل الدور في صحوة.");
+    return { team, responsibility };
   }
-  const title = text(input, "roleTitle", "الدور في صحوة", 120);
+  const title = text(input, "roleTitle", "الدور في صحوة", 120, true);
   const role = roleForTitle(title);
   return {
     roleId: role?.id ?? null,

@@ -21,7 +21,7 @@ export default function VolunteerRoleField({
     <TeamComboField
       label="الدور في صحوة"
       name="roleTitle"
-      optional
+      required
       fullWidth
       value={value}
       onChange={onChange}

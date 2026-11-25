@@ -4,9 +4,7 @@ export const VOLUNTEER_ROLE_GROUPS = [
   {
     title: "العضوية العامة",
     roles: [
-      { id: "sahwa-member", title: "عضو صحوة", keywords: "عضو داخل الجامعة عضو فاعل" },
-      { id: "volunteer", title: "متطوع", keywords: "متطوعة متطوع عام خارج اللجان" },
-      { id: "former-member", title: "عضو سابق", keywords: "خريج قديم" },
+      { id: "sahwa-member", title: "عضو صحوة", keywords: "عضو داخل الجامعة عضو فاعل متطوع عضو سابق خريج" },
     ],
   },
   {

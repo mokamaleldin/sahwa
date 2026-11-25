@@ -18,7 +18,7 @@ async function legacyUser(identifier='old-volunteer@example.invalid',role='volun
 }
 test('a volunteer is an independent record, with no account creation or credentials',async()=>{
  const cookie=await session(),team=createTeamHandler(store);
- const response=await team(req('team','POST',{person:{fullName:'أحمد',university:'استنيا',status:'نشط',gender:'شاب',email:'ignored@example.invalid',password,accessRole:'admin'}},cookie));assert.equal(response.status,201);let saved=(await response.json()).person;
+ const response=await team(req('team','POST',{person:{fullName:'أحمد',university:'استنيا',status:'نشط',gender:'شاب',roleTitle:'عضو صحوة',email:'ignored@example.invalid',password,accessRole:'admin'}},cookie));assert.equal(response.status,201);let saved=(await response.json()).person;
  for(const field of ['email','password','passwordHash','accessRole'])assert.ok(!(field in saved));assert.equal(saved.phone,'');assert.equal(saved.birthDate,'');
  assert.equal((await db.query('SELECT count(*)::int AS count FROM sahwa_users')).rows[0].count,0);
  const edited=await team(req('team','PUT',{id:saved.id,revision:saved.revision,person:person({fullName:'أحمد',phone:'+90 534 123 45 67'})},cookie));assert.equal(edited.status,200);saved=(await edited.json()).person;assert.equal(saved.birthDate,'2004-02-29');assert.equal(saved.phone,'+90 534 123 45 67');
@@ -132,7 +132,6 @@ test('volunteer roles round-trip through the API, including named committees, fr
   assert.equal(saved.responsibility, 'منسق نادي القراءة');
   const listed = (await (await handler(req('team','GET',undefined,cookie))).json()).volunteers;
   assert.deepEqual(listed, [saved]);
-  saved = await save({ ...saved, roleTitle: '' }, saved);
-  assert.equal(saved.responsibility, '');
-  assert.equal(saved.team, '');
+  const emptyRole = await handler(req('team', 'PUT', { id: saved.id, revision: saved.revision, person: { ...saved, roleTitle: '' } }, cookie));
+  assert.equal(emptyRole.status, 400);
 });
