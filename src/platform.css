@@ -256,5 +256,5 @@
 .workspace-navigation .workspace-bar { margin:12px 0 0; }
 @media(max-width:760px) {
   .dashboard-role-columns,.dashboard-topic-grid { grid-template-columns:minmax(0,1fr); }
-  .dashboard-role-card { padding:16px; }
+  .dashboard-roles .platform-role-card { padding:16px; }
 }
