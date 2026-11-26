@@ -360,10 +360,13 @@ test("event creation is scoped; everyone can read the register; community sharin
   assert.equal(readOnly.canCreate, false);
   assert.ok(readOnly.events.every((e) => e.canEdit === false && e.canDelete === false));
   assert.equal((await platform.internalEvents(false)).length, 0, "private by default");
-  assert.equal((await posts(req("posts", "POST", { kind: "news", title: "للجميع" }, lead.cookie))).status, 403, "cannot publish to everyone");
+  assert.equal((await posts(req("posts", "POST", { kind: "news", title: "للجميع" }, lead.cookie))).status, 201, "publishers can publish to everyone");
   assert.equal((await posts(req("posts", "POST", { kind: "news", title: "لاستنيا", audienceUniversity: "استنيا", audienceSector: "youth" }, lead.cookie))).status, 201);
   const seen = await (await posts(req("posts", "GET", undefined, other.cookie))).json();
-  assert.equal(seen.posts.length, 0);
+  assert.equal(seen.posts.length, 2);
+  assert.ok(seen.posts.every(p=>!("authorLabel" in p) && !("authorVolunteer" in p) && p.canDelete===false));
+  assert.equal((await posts(req("posts","DELETE",{id:seen.posts[0].id,revision:seen.posts[0].revision},other.cookie))).status,403);
+  assert.equal((await posts(req("posts","DELETE",{id:seen.posts[0].id,revision:seen.posts[0].revision},lead.cookie))).status,200);
 });
 
 test("activities members can read the complete register but cannot create or edit by default", async () => {

@@ -5,7 +5,7 @@ import { TeamError } from "../team-data.js";
 const PERSON = `v.id, v.full_name AS "fullName", v.university, v.major, v.study_year AS "studyYear", COALESCE(v.birth_date::text,'') AS "birthDate", v.gender, v.team, v.responsibility, v.role_id AS "roleId", v.phone, v.status, v.revision, v.membership_level AS "membershipLevel", v.is_test AS "isTest", v.archived_at AS "archivedAt"`;
 const ASSIGNMENT = `a.id, a.volunteer_id AS "volunteerId", a.role_id AS "roleId", a.university, a.sector, COALESCE(a.starts_on::text,'') AS "startsOn", COALESCE(a.ends_on::text,'') AS "endsOn", a.status, a.source, a.assigned_by AS "assignedBy", a.created_at AS "createdAt"`;
 const ACCOUNT = `c.id AS "accountId", c.username, c.email AS "accountEmail", c.status AS "accountStatus", c.must_change_password AS "mustChangePassword", c.temporary_expires_at AS "temporaryExpiresAt", c.last_login_at AS "lastLoginAt", c.last_reset_at AS "lastResetAt", c.created_at AS "accountCreatedAt"`;
-const POST = `p.id, p.kind, p.title, p.body, p.skills, p.link, COALESCE(p.happens_on::text,'') AS "happensOn", p.audience_university AS "audienceUniversity", p.audience_sector AS "audienceSector", p.audience_team AS "audienceTeam", p.author_label AS "authorLabel", p.revision, p.created_at AS "createdAt"`;
+const POST = `p.id, p.kind, p.title, p.body, p.skills, p.link, COALESCE(p.happens_on::text,'') AS "happensOn", p.audience_university AS "audienceUniversity", p.audience_sector AS "audienceSector", p.audience_team AS "audienceTeam", p.author_label AS "authorLabel", p.author_volunteer AS "authorVolunteer", p.revision, p.created_at AS "createdAt"`;
 const FORM = `f.id, f.slug, f.title, f.description, f.fields, f.routing, f.audience, f.active, f.confidential, f.sort_order AS "sortOrder", f.revision`;
 const SUBMISSION = `s.id, s.form_id AS "formId", s.form_snapshot AS "form", s.answers, s.route_role AS "routeRole", s.route_university AS "routeUniversity", s.route_sector AS "routeSector", s.status, s.response, s.responded_by AS "respondedBy", s.revision, s.created_at AS "createdAt", s.submitter_volunteer AS "submitterId"`;
 const PROFILE = `pr.volunteer_id AS "volunteerId", pr.handle, pr.display_name AS "displayName", pr.bio, pr.work, pr.skills, pr.participation, pr.links, pr.directory_fields AS "directoryFields", pr.public_fields AS "publicFields", pr.is_public AS "isPublic"`;
@@ -230,9 +230,9 @@ export function createPlatformStore(getClient = getSql) {
     },
     async internalEvents(isTest) {
       return query(
-        `SELECT e.id, e.title, COALESCE(e.event_date::text,'') AS "eventDate", e.university, e.sector, e.team, e.progress, COALESCE(v.full_name,'') AS responsible
+        `SELECT e.id, e.title, COALESCE(e.event_date::text,'') AS "eventDate", e.university, e.sector, e.team, e.progress, e.audience, COALESCE(v.full_name,'') AS responsible
          FROM sahwa_events e LEFT JOIN sahwa_volunteers v ON v.id=e.responsible_id
-         WHERE e.is_test=$1 AND e.audience='internal' ORDER BY e.event_date DESC NULLS LAST`,
+         WHERE e.is_test=$1 AND (e.audience='internal' OR e.progress='completed') ORDER BY e.event_date DESC NULLS LAST`,
         [isTest],
       );
     },
@@ -270,7 +270,11 @@ export function createPlatformStore(getClient = getSql) {
       )).id;
     },
     async submissionsBy(volunteerId) {
-      return query(`SELECT ${SUBMISSION} FROM sahwa_form_submissions s WHERE s.submitter_volunteer=$1 AND NOT s.direct_relation ORDER BY s.created_at DESC`, [volunteerId]);
+      return query(`SELECT ${SUBMISSION} FROM sahwa_form_submissions s WHERE s.submitter_volunteer=$1 AND NOT s.direct_relation AND s.hidden_by_submitter_at IS NULL ORDER BY s.created_at DESC`, [volunteerId]);
+    },
+    async hideOwnSubmission(id, volunteerId, isTest) {
+      const rows = await query("UPDATE sahwa_form_submissions SET hidden_by_submitter_at=now() WHERE id=$1 AND submitter_volunteer=$2 AND is_test=$3 AND NOT direct_relation RETURNING id", [id, volunteerId, isTest]);
+      if (!rows.length) throw new TeamError("الطلب غير موجود.", 404);
     },
     async submissionsForRoles(isTest, roleIds, permissions) {
       if (!roleIds.length) return [];
