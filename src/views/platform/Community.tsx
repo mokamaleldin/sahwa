@@ -98,12 +98,12 @@ function Publisher({ scopes, onClose }: { scopes: Data["publishScopes"]; onClose
   );
 }
 
-export default function Community({ data, showFeed, publish }: { data: Data; showFeed: boolean; publish: boolean }) {
+export default function Community({ data, showFeed, publish, workspace = false }: { data: Data; showFeed: boolean; publish: boolean; workspace?: boolean }) {
   const router = useRouter();
   const [publishing, setPublishing] = useState(publish && data.canPublish);
   return <section id="community">
     {showFeed && <>
-      <h2 className="platform-section-title font-heading">أهل صحوة</h2>
+      <h2 className="platform-section-title font-heading">ما يجري في صحوة</h2>
       <div className="community-columns">
         <section><h3 className="font-heading">مستجدات صحوة</h3><PostList posts={data.news} empty="لا توجد مستجدات حتى الآن." /></section>
         <section><h3 className="font-heading">الفعاليات والمشاريع القادمة</h3>
@@ -116,6 +116,7 @@ export default function Community({ data, showFeed, publish }: { data: Data; sho
         </section>
       </div>
     </>}
-    {publishing && <Publisher scopes={data.publishScopes} onClose={() => { setPublishing(false); router.replace("/team#community", {scroll: false}); }} />}
+    {workspace && data.canPublish && <><h1 className="platform-section-title font-heading">نشر مستجد</h1><button className="team-button" onClick={() => setPublishing(true)}>نشر مستجد</button></>}
+    {publishing && <Publisher scopes={data.publishScopes} onClose={() => { setPublishing(false); if (!workspace) router.replace("/team#community", {scroll: false}); }} />}
   </section>;
 }

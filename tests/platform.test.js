@@ -334,7 +334,18 @@ test("directory keeps sectors apart by default and shows only allowed fields", a
   assert.ok(!("phone" in card) && !("birthDate" in card) && !("status" in card));
 });
 
-test("events are scoped to the university and sector, and stay private unless shared", async () => {
+test("global Sahwa lead directory matches the non-archived register without exposing administrative fields", async () => {
+  const head = await member("المسؤول العام", { roles: [{ roleId: "sahwa-lead" }] });
+  await member("متطوعة", { gender: "بنت", account: false });
+  await member("غير نشط", { status: "غير نشط", account: false });
+  const actor = await currentActor(req("auth", "GET", undefined, head.cookie), { platformStore: platform });
+  const realm = await loadRealm(platform, false);
+  const directory = directoryData(actor, realm, "leads").all;
+  assert.equal(directory.length, realm.people.length);
+  assert.ok(directory.every((card) => !("phone" in card) && !("birthDate" in card) && !("status" in card)));
+});
+
+test("event creation is scoped; everyone can read the register; community sharing stays private by default", async () => {
   const { events, posts } = handlers();
   const lead = await member("مسؤول", { roles: [{ roleId: "university-youth-lead", university: "استنيا", sector: "youth" }] });
   const other = await member("مسؤول بيلجي", { university: "بيلجي", roles: [{ roleId: "university-youth-lead", university: "بيلجي", sector: "youth" }] });
@@ -342,9 +353,12 @@ test("events are scoped to the university and sector, and stay private unless sh
   assert.equal(created.status, 403, "cannot create in another university");
   const ok = await events(req("events", "POST", { event: { title: "لقاء استنيا", eventDate: "2099-01-01" }, scope: { university: "استنيا", sector: "youth" } }, lead.cookie));
   assert.equal(ok.status, 201);
-  assert.equal((await (await events(req("events", "GET", undefined, other.cookie))).json()).events.length, 0);
+  assert.equal((await (await events(req("events", "GET", undefined, other.cookie))).json()).events.length, 1);
   const volunteer = await member("متطوع", { roles: [{ roleId: "university-volunteer", university: "استنيا", sector: "youth" }] });
-  assert.equal((await events(req("events", "GET", undefined, volunteer.cookie))).status, 403);
+  const readOnly = await (await events(req("events", "GET", undefined, volunteer.cookie))).json();
+  assert.equal(readOnly.events.length, 1);
+  assert.equal(readOnly.canCreate, false);
+  assert.ok(readOnly.events.every((e) => e.canEdit === false && e.canDelete === false));
   assert.equal((await platform.internalEvents(false)).length, 0, "private by default");
   assert.equal((await posts(req("posts", "POST", { kind: "news", title: "للجميع" }, lead.cookie))).status, 403, "cannot publish to everyone");
   assert.equal((await posts(req("posts", "POST", { kind: "news", title: "لاستنيا", audienceUniversity: "استنيا", audienceSector: "youth" }, lead.cookie))).status, 201);
@@ -352,19 +366,18 @@ test("events are scoped to the university and sector, and stay private unless sh
   assert.equal(seen.posts.length, 0);
 });
 
-test("activities members can add events in their university and only edit events they created", async () => {
+test("activities members can read the complete register but cannot create or edit by default", async () => {
   const { events } = handlers();
   const lead = await member("مسؤول أنشطة", { roles: [{ roleId: "internal-activities-lead", university: "استنيا", sector: "youth" }] });
   const memberA = await member("عضو أ", { roles: [{ roleId: "internal-activities-member", university: "استنيا", sector: "youth" }] });
   const memberB = await member("عضو ب", { roles: [{ roleId: "internal-activities-member", university: "استنيا", sector: "youth" }] });
   const leadEv = await (await events(req("events", "POST", { event: { title: "فعالية المسؤول", eventDate: "2099-02-01" }, scope: { university: "استنيا", sector: "youth" } }, lead.cookie))).json();
   const aCreate = await events(req("events", "POST", { event: { title: "فعالية أ", eventDate: "2099-02-02" }, scope: { university: "استنيا", sector: "youth" } }, memberA.cookie));
-  assert.equal(aCreate.status, 201, "activities member can create an event in their university");
-  const aEv = (await aCreate.json()).event;
-  assert.equal((await events(req("events", "PUT", { id: aEv.id, revision: aEv.revision, event: { title: "فعالية أ المعدلة", eventDate: "2099-02-02" } }, memberA.cookie))).status, 200, "creator can edit their own event");
+  assert.equal(aCreate.status, 403, "activities member is read-only");
   assert.equal((await events(req("events", "PUT", { id: leadEv.event.id, revision: leadEv.event.revision, event: { title: "تعديل غير مسموح" } }, memberA.cookie))).status, 403, "member cannot edit someone else's event");
   const bList = await (await events(req("events", "GET", undefined, memberB.cookie))).json();
-  assert.equal(bList.events.length, 2, "member sees all university events");
+  assert.equal(bList.events.length, 1, "member sees the complete register");
+  assert.equal(bList.canCreate, false);
   assert.ok(bList.events.every((e) => e.canEdit === false), "member cannot edit events created by others");
   assert.equal((await events(req("events", "POST", { event: { title: "فعالية بيلجي" }, scope: { university: "بيلجي", sector: "youth" } }, memberA.cookie))).status, 403, "cannot add in another university");
 });

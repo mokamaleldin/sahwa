@@ -37,8 +37,8 @@ function PersonCard({ c, manager = false }: { c: Card; manager?: boolean }) {
             </article>);
 }
 
-export default function PeopleDirectory({ data, policy }: { data: Data; policy: string }) {
-  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>(data.groups.length ? "team" : data.university.length ? "university" : "all");
+export default function PeopleDirectory({ data, policy, global = false }: { data: Data; policy: string; global?: boolean }) {
+  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("all");
   const [query, setQuery] = useState("");
   const list = useMemo(() => {
     const q = normalizeSearch(query);
@@ -63,8 +63,9 @@ export default function PeopleDirectory({ data, policy }: { data: Data; policy: 
       </div>
       <p className="platform-muted mb-4">
         يعرض الدليل الاسم والجامعة والأدوار، وما اختار كل شخص مشاركته من ملفه فقط. لا تظهر أرقام الهواتف أو البيانات الإدارية.
-        {policy === "leads" && " يظهر من القطاع الآخر شاغلو المناصب الرسمية اللازمة للتنسيق فقط."}
-        {policy === "none" && " لا يظهر القطاع الآخر إلا لزملاء الفرق المشتركة."}
+        {global && " يعرض تبويب أهل صحوة جميع المتطوعين غير المؤرشفين، بمن فيهم المتوقفون وغير النشطين."}
+        {!global && policy === "leads" && " يظهر من القطاع الآخر شاغلو المناصب الرسمية اللازمة للتنسيق فقط."}
+        {!global && policy === "none" && " لا يظهر القطاع الآخر إلا لزملاء الفرق المشتركة."}
       </p>
       {tab === "team" && data.groups.length ? data.groups.map((g) => {
         const members = g.people.filter((p) => list.some((c) => c.id === p.id));

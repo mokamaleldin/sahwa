@@ -163,7 +163,7 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
       </Helmet>
       <PageHeading
         title="سجل الفعاليات"
-        description="ما أنجزناه معًا، محفوظ ببساطة. أضف الفعالية وتفاصيلها الأساسية."
+        description="ما أنجزناه معًا، محفوظ في سجل واحد لجميع أهل صحوة."
       />
       <section aria-label="فعاليات صحوة">
         <div className="team-directory-toolbar">
@@ -309,7 +309,7 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
                 ? "أعد المحاولة لعرض الفعاليات."
                 : events.length
                   ? "جرّب اسمًا آخر."
-                  : "أضف أول فعالية لنحفظ ما أنجزه فريق صحوة."}
+                  : canCreate ? "أضف أول فعالية لنحفظ ما أنجزه فريق صحوة." : "لا توجد فعاليات مسجلة بعد."}
             </p>
           </div>
         ) : (
@@ -329,7 +329,7 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
                         <span>التاريخ غير محدد</span>
                       )}
                     </span>
-                    {event.canEdit !== false && <button
+                    {event.canEdit === true && <button
                       className="team-icon-button"
                       onClick={() => setEditing(event)}
                       aria-label={`تعديل فعالية ${event.title}`}

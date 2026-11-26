@@ -240,3 +240,21 @@
   .internal-account summary { padding: 7px 10px; }
   .community-columns { grid-template-columns: 1fr; }
 }
+
+/* Personal dashboard: content-first, full-width, responsive role and contact cards. */
+.dashboard-roles { display:grid; gap:20px; }
+.dashboard-role-columns { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; align-items:start; }
+.dashboard-role-columns h4 { color:var(--brand-primary); font-size:17px; margin:0 0 12px; }
+.dashboard-contact-panel { min-width:0; padding:14px 16px; border:1px solid var(--line); border-radius:14px; }
+.dashboard-topic-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; align-items:start; }
+.dashboard-topic-wide { grid-column:1/-1; }
+.dashboard-topic > div { max-height:none; overflow:visible; }
+.dashboard-topic[open] > summary svg { transform:rotate(180deg); }
+.dashboard-daily-message { margin-top:18px; border-top:1px solid var(--line); padding-top:14px; }
+.dashboard-daily-message .dashboard-verse { color:var(--brand-primary); font-size:clamp(1.1rem,2vw,1.45rem); font-weight:600; line-height:1.9; }
+.dashboard-verse small { font-size:.7em; font-weight:400; }
+.workspace-navigation .workspace-bar { margin:12px 0 0; }
+@media(max-width:760px) {
+  .dashboard-role-columns,.dashboard-topic-grid { grid-template-columns:minmax(0,1fr); }
+  .dashboard-roles .platform-role-card { padding:16px; }
+}

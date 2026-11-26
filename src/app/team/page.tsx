@@ -1,10 +1,10 @@
 import { requirePageActor } from "../../../server/page-auth";
 import { platformStore } from "../../../server/platform/store.js";
 import { canAny } from "../../../server/platform/access.js";
-import { loadRealm, dashboardData, communityData, workspaceData } from "../../../server/platform/service.js";
+import { loadRealm, dashboardData, communityData } from "../../../server/platform/service.js";
 import { todayInIstanbul } from "../../../shared/team-options.js";
 import { roleById } from "../../../shared/platform-roles.js";
-import { roleText } from "../../lib/roleTexts";
+import { roleText, boardText, decisionTexts, generalVolunteerText } from "../../lib/roleTexts";
 import Dashboard from "../../views/platform/Dashboard";
 import Community from "../../views/platform/Community";
 
@@ -18,8 +18,10 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
     feed ? platformStore.posts(actor.isTest) : [], feed ? platformStore.internalEvents(actor.isTest) : [], searchParams,
   ]);
   const roles = realm ? dashboardData(actor, realm).roles.map((r: { roleId: string; sector: string | null }) => ({ ...r, text: roleText(r.roleId, r.sector) })) : [];
-  const community = communityData(actor, posts, events, todayInIstanbul());
-  return <Dashboard name={actor.fullName} roles={roles} owner={actor.kind === "owner"} tools={workspaceData(actor)}
+  const today = todayInIstanbul();
+  const community = communityData(actor, posts, events, today);
+  const boardMember = roles.some((r: {roleId: string}) => ["sahwa-lead", "women-sector-lead", "central-activities-lead", "media-lead", "central-relations-lead"].includes(r.roleId));
+  return <Dashboard name={actor.fullName} roles={roles} owner={actor.kind === "owner"} today={today} board={boardMember ? boardText() : null} general={generalVolunteerText()} decisions={decisionTexts(boardMember)}
     reviewActivity={actor.kind === "account" && actor.status !== "نشط" && actor.assignments.some((a: {roleId: string}) => roleById(a.roleId)?.level === "lead")}>
     {(feed || community.canPublish) && <Community key={params.publish || "read"} data={community} showFeed={feed} publish={params.publish === "1"} />}
   </Dashboard>;
