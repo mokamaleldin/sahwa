@@ -8,7 +8,7 @@ import { normalizeSearch } from "../../../shared/team-options.js";
 
 interface Card {
   id: string; name: string; university: string; major: string; bio: string; skills: string; work: string;
-  roles: { title: string; scope: string; team: string }[]; profileUrl: string;
+  roles: { title: string; university?: string | null; scope: string; team: string }[]; profileUrl: string;
 }
 interface Group { id: string; title: string; teamTitle: string; scope: string; people: Card[]; managerIds: string[]; canManage: boolean }
 interface Data { all: Card[]; university: Card[]; team: Card[]; groups: Group[] }
@@ -29,7 +29,13 @@ function PersonCard({ c, manager = false }: { c: Card; manager?: boolean }) {
                 </div>
               </div>
               {c.roles.length > 0 && (
-                <div className="platform-chips mt-3">{c.roles.map((r, i) => <span key={i} className="platform-chip" title={r.scope}>{r.title}</span>)}</div>
+                <div className="platform-chips mt-3">
+                  {c.roles.map((r, i) => (
+                    <span key={i} className="platform-chip" title={r.scope}>
+                      {r.university ? `${r.title} — ${r.university}` : r.title}
+                    </span>
+                  ))}
+                </div>
               )}
               {c.bio && <p className="mt-3">{c.bio}</p>}
               {c.skills && <p className="platform-muted mt-1">المهارات: {c.skills}</p>}
@@ -42,7 +48,7 @@ export default function PeopleDirectory({ data, policy, global = false }: { data
   const [query, setQuery] = useState("");
   const list = useMemo(() => {
     const q = normalizeSearch(query);
-    return data[tab].filter((c) => !q || normalizeSearch([c.name, c.university, c.major, c.skills, ...c.roles.map((r) => `${r.title} ${r.team}`)].join(" ")).includes(q));
+    return data[tab].filter((c) => !q || normalizeSearch([c.name, c.university, c.major, c.skills, ...c.roles.map((r) => `${r.title} ${r.university || ""} ${r.team}`)].join(" ")).includes(q));
   }, [data, tab, query]);
   return (
     <>

@@ -213,32 +213,42 @@ test("explicit deny overrides a role default and archived people lose access", a
   assert.equal((await (await auth(req("auth", "GET", undefined, lead.cookie))).json()).authenticated, false);
 });
 
-test("accounts are created with e-mail and username, and sign in with either", async () => {
+test("accounts are created with e-mail and password, and sign in with e-mail or internal username", async () => {
   const { admin, auth } = handlers();
   const owner = cookieOf(await auth(req("auth", "POST", { identifier: sharedEmail, password: sharedPassword })));
   const lead = await member("سارة أحمد", { gender: "بنت", account: false, roles: [{ roleId: "women-sector-lead" }] });
   const created = await admin(req("admin", "POST", { action: "create-account", volunteerId: lead.id, email: "Sara@Sahwa.com", username: "sara.lead", password: "Fixture-Pass-9x", requireChange: false }, owner));
   assert.equal(created.status, 201);
-  const activation = (await created.json()).temporaryPassword;
-  for (const identifier of ["sara@sahwa.com", "SARA.LEAD"]) assert.equal((await auth(req("auth", "POST", { identifier, password: activation }))).status, 200);
+  const body = await created.json();
+  assert.equal(body.chosenPassword, true);
+  assert.equal(body.temporaryPassword, undefined);
+  for (const identifier of ["sara@sahwa.com", "SARA.LEAD"]) assert.equal((await auth(req("auth", "POST", { identifier, password: "Fixture-Pass-9x" }))).status, 200);
   const other = await member("آخر", { account: false });
   assert.equal((await admin(req("admin", "POST", { action: "create-account", volunteerId: other.id, email: "sara@sahwa.com", password: "Fixture-Pass-9x" }, owner))).status, 409, "e-mail unique");
   assert.equal((await admin(req("admin", "POST", { action: "create-account", volunteerId: other.id, username: "sara.lead", password: "Fixture-Pass-9x" }, owner))).status, 409, "username unique");
 });
 
-test("activation is always one-time, including for older clients that submit a password", async () => {
+test("account creation supports an initial chosen password (still requiring change on first login) or auto-generated temporary password", async () => {
   const { admin, auth } = handlers();
   const head = await member("رئيس", { roles: [{ roleId: "sahwa-lead" }] });
   const lead = await member("خالد علي", { account: false, roles: [{ roleId: "media-lead" }] });
-  const created = await (await admin(req("admin", "POST", { action: "create-account", volunteerId: lead.id, password: "Fixture-Pass-9x", requireChange: false }, head.cookie))).json();
-  assert.equal(created.chosenPassword, false);
-  assert.ok(created.temporaryPassword && created.temporaryPassword !== "Fixture-Pass-9x");
-  const login = await auth(req("auth", "POST", { identifier: created.username, password: created.temporaryPassword }));
+  assert.equal((await admin(req("admin", "POST", { action: "create-account", volunteerId: lead.id, email: "khaled@sahwa.com", password: "short" }, head.cookie))).status, 400);
+  const created = await (await admin(req("admin", "POST", { action: "create-account", volunteerId: lead.id, email: "khaled@sahwa.com", password: "Fixture-Pass-9x", requireChange: false }, head.cookie))).json();
+  assert.equal(created.chosenPassword, true);
+  assert.equal(created.temporaryPassword, undefined);
+  const login = await auth(req("auth", "POST", { identifier: "khaled@sahwa.com", password: "Fixture-Pass-9x" }));
   assert.equal(login.status, 200);
   assert.equal((await login.json()).user.mustChangePassword, true);
   assert.equal((await admin(req("admin", "POST", { action: "reset-account", volunteerId: lead.id, password: "short" }, head.cookie))).status, 400);
   const stored = (await db.query("SELECT password_hash FROM sahwa_accounts WHERE volunteer_id=$1", [lead.id])).rows[0].password_hash;
   assert.ok(!stored.includes("Fixture-Pass-9x"));
+  const autoVol = await member("سالم نور", { account: false, roles: [{ roleId: "media-member" }] });
+  const auto = await (await admin(req("admin", "POST", { action: "create-account", volunteerId: autoVol.id, email: "salem@sahwa.com" }, head.cookie))).json();
+  assert.equal(auto.chosenPassword, false);
+  assert.ok(auto.temporaryPassword);
+  const autoLogin = await auth(req("auth", "POST", { identifier: "salem@sahwa.com", password: auto.temporaryPassword }));
+  assert.equal(autoLogin.status, 200);
+  assert.equal((await autoLogin.json()).user.mustChangePassword, true);
 });
 
 test("contacts resolve to the people actually assigned, update on reassignment, and show vacancies", async () => {
@@ -323,17 +333,22 @@ test("directory keeps sectors apart by default and shows only allowed fields", a
   await member("شاب آخر", { university: "بيلجي", account: false });
   await member("طالبة", { gender: "بنت", account: false });
   await member("مسؤولة", { gender: "بنت", roles: [{ roleId: "university-women-lead", university: "استنيا", sector: "women" }], account: false });
+  await member("جنة", { gender: "بنت", university: "استنيا", roles: [{ roleId: "university-relations-lead", university: "استنيا", sector: null }], account: false });
   await member("زميلة إعلام", { gender: "بنت", roles: [{ roleId: "media-member" }], account: false });
   await member("غير نشط", { status: "غير نشط", account: false });
   const actor = await currentActor(req("auth", "GET", undefined, viewer.cookie), { teamStore: store, platformStore: platform });
   const realm = await loadRealm(platform, false);
-  const names = directoryData(actor, realm, "leads").all.map((c) => c.name);
+  const allCards = directoryData(actor, realm, "leads").all;
+  const names = allCards.map((c) => c.name);
   assert.ok(names.includes("شاب آخر"), "across universities");
   assert.ok(!names.includes("طالبة"));
   assert.ok(names.includes("مسؤولة"), "official leads stay reachable");
   assert.ok(!names.includes("غير نشط"));
   assert.ok(!directoryData(actor, realm, "none").all.some((c) => c.name === "مسؤولة"));
-  const card = directoryData(actor, realm, "leads").all.find((c) => c.name === "شاب آخر");
+  const janna = allCards.find((c) => c.name === "جنة");
+  assert.equal(janna.roles[0].title, "مسؤولة العلاقات الجامعية");
+  assert.equal(janna.roles[0].university, "استنيا");
+  const card = allCards.find((c) => c.name === "شاب آخر");
   assert.ok(!("phone" in card) && !("birthDate" in card) && !("status" in card));
 });
 

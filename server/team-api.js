@@ -57,7 +57,7 @@ export function createTeamHandler(store, platformStore) {
           volunteers.push({
             ...person,
             groups: groupNames,
-            assignments: own.map((a) => ({ ...describeAssignment(a), canChange: assignTargetCheck(a) && !own.some((r) => r.roleId === "sahwa-lead") && actor.volunteerId !== p.id })),
+            assignments: own.map((a) => ({ ...describeAssignment(a, personWithSector.sector), canChange: assignTargetCheck(a) && !own.some((r) => r.roleId === "sahwa-lead") && actor.volunteerId !== p.id })),
             account: can(actor, "accounts.view", targets)
               ? accountId
                 ? { username, email: accountEmail, status: accountStatus, pending: mustChangePassword, lastLoginAt, lastResetAt, temporaryExpiresAt, createdAt: accountCreatedAt }
@@ -114,7 +114,7 @@ export function createTeamHandler(store, platformStore) {
         }
         const saved = await store.createVolunteer(person, { isTest: realmTest, assignment: role ? { roleId: role.id, university: scope.university, sector: scope.sector, assignedBy: actor.fullName, source: requested ? "manual" : "legacy" } : null });
         await platformStore.audit({ actor: actor.fullName, actorVolunteer: actor.volunteerId, action: "volunteer.create", target: saved.id, details: { university: person.university }, isTest: realmTest });
-        return json({ person: { ...saved, assignments: (await platformStore.assignmentsOf(saved.id)).map(describeAssignment), account: { status: "none" } } }, 201);
+        return json({ person: { ...saved, assignments: (await platformStore.assignmentsOf(saved.id)).map((a) => describeAssignment(a, sector)), account: { status: "none" } } }, 201);
       }
       recordVersion(input);
       const existing = await platformStore.person(input.id);

@@ -111,7 +111,7 @@ export function createAdminHandler(teamStore, platformStore) {
             const targets = volunteerTargets(p, own);
             if (!can(actor, "accounts.view", targets)) continue;
             const mayChange = (permission) => p.id !== actor.volunteerId && mayManagePerson(actor, own, permission, p) && can(actor, permission, targets);
-            const described = own.map(describeAssignment);
+            const described = own.map((a) => describeAssignment(a, p.sector));
             const key = p.university || "مركزي / بدون جامعة";
             if (!byUniversity.has(key)) byUniversity.set(key, []);
             byUniversity.get(key).push({
@@ -175,7 +175,7 @@ export function createAdminHandler(teamStore, platformStore) {
           if (!can(actor, "volunteers.view", targets)) throw forbidden();
           const history = await platformStore.assignmentsOf(person.id, { includeEnded: true });
           const grants = canAny(actor, "permissions.manage") ? await platformStore.grantsOf(person.id) : [];
-          return json({ assignments: history.map((a) => ({ ...describeAssignment(a), status: a.status, startsOn: a.startsOn, endsOn: a.endsOn, assignedBy: a.assignedBy })), active: assignments.length, grants });
+          return json({ assignments: history.map((a) => ({ ...describeAssignment(a, person.sector), status: a.status, startsOn: a.startsOn, endsOn: a.endsOn, assignedBy: a.assignedBy })), active: assignments.length, grants });
         }
         return json({ error: "طلب غير معروف." }, 400);
       }
@@ -249,11 +249,13 @@ export function createAdminHandler(teamStore, platformStore) {
         const bootstrapHead = action === "create-account" && actor.kind === "owner";
         if ((!bootstrapHead && !mayManagePerson(actor, assignments, permission, person)) || !can(actor, permission, targets)) throw forbidden();
         const account = await platformStore.accountForVolunteer(person.id);
-        // Custom passwords are accepted only on an explicit reset of an existing account.
+        // Accept an admin-chosen password on account creation or reset (validated,
+        // hashed, and requiring change on first login for new accounts); otherwise
+        // generate a random one-time temporary password.
         async function credentialFor() {
-          if (action === "reset-account" && typeof input.password === "string" && input.password) {
+          if ((action === "create-account" || action === "reset-account") && typeof input.password === "string" && input.password) {
             validateNewPassword(input.password);
-            const mustChange = input.requireChange !== false;
+            const mustChange = action === "create-account" ? true : input.requireChange !== false;
             return { chosen: true, hash: await hashPassword(input.password), expiresAt: null, mustChange };
           }
           return { ...(await temporaryCredential()), mustChange: true };
@@ -285,7 +287,7 @@ export function createAdminHandler(teamStore, platformStore) {
           const credential = await credentialFor();
           await platformStore.resetAccount(account.accountId, credential.hash, credential.expiresAt, credential.mustChange);
           await audit("account.reset", person.id, { username: account.username });
-          return json({ reset: true, fullName: person.fullName, username: account.username, temporaryPassword: credential.password, chosenPassword: Boolean(credential.chosen), expiresAt: credential.expiresAt });
+          return json({ reset: true, fullName: person.fullName, username: account.username, email: account.email || null, temporaryPassword: credential.password, chosenPassword: Boolean(credential.chosen), expiresAt: credential.expiresAt });
         }
         const status = action === "suspend-account" ? "suspended" : "active";
         await platformStore.setAccountStatus(account.accountId, status);

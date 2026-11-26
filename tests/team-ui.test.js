@@ -188,3 +188,50 @@ test('the Sahwa combobox pickers browse, search, allow custom values and preserv
    globalThis.IS_REACT_ACT_ENVIRONMENT = previous.act;
  }
 });
+
+test('account creation uses email and password only, and volunteer details pin tabs without org-level or start-date clutter', async () => {
+  const { default: CreateAccountForm } = await at('src/components/Team/CreateAccountForm.js');
+  const { default: PersonAccess } = await at('src/components/Team/PersonAccess.js');
+  const { default: OrganizationalRoleOptions } = await at('src/components/Team/OrganizationalRoleOptions.js');
+  const { PLATFORM_ROLES } = await import('../shared/platform-roles.js');
+
+  const createHtml = renderToStaticMarkup(h(CreateAccountForm, { volunteerId: 'v-1', fullName: 'آية', onCreated: noop }));
+  const createDom = new JSDOM(createHtml);
+  assert.ok(createDom.window.document.querySelector('input[name="email"][type="email"][required]'));
+  assert.ok(createDom.window.document.querySelector('input[name="password"][type="password"]'));
+  assert.ok(createDom.window.document.querySelector('button[type="button"][aria-pressed="false"]'));
+  assert.equal(createDom.window.document.querySelector('input[name="username"]'), null);
+  assert.ok(!createHtml.includes('اسم المستخدم'));
+  createDom.window.close();
+
+  const meta = {
+    canAssign: true,
+    canCreate: true,
+    globalAdmin: false,
+    assignableRoles: PLATFORM_ROLES.map((r) => ({ id: r.id, title: r.title, titleWomen: r.titleWomen || null, scope: r.scope, sector: r.sector, deferred: Boolean(r.deferred) })),
+  };
+  const volunteer = {
+    ...person({ fullName: 'آية', gender: 'بنت' }),
+    assignments: [],
+    account: { status: 'none' },
+    allowed: { edit: true, archive: true, assign: true, createAccount: true, resetAccount: true, suspendAccount: true, level: true },
+  };
+  const detailsHtml = renderToStaticMarkup(h(PersonDetails, { person: volunteer, meta, onChanged: noop, onEdit: noop, onDelete: noop, onClose: noop }));
+  const detailsDom = new JSDOM(detailsHtml);
+  assert.ok(detailsDom.window.document.querySelector('.team-dialog-header .dialog-tabs'), 'tabs live inside sticky dialog header');
+  assert.ok(!detailsHtml.includes('المستوى التنظيمي'));
+  assert.ok(detailsHtml.includes('ملف المتطوع') && detailsHtml.includes('إنشاء حساب'));
+  detailsDom.window.close();
+
+  const accessHtml = renderToStaticMarkup(h(PersonAccess, { person: volunteer, meta, onChanged: noop, mode: 'roles' }));
+  assert.ok(!accessHtml.includes('المستوى التنظيمي'));
+  assert.ok(!accessHtml.includes('بداية التكليف'));
+
+  const optionsHtml = renderToStaticMarkup(h('select', null, h(OrganizationalRoleOptions, { roles: meta.assignableRoles, women: true })));
+  const optionsDom = new JSDOM(optionsHtml);
+  const labels = [...optionsDom.window.document.querySelectorAll('optgroup')].map((g) => g.getAttribute('label'));
+  assert.deepEqual(labels, ['العام', 'فريق الجامعة', 'الفرق والوحدات المركزية', 'الإدارة المركزية']);
+  for (const title of ['متطوعة عامة داخل الجامعة', 'متطوعة عامة مركزية', 'مسؤولة العلاقات الجامعية', 'عضوة العلاقات الجامعية'])
+    assert.ok(optionsHtml.includes(title), title);
+  optionsDom.window.close();
+});

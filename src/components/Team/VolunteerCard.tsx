@@ -53,7 +53,7 @@ export default function VolunteerCard({
       <div className="team-person-role">
         <strong>
           {hasAssignments
-            ? person.assignments.map((a) => a.title).join("، ")
+            ? person.assignments.map((a) => (a.university ? `${a.title} — ${a.university}` : a.title)).join("، ")
             : volunteerRoleLabel(person) || "الدور غير محدد"}
         </strong>
         {role?.status && <span>{role.status}</span>}

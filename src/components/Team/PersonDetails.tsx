@@ -45,7 +45,7 @@ export default function PersonDetails({
     meta &&
       onChanged &&
       person.allowed &&
-      (person.assignments.length > 0 || person.allowed.assign || person.allowed.level),
+      (person.assignments.length > 0 || person.allowed.assign),
   );
   const hasAccountTab = Boolean(meta && onChanged && person.account);
   const tabs: { id: TabId; label: string }[] = [
@@ -55,7 +55,7 @@ export default function PersonDetails({
       ? [
           {
             id: "account" as const,
-            label: person.account?.status === "none" ? "إنشاء حساب" : "الحساب والدخول",
+            label: person.account?.status === "none" ? "إنشاء حساب" : "تعديل الحساب",
           },
         ]
       : []),
@@ -72,30 +72,31 @@ export default function PersonDetails({
       person.gender === "شاب" ? "شاب" : person.gender === "بنت" ? "بنت" : "",
     ],
     ["العمر", age === null ? "" : `${age.toLocaleString("ar-EG")} سنة`],
-    ["المستوى التنظيمي", person.membershipLevel || "متطوع"],
     ["رقم الهاتف", person.phone],
   ];
 
+  const tabBar =
+    tabs.length > 1 ? (
+      <div className="dialog-tabs" role="tablist" aria-label="أقسام ملف المتطوع">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === t.id}
+            onClick={() => {
+              setTab(t.id);
+              setConfirmDelete(false);
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+    ) : undefined;
+
   return (
-    <TeamDialog title={person.fullName} onClose={onClose} busy={deleting}>
-      {tabs.length > 1 && (
-        <div className="dialog-tabs" role="tablist" aria-label="أقسام ملف المتطوع">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              role="tab"
-              aria-selected={activeTab === t.id}
-              onClick={() => {
-                setTab(t.id);
-                setConfirmDelete(false);
-              }}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      )}
+    <TeamDialog title={person.fullName} headerExtra={tabBar} onClose={onClose} busy={deleting}>
 
       <div className="team-form-body">
         {activeTab === "info" && (

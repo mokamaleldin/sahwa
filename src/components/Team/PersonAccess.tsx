@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { Check, Copy, KeyRound, Loader2, Plus, RefreshCw, ShieldAlert, X } from "lucide-react";
+import { useId, useState, type FormEvent } from "react";
+import { Check, Copy, Eye, EyeOff, KeyRound, Loader2, Plus, RefreshCw, ShieldAlert, X } from "lucide-react";
 import { teamRequest, type Volunteer, type VolunteerMeta } from "../../lib/team";
 import { UNIVERSITIES } from "../../../shared/team-options.js";
 import OrganizationalRoleOptions from "./OrganizationalRoleOptions";
@@ -10,12 +10,11 @@ const ACCOUNT_STATUS: Record<string, string> = {
   active: "فعال",
   suspended: "موقوف",
 };
-const LEVELS = ["متطوع", "عضو فاعل", "مسؤول"];
 const SECTOR: Record<string, string> = { youth: "الشباب", women: "الطالبات" };
 
 export interface IssuedCredential {
   fullName: string;
-  username: string;
+  login: string;
   temporaryPassword: string;
   expiresAt: string;
 }
@@ -30,9 +29,7 @@ const admin = <T,>(body: Record<string, unknown>) =>
     "/api/admin",
   );
 
-// Roles, membership level and login account of one volunteer.
-// Supports `mode="roles"` | `mode="account"` | `mode="all"` so PersonDetails
-// can separate role management cleanly from account management.
+// Roles and login account management of one volunteer.
 export default function PersonAccess({
   person,
   meta,
@@ -44,6 +41,7 @@ export default function PersonAccess({
   onChanged: () => Promise<void> | void;
   mode?: "roles" | "account" | "all";
 }) {
+  const idPrefix = useId();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -54,6 +52,7 @@ export default function PersonAccess({
   const [copied, setCopied] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
   const [password, setPassword] = useState("");
+  const [showResetPassword, setShowResetPassword] = useState(false);
   const allowed = person.allowed;
   const role = meta.assignableRoles.find((r) => r.id === roleId);
   const women = person.gender === "بنت";
@@ -83,13 +82,12 @@ export default function PersonAccess({
         volunteerId: person.id,
         roleId,
         university: form.get("university"),
-        startsOn: form.get("startsOn"),
       },
       () => {
         setAdding(false);
         setReplacing(null);
         setRoleId("");
-        setNotice(replacing ? "تم تحديث الدور التنظيمي." : "تم إسناد الدور بنجاح.");
+        setNotice(replacing ? "تم تحديث الدور." : "تم إسناد الدور بنجاح.");
       },
     );
   }
@@ -97,6 +95,7 @@ export default function PersonAccess({
   const credential = (r: {
     fullName: string;
     username: string;
+    email?: string | null;
     temporaryPassword?: string;
     chosenPassword?: boolean;
     expiresAt?: string | null;
@@ -105,7 +104,7 @@ export default function PersonAccess({
     if (secret) {
       setIssued({
         fullName: r.fullName,
-        username: r.username,
+        login: r.email || person.account?.email || r.username,
         temporaryPassword: secret,
         expiresAt: r.expiresAt || "",
       });
@@ -113,11 +112,12 @@ export default function PersonAccess({
     }
     setResetOpen(false);
     setPassword("");
+    setShowResetPassword(false);
   };
 
   async function copyCredentials() {
     if (!issued) return;
-    const text = `بيانات الدخول لمنصة صحوة (${issued.fullName}):\nاسم الدخول: ${issued.username}\nكلمة المرور المؤقتة: ${issued.temporaryPassword}\nرابط الدخول: https://sahwa.world/login`;
+    const text = `بيانات الدخول لمنصة صحوة (${issued.fullName}):\nالبريد الإلكتروني: ${issued.login}\nكلمة المرور المؤقتة: ${issued.temporaryPassword}\nرابط الدخول: https://sahwa.world/login`;
     try {
       await navigator.clipboard?.writeText(text);
       setCopied(true);
@@ -129,13 +129,14 @@ export default function PersonAccess({
   if (!allowed) return null;
   const showRoles = mode === "roles" || mode === "all";
   const showAccount = mode === "account" || mode === "all";
+  const resetPasswordId = `${idPrefix}-reset-password`;
 
   return (
-    <section aria-label={mode === "roles" ? "الأدوار التنظيمية" : mode === "account" ? "حساب الدخول" : "الأدوار والحساب"}>
+    <section aria-label={mode === "roles" ? "الأدوار" : mode === "account" ? "الحساب" : "الأدوار والحساب"}>
       {showRoles && (
         <div>
           <div className="platform-row mb-3">
-            <h3 className="font-heading text-base text-brand-primary m-0">الأدوار التنظيمية</h3>
+            <h3 className="font-heading text-base text-brand-primary m-0">الأدوار</h3>
             {allowed.assign && meta.assignableRoles.length > 0 && !adding && (
               <button
                 type="button"
@@ -198,7 +199,7 @@ export default function PersonAccess({
             </ul>
           ) : (
             <p className="platform-empty">
-              لا يوجد دور تنظيمي مسند حاليًا.
+              لا يوجد دور مسند حاليًا.
               {person.responsibility && ` (المسمى السابق: ${person.responsibility})`}
             </p>
           )}
@@ -206,12 +207,12 @@ export default function PersonAccess({
           {allowed.assign && meta.assignableRoles.length > 0 && adding && (
             <form className="platform-item platform-form mt-3" onSubmit={assign}>
               <h4 className="font-heading text-sm text-brand-primary m-0">
-                {replacing ? "تغيير الدور الحالي" : "إسناد دور جديد"}
+                {replacing ? "تغيير الدور الحالي" : "إضافة دور جديد"}
               </h4>
               <label className="team-field">
                 <span>الدور *</span>
-                <select value={roleId} onChange={(e) => setRoleId(e.target.value)} required>
-                  <option value="">اختر من التصنيفات المعتمدة</option>
+                <select name="roleId" value={roleId} onChange={(e) => setRoleId(e.target.value)} required>
+                  <option value="">اختر الدور</option>
                   <OrganizationalRoleOptions roles={meta.assignableRoles} women={women} />
                 </select>
               </label>
@@ -230,15 +231,9 @@ export default function PersonAccess({
                   القطاع: {SECTOR[role.sector === "required" ? (women ? "women" : "youth") : role.sector]} (بحسب النوع المسجل)
                 </p>
               )}
-              <label className="team-field">
-                <span>
-                  بداية التكليف <small>اختياري</small>
-                </span>
-                <input type="date" name="startsOn" />
-              </label>
               <div className="flex flex-wrap gap-2">
                 <button type="submit" className="team-button" disabled={busy || !roleId}>
-                  {replacing ? "حفظ التغيير" : "إسناد الدور"}
+                  {replacing ? "حفظ التغيير" : "حفظ الدور"}
                 </button>
                 <button
                   type="button"
@@ -253,30 +248,6 @@ export default function PersonAccess({
               </div>
             </form>
           )}
-
-          {allowed.level && (
-            <div className="platform-item mt-4">
-              <label className="team-field" style={{ maxWidth: 280 }}>
-                <span>
-                  المستوى التنظيمي <small>متطوع / عضو فاعل / مسؤول</small>
-                </span>
-                <select
-                  value={person.membershipLevel || "متطوع"}
-                  disabled={busy}
-                  onChange={(e) =>
-                    void act(
-                      { action: "set-level", volunteerId: person.id, level: e.target.value },
-                      () => setNotice("تم تحديث المستوى التنظيمي."),
-                    )
-                  }
-                >
-                  {LEVELS.map((l) => (
-                    <option key={l}>{l}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          )}
         </div>
       )}
 
@@ -290,7 +261,7 @@ export default function PersonAccess({
                 onCreated={async (a) => {
                   setIssued({
                     fullName: a.fullName,
-                    username: a.email ? `${a.email} (${a.username})` : a.username,
+                    login: a.email || a.username,
                     temporaryPassword: a.password,
                     expiresAt: a.expiresAt || "",
                   });
@@ -323,12 +294,6 @@ export default function PersonAccess({
 
               <dl className="team-detail-grid">
                 <div>
-                  <dt>اسم المستخدم</dt>
-                  <dd>
-                    <span className="platform-secret">{person.account.username}</span>
-                  </dd>
-                </div>
-                <div>
                   <dt>البريد الإلكتروني</dt>
                   <dd>
                     {person.account.email ? (
@@ -338,6 +303,14 @@ export default function PersonAccess({
                     )}
                   </dd>
                 </div>
+                {!person.account.email && person.account.username && (
+                  <div>
+                    <dt>معرّف الدخول</dt>
+                    <dd>
+                      <span className="platform-secret">{person.account.username}</span>
+                    </dd>
+                  </div>
+                )}
               </dl>
 
               <div className="flex flex-wrap gap-2">
@@ -352,7 +325,7 @@ export default function PersonAccess({
                     }}
                   >
                     <RefreshCw size={15} aria-hidden="true" />
-                    إعادة ضبط كلمة المرور
+                    تغيير كلمة المرور
                   </button>
                 )}
                 {person.account.status === "active" && allowed.suspendAccount && (
@@ -393,23 +366,36 @@ export default function PersonAccess({
                   <p className="platform-muted">
                     ستتوقف كلمة المرور الحالية وتنتهي جلسات المتطوع فورًا، وسيُطلب منه اختيار كلمة مرور جديدة عند الدخول.
                   </p>
-                  <label className="team-field">
-                    <span>
-                      كلمة مرور محددة <small>اختياري — اتركه فارغًا لتوليد كلمة مؤقتة تلقائيًا</small>
-                    </span>
-                    <input
-                      type="text"
-                      dir="ltr"
-                      autoCorrect="off"
-                      autoCapitalize="none"
-                      spellCheck={false}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      maxLength={128}
-                      autoComplete="off"
-                      placeholder="فارغ = كلمة مؤقتة تلقائية"
-                    />
-                  </label>
+                  <div className="team-field">
+                    <label htmlFor={resetPasswordId}>
+                      كلمة مرور جديدة <small>اختياري — اتركها فارغة لتوليد كلمة مؤقتة</small>
+                    </label>
+                    <div className="team-password-wrap" dir="ltr">
+                      <input
+                        id={resetPasswordId}
+                        type={showResetPassword ? "text" : "password"}
+                        dir="ltr"
+                        autoCorrect="off"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        autoComplete="new-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        minLength={8}
+                        maxLength={128}
+                        placeholder="8 أحرف على الأقل أو فارغ لتوليد تلقائي"
+                      />
+                      <button
+                        type="button"
+                        className="team-password-toggle"
+                        onClick={() => setShowResetPassword((v) => !v)}
+                        aria-label={showResetPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+                        aria-pressed={showResetPassword}
+                      >
+                        {showResetPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}
+                      </button>
+                    </div>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
@@ -426,7 +412,7 @@ export default function PersonAccess({
                         )
                       }
                     >
-                      تأكيد إعادة الضبط
+                      تأكيد التغيير
                     </button>
                     <button
                       type="button"
@@ -435,6 +421,7 @@ export default function PersonAccess({
                       onClick={() => {
                         setResetOpen(false);
                         setPassword("");
+                        setShowResetPassword(false);
                       }}
                     >
                       إلغاء
@@ -471,7 +458,7 @@ export default function PersonAccess({
               {copied ? "تم النسخ" : "نسخ البيانات"}
             </button>
           </div>
-          الدخول بـ: <span className="platform-secret">{issued.username}</span> · كلمة المرور المؤقتة:{" "}
+          البريد الإلكتروني: <span className="platform-secret">{issued.login}</span> · كلمة المرور:{" "}
           <span className="platform-secret">{issued.temporaryPassword}</span>
           <br />
           {issued.expiresAt && `تنتهي في ${new Date(issued.expiresAt).toLocaleString("ar-EG")}. `}سلّمها للشخص عبر وسيلة خاصة.

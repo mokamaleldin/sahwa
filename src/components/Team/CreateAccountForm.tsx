@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { KeyRound, Loader2 } from "lucide-react";
+import { useId, useState, type FormEvent } from "react";
+import { Eye, EyeOff, KeyRound, Loader2 } from "lucide-react";
 import { teamRequest } from "../../lib/team";
 
 export interface CreatedAccount {
@@ -10,7 +10,7 @@ export interface CreatedAccount {
   expiresAt?: string;
 }
 
-// Creates the login account for an existing volunteer record with one simple step.
+// Creates a login account for an existing volunteer using email and password.
 export default function CreateAccountForm({
   volunteerId,
   fullName,
@@ -22,12 +22,20 @@ export default function CreateAccountForm({
   onCreated: (a: CreatedAccount) => void;
   onCancel?: () => void;
 }) {
+  const idPrefix = useId();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  const emailId = `${idPrefix}-email`;
+  const passwordId = `${idPrefix}-password`;
+  const passwordHintId = `${idPrefix}-password-hint`;
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const f = new FormData(event.currentTarget);
+    const cleanEmail = email.trim();
     setBusy(true);
     setError("");
     try {
@@ -35,6 +43,7 @@ export default function CreateAccountForm({
         username: string;
         email: string | null;
         temporaryPassword?: string;
+        chosenPassword?: boolean;
         expiresAt?: string;
         existing?: boolean;
       }>(
@@ -44,8 +53,8 @@ export default function CreateAccountForm({
           body: JSON.stringify({
             action: "create-account",
             volunteerId,
-            email: f.get("email"),
-            username: f.get("username"),
+            email: cleanEmail,
+            ...(password ? { password } : {}),
           }),
         },
         "/api/admin",
@@ -54,8 +63,8 @@ export default function CreateAccountForm({
       onCreated({
         fullName,
         username: r.username,
-        email: r.email,
-        password: r.temporaryPassword || "",
+        email: r.email || cleanEmail.toLowerCase(),
+        password: r.temporaryPassword || password,
         expiresAt: r.expiresAt,
       });
     } catch (reason) {
@@ -65,43 +74,65 @@ export default function CreateAccountForm({
   }
 
   return (
-    <form className="platform-item platform-form" onSubmit={submit}>
+    <form className="platform-item platform-form" onSubmit={submit} aria-busy={busy}>
       <p className="platform-muted">
-        أنشئ حساب دخول لـ <strong>{fullName}</strong>. سيصدر النظام اسم دخول وكلمة مرور مؤقتة تسلّمها له مرة واحدة.
+        أنشئ حساب دخول لـ <strong>{fullName}</strong> بالبريد الإلكتروني وكلمة مرور أولية يغيّرها في أول دخول.
       </p>
       <div className="team-form-grid">
-        <label className="team-field">
-          <span>
-            البريد الإلكتروني <small>اختياري</small>
-          </span>
+        <div className="team-field">
+          <label htmlFor={emailId}>البريد الإلكتروني *</label>
           <input
+            id={emailId}
             name="email"
             type="email"
             dir="ltr"
+            required
             autoCorrect="off"
             autoCapitalize="none"
             spellCheck={false}
             maxLength={254}
             autoComplete="off"
             placeholder="name@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={busy}
           />
-        </label>
-        <label className="team-field">
-          <span>
-            اسم المستخدم <small>اختياري (تلقائي إذا تُرك فارغًا)</small>
-          </span>
-          <input
-            name="username"
-            type="text"
-            dir="ltr"
-            autoCorrect="off"
-            autoCapitalize="none"
-            spellCheck={false}
-            maxLength={40}
-            autoComplete="off"
-            placeholder="ahmed.ali"
-          />
-        </label>
+        </div>
+        <div className="team-field">
+          <label htmlFor={passwordId}>
+            كلمة المرور <small>اختياري</small>
+          </label>
+          <div className="team-password-wrap" dir="ltr">
+            <input
+              id={passwordId}
+              name="password"
+              type={showPassword ? "text" : "password"}
+              dir="ltr"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              autoComplete="new-password"
+              minLength={8}
+              maxLength={128}
+              aria-describedby={passwordHintId}
+              placeholder="8 أحرف على الأقل"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={busy}
+            />
+            <button
+              type="button"
+              className="team-password-toggle"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+              aria-pressed={showPassword}
+              disabled={busy}
+            >
+              {showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}
+            </button>
+          </div>
+          <small id={passwordHintId}>اتركها فارغة لتوليد كلمة مرور مؤقتة تلقائيًا.</small>
+        </div>
       </div>
       {error && (
         <p className="team-error" role="alert">
@@ -115,7 +146,7 @@ export default function CreateAccountForm({
           ) : (
             <KeyRound size={15} aria-hidden="true" />
           )}
-          إنشاء الحساب وإصدار بيانات الدخول
+          إنشاء الحساب
         </button>
         {onCancel && (
           <button

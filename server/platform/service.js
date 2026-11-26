@@ -21,12 +21,12 @@ export function scopeLabel(assignment) {
   return parts.join(" — ");
 }
 
-export function describeAssignment(assignment) {
+export function describeAssignment(assignment, personSector = null) {
   const role = roleById(assignment.roleId);
   return {
     id: assignment.id,
     roleId: assignment.roleId,
-    title: roleTitle(assignment.roleId, assignment.sector),
+    title: roleTitle(assignment.roleId, assignment.sector || personSector),
     number: role?.number ?? null,
     category: role?.category ?? null,
     team: role?.team ?? null,
@@ -85,7 +85,7 @@ function linkTarget(link, assignment) {
 
 const contactPerson = (realm, a) => {
   const person = realm.byId.get(a.volunteerId);
-  return { id: person.id, name: person.fullName, role: roleTitle(a.roleId, a.sector), scope: scopeLabel(a) };
+  return { id: person.id, name: person.fullName, role: roleTitle(a.roleId, a.sector || person.sector), scope: scopeLabel(a) };
 };
 
 // Resolves each quoted relation to the people who currently hold the target
@@ -134,7 +134,7 @@ export function dashboardData(actor, realm, { eventsThisYear = null } = {}) {
       teams,
       username: actor.username,
     },
-    roles: assignments.map((a) => ({ ...describeAssignment(a), contacts: resolveContacts(realm, a, actor.volunteerId) })),
+    roles: assignments.map((a) => ({ ...describeAssignment(a, person.sector), contacts: resolveContacts(realm, a, actor.volunteerId) })),
     eventsThisYear,
   };
 }
@@ -167,7 +167,7 @@ export function directoryCard(realm, person, { leadsOnly = false } = {}) {
     bio: shown.has("bio") && !leadsOnly ? profile?.bio || "" : "",
     skills: shown.has("skills") && !leadsOnly ? profile?.skills || "" : "",
     work: shown.has("work") && !leadsOnly ? profile?.work || "" : "",
-    roles: assignments.map((a) => ({ title: roleTitle(a.roleId, a.sector), scope: scopeLabel(a), team: TEAM_TITLES[roleById(a.roleId)?.team] || "" })),
+    roles: assignments.map((a) => ({ title: roleTitle(a.roleId, a.sector || person.sector), university: a.university || null, scope: scopeLabel(a), team: TEAM_TITLES[roleById(a.roleId)?.team] || "" })),
     profileUrl: profile?.isPublic && profile?.handle && !leadsOnly ? `/u/${profile.handle}` : "",
   };
 }
@@ -197,7 +197,7 @@ export function directoryData(actor, realm, policy = "leads") {
       return role?.level === "lead" && mayAssignRole({ ...actor, assignments: [assignment] }, other.roleId, assignmentTarget(other));
     });
     const peers = visible.filter((p) => p.id !== viewer.id && (managers.has(p.id) || memberOf(p)));
-    return { id: assignment.id, title: roleTitle(assignment.roleId, assignment.sector), scope: scopeLabel(assignment),
+    return { id: assignment.id, title: roleTitle(assignment.roleId, assignment.sector || viewer.sector), scope: scopeLabel(assignment),
       teamTitle: TEAM_TITLES[role?.team] || "", people: peers.map(card), managerIds: [...managers],
       canManage: role?.level === "lead" && can(actor, "roles.assign", assignmentTarget(assignment)) && canAny(actor, "volunteers.view") };
   });

@@ -47,15 +47,22 @@
 .team-field textarea { resize:vertical; line-height:1.8; }
 @supports (appearance: base-select) {
   .team-field select,.team-field select::picker(select) { appearance:base-select; }
-  .team-field select { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; cursor:pointer; }
+  .team-field select { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; cursor:pointer; text-align:start; }
   .team-field select::picker-icon { color:var(--brand-primary); transition:rotate .18s ease; }
   .team-field select:open::picker-icon { rotate:180deg; }
-  .team-field select::picker(select) { margin-block:6px; padding:4px; min-inline-size:anchor-size(width); max-block-size:min(280px,38dvh); overflow-y:auto; overscroll-behavior:contain; border:1px solid var(--line); border-radius:12px; background:var(--bg-base); color:var(--text-main); box-shadow:0 14px 30px -14px rgba(53,14,21,.24); }
-  .team-field select option { display:flex; align-items:center; gap:8px; min-height:40px; padding:8px 12px; border-radius:8px; color:var(--text-main); cursor:pointer; }
-  .team-field select option:hover,.team-field select option:focus-visible { background:#7520260c; }
-  .team-field select option:checked { color:var(--brand-primary); font-weight:600; background:#7520260a; }
-  .team-field select option::checkmark { color:var(--brand-primary); margin-inline-start:auto; }
+  .team-field select::picker(select) { margin-block:6px; padding:6px; min-inline-size:anchor-size(width); max-block-size:min(320px,45dvh); overflow-y:auto; overscroll-behavior:contain; border:1px solid var(--line); border-radius:14px; background:var(--bg-base); color:var(--text-main); box-shadow:0 14px 30px -14px rgba(53,14,21,.24); text-align:start; }
+  .team-field select optgroup { margin:8px 0 0; padding:6px 6px 4px; border:1px solid #75202614; border-radius:10px; background:#75202606; color:var(--brand-primary); font-size:12px; font-weight:700; text-align:start; }
+  .team-field select optgroup:first-of-type { margin-top:6px; }
+  .team-field select option { display:flex; align-items:center; justify-content:flex-start; gap:8px; min-height:38px; padding:7px 12px; border-radius:8px; background:transparent; color:var(--text-main); font-size:13.5px; font-weight:400; text-align:start; cursor:pointer; }
+  .team-field select optgroup option { margin-top:2px; padding-inline-start:16px; }
+  .team-field select option:hover,.team-field select option:focus-visible { background:#75202610; }
+  .team-field select option:checked { color:var(--brand-primary); font-weight:600; background:#75202612; }
+  .team-field select option::checkmark { order:1; margin-inline-start:auto; color:var(--brand-primary); }
 }
+.team-password-wrap { position:relative; }
+.team-password-wrap input { padding-inline-end:46px; }
+.team-password-toggle { position:absolute; inset-inline-end:2px; inset-block:2px; min-width:42px; display:grid; place-items:center; border-radius:8px; color:var(--text-muted); }
+.team-password-toggle:hover { color:var(--brand-primary); background:#75202608; }
 .team-combo-input { position:relative; }
 .team-combo-field .team-combo-input input { padding-inline-end:48px; }
 .team-combo-toggle { position:absolute; inset-inline-end:1px; inset-block:1px; width:43px; display:grid; place-items:center; border-radius:9px; color:var(--brand-primary); }
@@ -99,7 +106,9 @@
 .team-dialog { padding:0; width:min(720px,calc(100vw - 24px)); max-height:calc(100dvh - 32px); border:1px solid var(--line); border-radius:22px; background:var(--bg-base); color:var(--text-main); overflow:auto; }
 .team-dialog:modal { overscroll-behavior:contain; }
 .team-dialog::backdrop { background:#350e1590; backdrop-filter:blur(3px); overflow:hidden; overscroll-behavior:contain; }
-.team-dialog-heading { position:sticky; top:0; z-index:2; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:17px 24px; background:var(--bg-base); border-bottom:1px solid var(--line); }
+.team-dialog-header { position:sticky; top:0; z-index:3; background:var(--bg-base); border-bottom:1px solid var(--line); }
+.team-dialog-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:17px 24px; }
+.team-dialog-heading:has(+ .dialog-tabs) { padding-bottom:8px; }
 .team-dialog-heading h2 { font-size:26px; color:var(--brand-primary); line-height:1.5; margin:0; }
 .team-icon-button { width:44px; height:44px; display:flex; align-items:center; justify-content:center; border-radius:12px; flex-shrink:0; color:var(--brand-primary); }
 .team-icon-button:hover { background:#75202609; }

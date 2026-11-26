@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 
-export default function TeamDialog({ title, onClose, busy = false, children }: { title: string; onClose: () => void; busy?: boolean; children: ReactNode }) {
+export default function TeamDialog({ title, headerExtra, onClose, busy = false, children }: { title: string; headerExtra?: ReactNode; onClose: () => void; busy?: boolean; children: ReactNode }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const onCloseRef = useRef(onClose);
@@ -52,11 +52,14 @@ export default function TeamDialog({ title, onClose, busy = false, children }: {
         if (!busy) onClose();
       }}
     >
-      <div className="team-dialog-heading">
-        <h2 id={titleId} className="font-heading">{title}</h2>
-        <button type="button" className="team-icon-button" onClick={onClose} disabled={busy} aria-label="إغلاق">
-          <X size={21} aria-hidden="true" />
-        </button>
+      <div className="team-dialog-header">
+        <div className="team-dialog-heading">
+          <h2 id={titleId} className="font-heading">{title}</h2>
+          <button type="button" className="team-icon-button" onClick={onClose} disabled={busy} aria-label="إغلاق">
+            <X size={21} aria-hidden="true" />
+          </button>
+        </div>
+        {headerExtra}
       </div>
       {children}
     </dialog>
