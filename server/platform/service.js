@@ -219,54 +219,36 @@ export function communityData(actor, posts, events, today) {
   };
 }
 
-// Workspace tools are listed by real permissions; deferred categories only
-// show a «later» notice to holders of those roles.
-export function workspaceData(actor) {
+// Flat, uncluttered list of workspace tools available to this actor.
+// Files are hidden until ready; deferred notices appear only for holders of
+// those specific roles (never cluttering the general administrator's workspace).
+export function workspaceToolsFor(actor) {
   const has = (p) => canAny(actor, p);
-  const roleIds = new Set(actor.assignments.map((a) => a.roleId));
   const tools = [];
-  const add = (category, tool) => tools.push({ category, ...tool });
-  const global = actor.kind === "owner" || roleIds.has("sahwa-lead");
-  const HOME = [
-    ["sahwa-lead", "sahwa-admin"], ["women-sector-lead", "women-admin"], ["university-youth-lead", "universities"], ["university-women-lead", "universities"],
-    ["internal-activities-lead", "internal-activities"], ["internal-activities-member", "internal-activities"], ["central-activities-lead", "central-activities"],
-    ["central-activities-member", "central-activities"], ["university-relations-lead", "university-relations"], ["university-relations-member", "university-relations"],
-    ["central-relations-lead", "central-relations"], ["central-relations-member", "central-relations"], ["media-lead", "media"], ["media-member", "media"],
-  ];
-  const home = global ? "sahwa-admin" : HOME.find(([roleId]) => roleIds.has(roleId))?.[1] || "sahwa-admin";
-  if (has("accounts.view") || has("permissions.manage") || has("audit.view"))
-    add(home, { id: "admin", title: "لوحة التحكم الإدارية", description: "الحسابات والأدوار والصلاحيات وسجل التغييرات.", href: "/team/admin" });
   if (has("volunteers.view"))
-    add(home, { id: "volunteers", title: "إدارة المتطوعين", description: "سجل المتطوعين في نطاقك وأدوارهم وحساباتهم.", href: "/team/volunteers" });
-  if (has("events.view")) add(home, { id: "events", title: "سجل الفعاليات", description: "الفعاليات المسجلة في نطاقك.", href: "/team/events" });
-  if (has("forms.review") || actor.assignments.some((a) => ["internal-activities-lead", "central-activities-lead", "university-relations-lead", "central-relations-lead", "media-lead"].includes(a.roleId)))
-    add("requests", { id: "inbox", title: "الطلبات الواردة", description: "الأفكار والطلبات الموجهة إليك بحسب نطاقك.", href: "/team/forms/inbox" });
-  if (has("files.view")) add("files", { id: "files", title: "الملفات الأساسية", description: "مجلدات صحوة المشتركة.", href: "/team/files" });
-  if (has("studio.use")) add("studio", { id: "studio", title: "استوديو صحوة", description: "القوالب وأدوات التصميم بهوية صحوة.", href: "/studio" });
+    tools.push({ id: "volunteers", title: "إدارة المتطوعين", description: "عرض وإضافة وتعديل بيانات المتطوعين وأدوارهم في نطاقك.", href: "/team/volunteers" });
+  if (has("events.view"))
+    tools.push({ id: "events", title: "سجل الفعاليات", description: "متابعة الفعاليات وإضافة فعاليات جديدة في نطاقك.", href: "/team/events" });
+  if (has("forms.review") || actor.assignments.some((a) => ["internal-activities-lead", "central-activities-lead", "university-relations-lead", "central-relations-lead", "media-lead", "university-youth-lead", "university-women-lead", "women-sector-lead"].includes(a.roleId)))
+    tools.push({ id: "inbox", title: "الطلبات الواردة", description: "الأفكار والاقتراحات الموجهة لصندوقك.", href: "/team/forms/inbox" });
+  if (has("accounts.view") || has("permissions.manage") || has("permissions.delegate") || has("audit.view") || has("settings.manage") || has("forms.manage"))
+    tools.push({ id: "admin", title: "لوحة التحكم", description: "إدارة الحسابات والصلاحيات والنماذج والإعدادات.", href: "/team/admin" });
+  if (has("studio.use"))
+    tools.push({ id: "studio", title: "استوديو صحوة", description: "القوالب وأدوات التصميم بهوية صحوة.", href: "/studio" });
+  return tools;
+}
 
-  const CATEGORIES = [
-    { id: "sahwa-admin", title: "إدارة صحوة" },
-    { id: "women-admin", title: "إدارة قطاع الطالبات" },
-    { id: "universities", title: "إدارة الجامعات" },
-    { id: "internal-activities", title: "الأنشطة الداخلية" },
-    { id: "central-activities", title: "الأنشطة المركزية" },
-    { id: "university-relations", title: "العلاقات الجامعية" },
-    { id: "central-relations", title: "العلاقات العامة المركزية" },
-    { id: "media", title: "الإعلام" },
-    { id: "requests", title: "الطلبات الواردة" },
-    { id: "files", title: "الملفات" },
-    { id: "studio", title: "استوديو صحوة" },
-    { id: "finance", title: "المالية", later: true, role: "finance-lead" },
-    { id: "archive", title: "التوثيق والأرشفة", later: true, role: "archive-lead" },
-    { id: "review", title: "المتابعة والمراجعة والتظلمات", later: true, roles: ["review-lead", "review-member"] },
+export function workspaceData(actor) {
+  const roleIds = new Set(actor.assignments.map((a) => a.roleId));
+  const global = actor.kind === "owner" || roleIds.has("sahwa-lead");
+  const tools = workspaceToolsFor(actor);
+  const DEFERRED = [
+    { id: "finance", title: "المالية", roles: ["finance-lead"] },
+    { id: "archive", title: "التوثيق والأرشفة", roles: ["archive-lead"] },
+    { id: "review", title: "المتابعة والمراجعة والتظلمات", roles: ["review-lead", "review-member"] },
   ];
-  const later = CATEGORIES.filter((c) => c.later && (global || roleIds.has(c.role) || (c.roles || []).some((r) => roleIds.has(r))));
-  return {
-    categories: CATEGORIES.filter((c) => !c.later)
-      .map((c) => ({ id: c.id, title: c.title, tools: tools.filter((t) => t.category === c.id) }))
-      .filter((c) => c.tools.length),
-    later: later.map((c) => ({ id: c.id, title: c.title })),
-  };
+  const later = global ? [] : DEFERRED.filter((c) => c.roles.some((r) => roleIds.has(r))).map(({ id, title }) => ({ id, title }));
+  return { tools, later };
 }
 
 export { ROLE_CATEGORIES };

@@ -31,7 +31,7 @@ export const PERMISSIONS = [
   { key: "events.publish", label: "تحديد جمهور الفعالية داخليًا" },
   { key: "posts.publish", label: "نشر في أهل صحوة" },
   { key: "studio.use", label: "استخدام استوديو صحوة" },
-  { key: "files.view", label: "الملفات الأساسية" },
+  { key: "files.view", label: "الملفات الأساسية", hidden: true },
   { key: "forms.review", label: "متابعة الطلبات الواردة" },
   { key: "forms.manage", label: "إدارة تعريفات النماذج" },
 ];
@@ -44,29 +44,43 @@ const U = "@university";
 const S = "@sector";
 const scope = (university = null, sector = null, team = null) => ({ university, sector, team });
 
-// Default permissions per role. Only what the requirements document
-// describes as uncontroversial is granted. Management of volunteers and
-// accounts by leads other than مسؤول صحوة stays denied until it is
-// granted explicitly from the admin panel.
+// Default permissions per role. Global admin (مسؤول صحوة) holds full control;
+// sector and university leads manage volunteers, accounts, events, and requests
+// strictly within their own scope; activities members can view and add events
+// in their scope (and only edit events they created themselves).
 const ROLE_DEFAULTS = {
-  "sahwa-lead": PERMISSIONS.filter((p) => !p.base).map((p) => [p.key, scope()]),
+  "sahwa-lead": PERMISSIONS.filter((p) => !p.base && !p.hidden).map((p) => [p.key, scope()]),
   "women-sector-lead": [
     ["volunteers.view", scope(null, "women")],
+    ["volunteers.create", scope(null, "women")],
+    ["volunteers.edit", scope(null, "women")],
+    ["roles.assign", scope(null, "women")],
+    ["accounts.view", scope(null, "women")],
+    ["accounts.create", scope(null, "women")],
+    ["accounts.reset", scope(null, "women")],
+    ["accounts.suspend", scope(null, "women")],
     ["events.view", scope(null, "women")],
     ["events.create", scope(null, "women")],
     ["events.edit", scope(null, "women")],
+    ["forms.review", scope(null, "women")],
     ["posts.publish", scope(null, "women")],
     ["studio.use", scope()],
-    ["files.view", scope()],
   ],
   "university-youth-lead": [
     ["volunteers.view", scope(U, S)],
+    ["volunteers.create", scope(U, S)],
+    ["volunteers.edit", scope(U, S)],
+    ["roles.assign", scope(U, S)],
+    ["accounts.view", scope(U, S)],
+    ["accounts.create", scope(U, S)],
+    ["accounts.reset", scope(U, S)],
+    ["accounts.suspend", scope(U, S)],
     ["events.view", scope(U, S)],
     ["events.create", scope(U, S)],
     ["events.edit", scope(U, S)],
+    ["forms.review", scope(U, S)],
     ["posts.publish", scope(U, S)],
     ["studio.use", scope()],
-    ["files.view", scope()],
   ],
   "internal-activities-lead": [
     ["volunteers.view", scope(U, S, "internal-activities")],
@@ -74,32 +88,33 @@ const ROLE_DEFAULTS = {
     ["events.create", scope(U, S)],
     ["events.edit", scope(U, S)],
     ["studio.use", scope()],
-    ["files.view", scope()],
   ],
-  "internal-activities-member": [["events.view", scope(U, S)]],
+  "internal-activities-member": [
+    ["events.view", scope(U, S)],
+    ["events.create", scope(U, S)],
+  ],
   "central-activities-lead": [
     ["volunteers.view", scope(null, S, "central-activities")],
     ["events.view", scope(CENTRAL, S)],
     ["events.create", scope(CENTRAL, S)],
     ["events.edit", scope(CENTRAL, S)],
     ["studio.use", scope()],
-    ["files.view", scope()],
   ],
-  "central-activities-member": [["events.view", scope(CENTRAL, S)]],
+  "central-activities-member": [
+    ["events.view", scope(CENTRAL, S)],
+    ["events.create", scope(CENTRAL, S)],
+  ],
   "university-relations-lead": [
     ["volunteers.view", scope(U, null, "university-relations")],
     ["studio.use", scope()],
-    ["files.view", scope()],
   ],
   "central-relations-lead": [
     ["volunteers.view", scope(null, null, "central-relations")],
     ["studio.use", scope()],
-    ["files.view", scope()],
   ],
   "media-lead": [
     ["volunteers.view", scope(null, null, "media")],
     ["studio.use", scope()],
-    ["files.view", scope()],
   ],
 };
 ROLE_DEFAULTS["university-women-lead"] = ROLE_DEFAULTS["university-youth-lead"];
@@ -190,7 +205,11 @@ export function mayAssignRole(actor, roleId) {
 
 // A non-global actor may only act on accounts of people whose every active
 // role is one the actor may assign, so nobody resets a higher official.
+// Nobody except the platform owner may manage مسؤول صحوة (sahwa-lead).
 export function mayManagePerson(actor, targetAssignments) {
+  if (targetAssignments.some((a) => a.roleId === "sahwa-lead")) {
+    return actor.kind === "owner";
+  }
   if (isGlobalAdmin(actor)) return true;
   const allowed = assignableRoles(actor);
   return targetAssignments.every((a) => allowed.has(a.roleId));

@@ -8,23 +8,37 @@ const ACCOUNT_STATUS: Record<string, string> = { none: "لا يوجد حساب �
 const LEVELS = ["متطوع", "عضو فاعل", "مسؤول"];
 const SECTOR: Record<string, string> = { youth: "الشباب", women: "الطالبات" };
 
-export interface IssuedCredential { fullName: string; username: string; temporaryPassword: string; expiresAt: string }
+export interface IssuedCredential {
+  fullName: string;
+  login: string;
+  temporaryPassword: string;
+  expiresAt: string;
+}
 
-const admin = <T,>(body: Record<string, unknown>) => teamRequest<T>({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }, "/api/admin");
+const admin = <T,>(body: Record<string, unknown>) =>
+  teamRequest<T>({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }, "/api/admin");
 
 // Roles, membership level and login account of one volunteer. Every action
 // is checked again on the server; the buttons only reflect what it allows.
-export default function PersonAccess({ person, meta, onChanged }: { person: Volunteer; meta: VolunteerMeta; onChanged: () => Promise<void> | void }) {
+export default function PersonAccess({
+  person,
+  meta,
+  onChanged,
+}: {
+  person: Volunteer;
+  meta: VolunteerMeta;
+  onChanged: () => Promise<void> | void;
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
   const [roleId, setRoleId] = useState("");
   const [issued, setIssued] = useState<IssuedCredential | null>(null);
-  const [password, setPassword] = useState("");
   const [creating, setCreating] = useState(false);
   const allowed = person.allowed;
   const role = meta.assignableRoles.find((r) => r.id === roleId);
   const women = person.gender === "بنت";
+
   async function act<T>(body: Record<string, unknown>, after?: (r: T) => void) {
     setBusy(true);
     setError("");
@@ -38,17 +52,32 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
       setBusy(false);
     }
   }
+
   function assign(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    void act({ action: "assign-role", volunteerId: person.id, roleId, university: form.get("university"), startsOn: form.get("startsOn") }, () => { setAdding(false); setRoleId(""); });
+    void act(
+      { action: "assign-role", volunteerId: person.id, roleId, university: form.get("university"), startsOn: form.get("startsOn") },
+      () => {
+        setAdding(false);
+        setRoleId("");
+      },
+    );
   }
-  const credential = (r: { fullName: string; username: string; temporaryPassword?: string; chosenPassword?: boolean; expiresAt?: string | null }) => {
-    const secret = r.temporaryPassword || (r.chosenPassword ? password : "");
-    if (secret) setIssued({ fullName: r.fullName, username: r.username, temporaryPassword: secret, expiresAt: r.expiresAt || "" });
+
+  const credential = (r: { fullName: string; username: string; temporaryPassword?: string; expiresAt?: string | null }) => {
+    if (r.temporaryPassword) {
+      setIssued({
+        fullName: r.fullName,
+        login: person.account?.email || r.username,
+        temporaryPassword: r.temporaryPassword,
+        expiresAt: r.expiresAt || "",
+      });
+    }
   };
-  const chosen = password ? { password } : {};
+
   if (!allowed) return null;
+
   return (
     <section className="mt-6" aria-label="الأدوار والحساب">
       <h3 className="platform-section-title font-heading" style={{ marginTop: 0 }}>الأدوار التنظيمية</h3>
@@ -56,38 +85,89 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
         <ul className="platform-list">
           {person.assignments.map((a) => (
             <li key={a.id} className="platform-item platform-row">
-              <span><strong>{a.title}</strong> <span className="platform-muted">— {a.scope}{a.deferred ? " — مساحة العمل مؤجلة" : ""}</span></span>
+              <span>
+                <strong>{a.title}</strong>{" "}
+                <span className="platform-muted">— {a.scope}{a.deferred ? " — مساحة العمل مؤجلة" : ""}</span>
+              </span>
               {allowed.assign && meta.assignableRoles.some((r) => r.id === a.roleId) && (
-                <button className="team-text-button" disabled={busy} onClick={() => confirm(`إنهاء دور «${a.title}»؟ يبقى سجل الشخص وحسابه.`) && void act({ action: "end-role", assignmentId: a.id })}><X size={14} />إنهاء الدور</button>
+                <button
+                  type="button"
+                  className="team-text-button"
+                  disabled={busy}
+                  onClick={() => confirm(`إنهاء دور «${a.title}»؟ يبقى سجل الشخص وحسابه.`) && void act({ action: "end-role", assignmentId: a.id })}
+                >
+                  <X size={14} aria-hidden="true" />
+                  إنهاء الدور
+                </button>
               )}
             </li>
           ))}
         </ul>
-      ) : <p className="platform-muted">لا يوجد دور مسند. {person.responsibility && `المسمى المسجل سابقًا: ${person.responsibility}.`}</p>}
+      ) : (
+        <p className="platform-muted">
+          لا يوجد دور مسند.{person.responsibility && ` المسمى المسجل سابقًا: ${person.responsibility}.`}
+        </p>
+      )}
       {allowed.assign && meta.assignableRoles.length > 0 && (adding ? (
         <form className="platform-item platform-form mt-3" onSubmit={assign}>
-          <label className="team-field"><span>الدور</span>
+          <label className="team-field">
+            <span>الدور</span>
             <select value={roleId} onChange={(e) => setRoleId(e.target.value)} required>
               <option value="">اختر من التصنيفات المعتمدة</option>
-              {meta.assignableRoles.filter((r) => !(r.sector === "youth" && women) && !(r.sector === "women" && !women)).map((r) => <option key={r.id} value={r.id}>{women && r.titleWomen ? r.titleWomen : r.title}{r.deferred ? " (مساحة عمل مؤجلة)" : ""}</option>)}
+              {meta.assignableRoles
+                .filter((r) => !(r.sector === "youth" && women) && !(r.sector === "women" && !women))
+                .map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {women && r.titleWomen ? r.titleWomen : r.title}
+                    {r.deferred ? " (مساحة عمل مؤجلة)" : ""}
+                  </option>
+                ))}
             </select>
           </label>
           {role?.scope === "university" && (
-            <label className="team-field"><span>الجامعة</span>
-              <select name="university" defaultValue={person.university}>{[...new Set([person.university, ...UNIVERSITIES])].filter(Boolean).map((u) => <option key={u}>{u}</option>)}</select>
+            <label className="team-field">
+              <span>الجامعة</span>
+              <select name="university" defaultValue={person.university}>
+                {[...new Set([person.university, ...UNIVERSITIES])].filter(Boolean).map((u) => (
+                  <option key={u}>{u}</option>
+                ))}
+              </select>
             </label>
           )}
-          {role && role.sector !== "none" && <p className="platform-muted">القطاع: {SECTOR[role.sector === "required" ? (women ? "women" : "youth") : role.sector]} (بحسب النوع المسجل)</p>}
-          <label className="team-field"><span>بداية التكليف <small>اختياري</small></span><input type="date" name="startsOn" /></label>
-          <p className="platform-muted">الإضافة التقنية لا تعني تعيينًا إداريًا نافذًا؛ تُعتمد التعيينات وفق النظام.</p>
-          <div className="flex gap-2"><button className="team-button" disabled={busy || !roleId}>إسناد</button><button type="button" className="team-button team-button-secondary" onClick={() => setAdding(false)}>إلغاء</button></div>
+          {role && role.sector !== "none" && (
+            <p className="platform-muted">
+              القطاع: {SECTOR[role.sector === "required" ? (women ? "women" : "youth") : role.sector]} (بحسب النوع المسجل)
+            </p>
+          )}
+          <label className="team-field">
+            <span>
+              بداية التكليف <small>اختياري</small>
+            </span>
+            <input type="date" name="startsOn" />
+          </label>
+          <div className="flex gap-2">
+            <button type="submit" className="team-button" disabled={busy || !roleId}>إسناد</button>
+            <button type="button" className="team-button team-button-secondary" onClick={() => setAdding(false)}>إلغاء</button>
+          </div>
         </form>
-      ) : <button className="team-text-button mt-2" onClick={() => setAdding(true)}><Plus size={15} />إضافة دور</button>)}
+      ) : (
+        <button type="button" className="team-text-button mt-2" onClick={() => setAdding(true)}>
+          <Plus size={15} aria-hidden="true" />
+          إضافة دور
+        </button>
+      ))}
 
       {allowed.level && (
-        <label className="team-field mt-4" style={{ maxWidth: 260 }}><span>المستوى التنظيمي</span>
-          <select value={person.membershipLevel || "متطوع"} disabled={busy} onChange={(e) => void act({ action: "set-level", volunteerId: person.id, level: e.target.value })}>
-            {LEVELS.map((l) => <option key={l}>{l}</option>)}
+        <label className="team-field mt-4" style={{ maxWidth: 260 }}>
+          <span>المستوى التنظيمي</span>
+          <select
+            value={person.membershipLevel || "متطوع"}
+            disabled={busy}
+            onChange={(e) => void act({ action: "set-level", volunteerId: person.id, level: e.target.value })}
+          >
+            {LEVELS.map((l) => (
+              <option key={l}>{l}</option>
+            ))}
           </select>
         </label>
       )}
@@ -97,35 +177,91 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
           <h3 className="platform-section-title font-heading">حساب الدخول</h3>
           <p className="platform-muted">
             الحالة: <strong>{ACCOUNT_STATUS[person.account.status] || person.account.status}</strong>
-            {person.account.email && <> · البريد: <span className="platform-secret">{person.account.email}</span></>}
-            {person.account.username && <> · اسم المستخدم: <span className="platform-secret">{person.account.username}</span></>}
+            {person.account.email ? (
+              <>
+                {" "}· البريد: <span className="platform-secret">{person.account.email}</span>
+              </>
+            ) : (
+              person.account.username && (
+                <>
+                  {" "}· الدخول: <span className="platform-secret">{person.account.username}</span>
+                </>
+              )
+            )}
             {person.account.pending && person.account.status === "active" && " · بانتظار أول دخول"}
-            {person.account.lastResetAt && ` · آخر إعادة ضبط: ${new Date(person.account.lastResetAt).toLocaleDateString("ar-EG")}`}
           </p>
           {creating && (
-            <div className="mt-2"><CreateAccountForm volunteerId={person.id} fullName={person.fullName} onCancel={() => setCreating(false)}
-              onCreated={async (a) => { setCreating(false); setIssued({ fullName: a.fullName, username: a.email ? `${a.email} (${a.username})` : a.username, temporaryPassword: a.password, expiresAt: "" }); await onChanged(); }} /></div>
+            <div className="mt-2">
+              <CreateAccountForm
+                volunteerId={person.id}
+                fullName={person.fullName}
+                onCancel={() => setCreating(false)}
+                onCreated={async (a) => {
+                  setCreating(false);
+                  setIssued({ fullName: a.fullName, login: a.email || a.username, temporaryPassword: a.password, expiresAt: "" });
+                  await onChanged();
+                }}
+              />
+            </div>
           )}
-          {allowed.resetAccount && person.account.status !== "none" && (
-            <label className="team-field mt-2" style={{ maxWidth: 320 }}><span>كلمة مرور جديدة عند إعادة الضبط <small>اختياري؛ فارغة = كلمة مؤقتة تلقائية</small></span>
-              <input type="text" dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} maxLength={128} autoComplete="off" />
-            </label>
-          )}
-          <div className="flex flex-wrap gap-2 mt-2">
-            {person.account.status === "none" && allowed.createAccount && !creating && <button className="team-button" disabled={busy} onClick={() => setCreating(true)}><KeyRound size={15} />إنشاء حساب</button>}
-            {person.account.status !== "none" && allowed.resetAccount && <button className="team-button team-button-secondary" disabled={busy} onClick={() => confirm("إعادة ضبط الحساب؟ ستتوقف كلمة المرور الحالية وتنتهي الجلسات.") && void act({ action: "reset-account", volunteerId: person.id, ...chosen }, credential)}>إعادة ضبط كلمة المرور</button>}
-            {person.account.status === "active" && allowed.suspendAccount && <button className="team-button team-button-secondary" disabled={busy} onClick={() => confirm("إيقاف الحساب؟ يُمنع الدخول فورًا.") && void act({ action: "suspend-account", volunteerId: person.id })}>إيقاف الحساب</button>}
-            {person.account.status === "suspended" && allowed.suspendAccount && <button className="team-button" disabled={busy} onClick={() => void act({ action: "reactivate-account", volunteerId: person.id })}>إعادة التفعيل</button>}
+          <div className="flex flex-wrap gap-2 mt-3">
+            {person.account.status === "none" && allowed.createAccount && !creating && (
+              <button type="button" className="team-button" disabled={busy} onClick={() => setCreating(true)}>
+                <KeyRound size={15} aria-hidden="true" />
+                إنشاء حساب
+              </button>
+            )}
+            {person.account.status !== "none" && allowed.resetAccount && (
+              <button
+                type="button"
+                className="team-button team-button-secondary"
+                disabled={busy}
+                onClick={() =>
+                  confirm(`إعادة ضبط كلمة المرور لحساب ${person.fullName}؟ سيتم توليد كلمة مرور مؤقتة جديدة.`) &&
+                  void act({ action: "reset-account", volunteerId: person.id }, credential)
+                }
+              >
+                إعادة ضبط كلمة المرور
+              </button>
+            )}
+            {person.account.status === "active" && allowed.suspendAccount && (
+              <button
+                type="button"
+                className="team-button team-button-secondary"
+                disabled={busy}
+                onClick={() => confirm(`إيقاف حساب ${person.fullName}؟ يُمنع الدخول فورًا.`) && void act({ action: "suspend-account", volunteerId: person.id })}
+              >
+                إيقاف الحساب
+              </button>
+            )}
+            {person.account.status === "suspended" && allowed.suspendAccount && (
+              <button type="button" className="team-button" disabled={busy} onClick={() => void act({ action: "reactivate-account", volunteerId: person.id })}>
+                إعادة التفعيل
+              </button>
+            )}
           </div>
         </>
       )}
-      {busy && <p className="team-loading"><Loader2 size={16} className="animate-spin" aria-hidden="true" /></p>}
-      {error && <p className="team-error mt-3" role="alert">{error}</p>}
+
+      {busy && (
+        <p className="team-loading">
+          <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+        </p>
+      )}
+      {error && (
+        <p className="team-error mt-3" role="alert">
+          {error}
+        </p>
+      )}
       {issued && (
         <div className="platform-notice mt-3" role="status">
-          <strong>بيانات الدخول لـ {issued.fullName} (تظهر مرة واحدة):</strong><br />
-          الدخول بـ: <span className="platform-secret">{issued.username}</span> · كلمة المرور المؤقتة: <span className="platform-secret">{issued.temporaryPassword}</span><br />
-          {issued.expiresAt && `تنتهي في ${new Date(issued.expiresAt).toLocaleString("ar-EG")}. `}سلّمها للشخص عبر وسيلة خاصة.
+          <strong>بيانات الدخول لـ {issued.fullName} (تظهر مرة واحدة):</strong>
+          <br />
+          البريد / الدخول: <span className="platform-secret">{issued.login}</span> · كلمة المرور:{" "}
+          <span className="platform-secret">{issued.temporaryPassword}</span>
+          <br />
+          {issued.expiresAt && `تنتهي في ${new Date(issued.expiresAt).toLocaleString("ar-EG")}. `}
+          سلّمها للشخص عبر وسيلة خاصة.
         </div>
       )}
     </section>

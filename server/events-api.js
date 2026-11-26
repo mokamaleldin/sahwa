@@ -11,6 +11,15 @@ function readScope(input, fallback) {
   return { university, sector };
 }
 
+// Leads with events.edit can edit any event in their scope; activities members
+// with events.create can only edit events they created themselves.
+function canEditEvent(actor, event) {
+  const target = eventTarget(event);
+  if (can(actor, "events.edit", target)) return true;
+  if (actor.volunteerId && event.createdByVolunteer === actor.volunteerId && can(actor, "events.create", target)) return true;
+  return false;
+}
+
 // Event records are scoped by university and sector. An event stays private
 // until its owner chooses an internal audience for «أهل صحوة».
 export function createEventsHandler(store, platformStore) {
@@ -27,7 +36,7 @@ export function createEventsHandler(store, platformStore) {
           .filter((e) => can(actor, "events.view", eventTarget(e)))
           .map(({ isTest: _hidden, ...e }) => ({
             ...e,
-            canEdit: can(actor, "events.edit", eventTarget(e)),
+            canEdit: canEditEvent(actor, e),
             canDelete: can(actor, "events.delete", eventTarget(e)),
           }));
         const volunteers = people
@@ -52,8 +61,9 @@ export function createEventsHandler(store, platformStore) {
         const target = eventTarget(scope);
         if (!can(actor, "events.create", target)) throw forbidden("لا تملك صلاحية إضافة فعالية في هذا النطاق.");
         const audience = input.audience === "internal" ? "internal" : "private";
-        const saved = await store.createEvent(event, { ...scope, audience, isTest });
-        return json({ event: { ...saved, canEdit: true, canDelete: can(actor, "events.delete", target) } }, 201);
+        const saved = await store.createEvent(event, { ...scope, audience, isTest, createdByVolunteer: actor.volunteerId });
+        const { isTest: _hidden, ...publicSaved } = saved;
+        return json({ event: { ...publicSaved, canEdit: true, canDelete: can(actor, "events.delete", target) } }, 201);
       }
       recordVersion(input);
       const existing = await store.eventById(input.id);
@@ -64,12 +74,12 @@ export function createEventsHandler(store, platformStore) {
         await store.deleteEvent(input.id, input.revision);
         return json({ deleted: true });
       }
-      if (!can(actor, "events.edit", target)) throw forbidden();
+      if (!canEditEvent(actor, existing)) throw forbidden("لا يمكنك تعديل فعالية لم تقم بإنشائها أو خارج نطاقك.");
       const event = validateEvent(input.event);
       let saved = await store.updateEvent(input.id, input.revision, event);
       if (input.scope !== undefined || input.audience !== undefined) {
         const scope = input.scope !== undefined ? readScope(input.scope) : { university: existing.university, sector: existing.sector };
-        if (!can(actor, "events.edit", eventTarget(scope))) throw forbidden("لا يمكنك نقل الفعالية إلى نطاق خارج صلاحياتك.");
+        if (input.scope !== undefined && !can(actor, "events.edit", eventTarget(scope))) throw forbidden("لا يمكنك نقل الفعالية إلى نطاق خارج صلاحياتك.");
         const audience = input.audience === "internal" ? "internal" : input.audience === "private" ? "private" : existing.audience;
         saved = await store.setEventScope(input.id, { ...scope, audience });
       }
