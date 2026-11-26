@@ -468,11 +468,12 @@ test("a live session loses work tools on pause, keeps its personal profile and c
   assert.equal((await platform.assignmentsOf(lead.id)).length,1);
 });
 
-test("an event is scoped to its selected assignment and edits to another person's event require management",async () => {
+test("an event is scoped to its selected assignment; sector central activities lead and responsible volunteer can edit, while cross-sector edits remain forbidden",async () => {
   const {events} = handlers();
   const scope = {roleId:"central-activities-lead",sector:"youth"};
   const one = await member("منشئ",{roles:[scope,{roleId:"internal-activities-lead",university:"استنيا",sector:"youth"}]});
   const two = await member("مسؤول زميل",{roles:[scope]});
+  const womenLead = await member("مسؤولة أنشطة",{gender:"بنت",roles:[{roleId:"central-activities-lead",sector:"women"}]});
   const assigned = await member("عضو مكلف",{university:"بيلجي",roles:[{roleId:"central-activities-member",sector:"youth"}]});
   const visible = await (await events(req("events","GET",undefined,one.cookie))).json();
   const target = visible.scopes.find((s) => s.team === "central-activities");
@@ -480,11 +481,146 @@ test("an event is scoped to its selected assignment and edits to another person'
   assert.equal(made.status,201);
   const record = (await made.json()).event;
   const edit = (cookie,extra={}) => events(req("events","PUT",{id:record.id,revision:record.revision,event:{...record,title:"تحديث"},...extra},cookie));
-  assert.equal((await edit(two.cookie)).status,403);
+  assert.equal((await edit(womenLead.cookie)).status,403);
   assert.equal((await edit(one.cookie,{scope:{university:"بيلجي",sector:"youth"}})).status,403);
   assert.equal((await store.eventById(record.id)).title,"فعالية");
   assert.equal((await edit(assigned.cookie)).status,200);
+  const afterAssigned = await store.eventById(record.id);
+  assert.equal((await events(req("events","PUT",{id:record.id,revision:afterAssigned.revision,event:{...afterAssigned,title:"تحديث المركزي"}},two.cookie))).status,200);
   assert.equal((await platform.internalEvents(false)).length,1);
+});
+
+test("campus leads see and manage all campus-sector volunteers (including Media & Relations), Media sees only Media, and Central Activities has read-only campus oversight", async () => {
+  const { team, admin, events } = handlers();
+  const ghina = await member("غنى", { university: "استنيا", gender: "بنت", roles: [{ roleId: "university-women-lead", university: "استنيا", sector: "women" }] });
+  const mariam = await member("مريم", { university: "استنيا", gender: "بنت", roles: [{ roleId: "internal-activities-lead", university: "استنيا", sector: "women" }], account: false });
+  const fatima = await member("فاطمة", { university: "استنيا", gender: "بنت", roles: [{ roleId: "internal-activities-member", university: "استنيا", sector: "women" }], account: false });
+  const asmaa = await member("أسماء", { university: "استنيا", gender: "بنت", roles: [{ roleId: "media-member" }], account: false });
+  const campusRel = await member("سلمى", { university: "استنيا", gender: "بنت", roles: [{ roleId: "university-relations-member", university: "استنيا" }], account: false });
+  const unassigned = await member("نور", { university: "استنيا", gender: "بنت", account: false });
+  await member("أحمد", { university: "استنيا", gender: "شاب", account: false });
+  const mediaLead = await member("مسؤول الإعلام", { university: "بيلجي", gender: "شاب", roles: [{ roleId: "media-lead" }] });
+  const centralRelLead = await member("مسؤول العلاقات", { university: "بيلجي", gender: "شاب", roles: [{ roleId: "central-relations-lead" }] });
+  const centralWomenAct = await member("مسؤولة الأنشطة المركزية", { university: "بيلجي", gender: "بنت", roles: [{ roleId: "central-activities-lead", sector: "women" }] });
+
+  // Ghina sees all female volunteers at Istinye including Media, Relations, Activities, and Unassigned — never males
+  const ghinaData = await (await team(req("team", "GET", undefined, ghina.cookie))).json();
+  const ghinaNames = ghinaData.volunteers.map((v) => v.fullName);
+  for (const name of ["مريم", "فاطمة", "أسماء", "سلمى", "نور"]) assert.ok(ghinaNames.includes(name), `Ghina should see ${name}`);
+  assert.ok(!ghinaNames.includes("أحمد"), "Ghina never sees youth sector");
+  const asmaaCard = ghinaData.volunteers.find((v) => v.id === asmaa.id);
+  assert.equal(asmaaCard.allowed.edit, true, "Ghina can edit Asmaa's basic campus info");
+  assert.equal(asmaaCard.allowed.createAccount, true, "Ghina can create an account for Asmaa");
+  assert.equal(asmaaCard.assignments[0].canChange, false, "Ghina cannot end Asmaa's central Media role");
+  // Ghina can assign campus relations to female student at Istinye
+  assert.equal((await admin(req("admin", "POST", { action: "assign-role", volunteerId: unassigned.id, roleId: "university-relations-member", university: "استنيا" }, ghina.cookie))).status, 200);
+  // Ghina can create account for Asmaa
+  assert.equal((await admin(req("admin", "POST", { action: "create-account", volunteerId: asmaa.id }, ghina.cookie))).status, 201);
+
+  // Media lead sees ONLY media members in volunteers, and can recruit existing volunteers across sectors
+  const mediaData = await (await team(req("team", "GET", undefined, mediaLead.cookie))).json();
+  assert.deepEqual(mediaData.volunteers.map((v) => v.fullName).sort(), ["أسماء", "مسؤول الإعلام"].sort());
+  assert.ok(mediaData.candidates.some((c) => c.id === fatima.id && c.roleIds.includes("media-member")), "Media lead can recruit existing campus member without duplicating");
+
+  // Central Relations lead sees university relations members across campuses
+  const relData = await (await team(req("team", "GET", undefined, centralRelLead.cookie))).json();
+  assert.ok(relData.volunteers.some((v) => v.id === campusRel.id), "Central relations sees university relations");
+
+  // Central Activities lead sees university internal activities leads & members as read-only oversight
+  const actData = await (await team(req("team", "GET", undefined, centralWomenAct.cookie))).json();
+  const mariamView = actData.volunteers.find((v) => v.id === mariam.id);
+  assert.ok(mariamView, "Central activities sees university internal activities lead");
+  assert.equal(mariamView.allowed.oversightOnly, true, "University internal activities stay under university management");
+  assert.equal(mariamView.allowed.edit, false);
+  assert.equal(mariamView.allowed.assign, false);
+  // Central Activities lead can edit & delete university events in her sector AND legacy untagged events
+  const campusEv = await (await events(req("events", "POST", { event: { title: "نشاط استنيا" }, scope: { university: "استنيا", sector: "women", team: "university-team" } }, ghina.cookie))).json();
+  assert.equal((await events(req("events", "PUT", { id: campusEv.event.id, revision: campusEv.event.revision, event: { title: "نشاط استنيا معدل" } }, centralWomenAct.cookie))).status, 200);
+  const legacyEv = await store.createEvent({ title: "فعالية قديمة", eventDate: "2025-01-01", responsibleId: null, attendance: 10, notes: "" }, { university: null, sector: null, team: null });
+  assert.equal((await events(req("events", "PUT", { id: legacyEv.id, revision: legacyEv.revision, event: { title: "فعالية قديمة معدلة" } }, centralWomenAct.cookie))).status, 200);
+  const updatedLegacy = await store.eventById(legacyEv.id);
+  assert.equal((await events(req("events", "DELETE", { id: updatedLegacy.id, revision: updatedLegacy.revision }, centralWomenAct.cookie))).status, 200);
+});
+
+test("volunteers can self-edit personal data (e.g. birthDate) to unlock public profiles without changing university or gender", async () => {
+  const { account } = handlers();
+  const saved = await store.createVolunteer(person({ fullName: "يزن", birthDate: "2015-01-01", university: "استنيا", gender: "شاب" }));
+  await platform.createAccount({ volunteerId: saved.id, username: "yazan.test", passwordHash, mustChange: false, expiresAt: null, createdBy: "test" });
+  const login = await handlers().auth(req("auth", "POST", { identifier: "yazan.test", password: PASSWORD }));
+  const cookie = cookieOf(login);
+  // Initially blocked from publishing because birthDate was wrong (< 18)
+  assert.equal((await account(req("account", "PUT", { profile: { handle: "yazan", isPublic: true } }, cookie))).status, 400);
+  // Yazan fixes his own birthDate and phone
+  const updated = await account(req("account", "PUT", { personal: { fullName: "يزن أحمد", birthDate: "2001-05-10", phone: "+90 555 111 22 33", major: "Software engineering", studyYear: "السنة الرابعة", university: "بيلجي", gender: "بنت" } }, cookie));
+  assert.equal(updated.status, 200);
+  const refreshed = await platform.person(saved.id);
+  assert.equal(refreshed.fullName, "يزن أحمد");
+  assert.equal(refreshed.birthDate, "2001-05-10");
+  assert.equal(refreshed.major, "هندسة البرمجيات");
+  assert.equal(refreshed.university, "استنيا", "self-edit never changes university");
+  assert.equal(refreshed.gender, "شاب", "self-edit never changes gender");
+  // Now Yazan can publish his public profile!
+  assert.equal((await account(req("account", "PUT", { profile: { handle: "yazan", isPublic: true } }, cookie))).status, 200);
+  // Login and self-edit are both recorded in audit log
+  const actions = (await platform.auditLog(false)).map((e) => e.action);
+  assert.ok(actions.includes("account.login"));
+  assert.ok(actions.includes("volunteer.self-edit"));
+});
+
+test("relations, inbox submissions, custom forms and posts support full edit/delete with proper authorization", async () => {
+  const { forms, relations, posts, auth } = handlers();
+  const owner = cookieOf(await auth(req("auth", "POST", { email: sharedEmail, password: sharedPassword })));
+  const centralRel = await member("علاقات مركزي", { roles: [{ roleId: "central-relations-lead" }] });
+  const uniLead = await member("مسؤول جامعة", { roles: [{ roleId: "university-youth-lead", university: "استنيا", sector: "youth" }] });
+  const volunteer = await member("متطوع", { roles: [{ roleId: "university-volunteer", university: "استنيا", sector: "youth" }] });
+
+  // 1. Relations delete & inbox delete independence
+  const relBank = (await platform.forms()).find((f) => f.slug === "relations-bank");
+  const sub = await (await forms(req("forms", "POST", { formId: relBank.id, answers: { name: "مؤسسة الأفق", reason: "شراكة", scope: "مركزي" } }, volunteer.cookie))).json();
+  assert.equal((await forms(req("forms", "PUT", { action: "respond", id: sub.id, revision: 1, status: "accepted" }, centralRel.cookie))).status, 200);
+  // Deleting from inbox keeps accepted relation in relations ledger
+  assert.equal((await forms(req("forms", "DELETE", { target: "inbox", id: sub.id, revision: 2 }, centralRel.cookie))).status, 200);
+  assert.equal((await (await forms(req("forms?view=inbox", "GET", undefined, centralRel.cookie))).json()).submissions.length, 0);
+  const relRows = (await (await relations(req("relations", "GET", undefined, centralRel.cookie))).json()).records;
+  assert.equal(relRows.length, 1);
+  assert.equal(relRows[0].canDelete, true);
+  // Unauthorized user cannot delete relation
+  assert.equal((await relations(req("relations", "DELETE", { id: relRows[0].id, revision: relRows[0].revision }, uniLead.cookie))).status, 403);
+  // Authorized lead deletes relation
+  assert.equal((await relations(req("relations", "DELETE", { id: relRows[0].id, revision: relRows[0].revision }, centralRel.cookie))).status, 200);
+  assert.equal((await (await relations(req("relations", "GET", undefined, centralRel.cookie))).json()).records.length, 0);
+
+  // 2. Custom form deletion (while protecting system forms)
+  assert.equal((await forms(req("forms", "PUT", { action: "save-form", form: { title: "نموذج مؤقت", description: "تجربة", fields: [{ id: "title", label: "العنوان", type: "short_text", required: true }], audience: { sectors: ["youth", "women"] }, active: true, routing: { by: "fixed", role: "sahwa-lead" } } }, owner))).status, 200);
+  const customForm = (await platform.forms()).find((f) => f.title === "نموذج مؤقت");
+  assert.ok(customForm);
+  assert.equal((await forms(req("forms", "DELETE", { target: "form", id: relBank.id, revision: relBank.revision }, owner))).status, 409, "relations-bank is protected");
+  assert.equal((await forms(req("forms", "DELETE", { target: "form", id: customForm.id, revision: customForm.revision }, owner))).status, 200);
+  assert.ok(!(await platform.forms()).some((f) => f.id === customForm.id));
+
+  // 3. Community post editing
+  const createdPost = await (await posts(req("posts", "POST", { kind: "news", title: "عنوان أولي", body: "تفاصيل" }, uniLead.cookie))).json();
+  assert.equal((await posts(req("posts", "PUT", { id: createdPost.id, revision: 1, kind: "project", title: "عنوان معدل", body: "تفاصيل محدثة" }, volunteer.cookie))).status, 403);
+  assert.equal((await posts(req("posts", "PUT", { id: createdPost.id, revision: 1, kind: "project", title: "عنوان معدل", body: "تفاصيل محدثة" }, uniLead.cookie))).status, 200);
+  const edited = await platform.post(createdPost.id);
+  assert.equal(edited.title, "عنوان معدل");
+  assert.equal(edited.kind, "project");
+});
+
+test("central activities lead dashboard contacts resolve university leads, internal activities leads, media, and relations", async () => {
+  const actLead = await member("مسؤول الأنشطة المركزية", { roles: [{ roleId: "central-activities-lead", sector: "youth" }] });
+  await member("مسؤول شباب استنيا", { roles: [{ roleId: "university-youth-lead", university: "استنيا", sector: "youth" }], account: false });
+  await member("مسؤول أنشطة استنيا", { roles: [{ roleId: "internal-activities-lead", university: "استنيا", sector: "youth" }], account: false });
+  await member("مسؤول الإعلام", { roles: [{ roleId: "media-lead" }], account: false });
+  await member("مسؤول العلاقات", { roles: [{ roleId: "central-relations-lead" }], account: false });
+  const actor = await currentActor(req("auth", "GET", undefined, actLead.cookie), { platformStore: platform });
+  const data = dashboardData(actor, await loadRealm(platform, false));
+  const coordNames = data.roles[0].contacts.links.filter((l) => l.relation === "coordinates").flatMap((l) => l.people.map((p) => p.name));
+  for (const name of ["مسؤول شباب استنيا", "مسؤول أنشطة استنيا", "مسؤول الإعلام", "مسؤول العلاقات"]) {
+    assert.ok(coordNames.includes(name), `Expected ${name} in central-activities-lead contacts`);
+  }
+  const financeLink = data.roles[0].contacts.links.find((l) => l.targetTitle === "مسؤول المالية");
+  assert.equal(financeLink?.deferred, true);
 });
 
 test("the relations ledger reuses accepted bank proposals and limits changes to the assigned contact",async () => {

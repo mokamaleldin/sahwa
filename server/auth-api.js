@@ -43,6 +43,16 @@ export function createAuthHandler(store, platformStore) {
       const previous = readSessionToken(request);
       if (previous) await platformStore.deleteAccountSession(tokenHash(previous));
       const actor = await currentActor(new Request(request.url, { headers: { cookie: cookie.split(";")[0] } }), stores);
+      if (actor) {
+        await platformStore.audit({
+          actor: `${actor.fullName} (${actor.username})`,
+          actorVolunteer: actor.volunteerId,
+          action: "account.login",
+          target: actor.volunteerId,
+          details: {},
+          isTest: actor.isTest,
+        });
+      }
       return json({ authenticated: true, user: actor ? sessionUser(actor) : null }, 200, { "Set-Cookie": cookie });
     } catch (error) {
       return errorResponse(error);

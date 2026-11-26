@@ -3,7 +3,7 @@ import { TeamError, date } from "./team-data.js";
 import { json, readInput, errorResponse } from "./http.js";
 import { requireActor, forbidden, validateNewPassword, createAccountSession } from "./platform/session.js";
 import { RESERVED } from "./platform/usernames.js";
-import { ageFromBirthDate } from "../shared/team-options.js";
+import { ageFromBirthDate, normalizeMajor, todayInIstanbul } from "../shared/team-options.js";
 import { can, canAny } from "./platform/access.js";
 import { audienceVisible, presentCommunityPost, mayRemoveCommunityPost } from "./platform/service.js";
 
@@ -54,15 +54,30 @@ export function validateProfile(input) {
   };
 }
 
+export function validateOwnPersonal(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw new TeamError("بيانات غير صالحة.");
+  const fullName = clean(input.fullName, 120, "الاسم الكامل");
+  if (!fullName) throw new TeamError("أدخل الاسم الكامل.");
+  const birthDate = date(clean(input.birthDate, 10, "تاريخ الميلاد"), "تاريخ ميلاد");
+  if (birthDate && (birthDate > todayInIstanbul() || birthDate < "1900-01-01")) throw new TeamError("راجع تاريخ الميلاد.");
+  const phone = clean(input.phone, 30, "رقم الهاتف").replace(/[٠-٩]/g, (digit) => String(digit.charCodeAt(0) - 1632));
+  if (phone && (!/^[+\d\s()\-]+$/.test(phone) || phone.replace(/\D/g, "").length < 7 || phone.replace(/\D/g, "").length > 16))
+    throw new TeamError("أدخل رقم هاتف صحيحًا، ويمكن إضافة رمز الدولة.");
+  const major = normalizeMajor(clean(input.major, 120, "التخصص"));
+  const studyYear = clean(input.studyYear, 60, "السنة الدراسية");
+  return { fullName, birthDate, phone, major, studyYear };
+}
+
 export function createAccountHandler(teamStore, platformStore) {
   const stores = { teamStore, platformStore };
   return async (request) => {
     try {
       const actor = await requireActor(request, stores, { allowPasswordChange: true });
       if (request.method === "GET") {
-        if (actor.kind !== "account") return json({ profile: null });
+        if (actor.kind !== "account") return json({ profile: null, person: null });
         if (actor.mustChangePassword) return json({ mustChangePassword: true });
-        return json({ profile: (await platformStore.profile(actor.volunteerId)) || null });
+        const [profile, person] = await Promise.all([platformStore.profile(actor.volunteerId), platformStore.person(actor.volunteerId)]);
+        return json({ profile: profile || null, person: person || null });
       }
       if (request.method !== "POST" && request.method !== "PUT") return json({ error: "طريقة طلب غير متاحة." }, 405);
       const input = await readInput(request, 16 * 1024);
@@ -90,6 +105,12 @@ export function createAccountHandler(teamStore, platformStore) {
       }
       if (actor.kind !== "account") throw forbidden("حساب المسؤول العام لا يرتبط بملف متطوع.");
       if (!can(actor, "profile.edit", {})) throw forbidden();
+      if (input.personal) {
+        const personal = validateOwnPersonal(input.personal);
+        const savedPerson = await platformStore.updateOwnPersonalInfo(actor.volunteerId, personal);
+        await platformStore.audit({ actor: `${personal.fullName} (${actor.username})`, actorVolunteer: actor.volunteerId, action: "volunteer.self-edit", target: actor.volunteerId, isTest: actor.isTest });
+        if (!input.profile) return json({ person: savedPerson });
+      }
       const profile = validateProfile(input.profile || {});
       if (profile.handle) {
         const owner = await platformStore.handleOwner(profile.handle);
@@ -149,12 +170,33 @@ export function createPostsHandler(teamStore, platformStore) {
         await platformStore.audit({ actor: actor.fullName, actorVolunteer: actor.volunteerId, action: "post.publish", details: { kind, title, audienceUniversity, audienceSector }, isTest: actor.isTest });
         return json({ id }, 201);
       }
+      if (request.method === "PUT") {
+        const post = await platformStore.post(String(input.id || ""));
+        if (!post || post.isTest !== actor.isTest) throw new TeamError("المنشور غير موجود.", 404);
+        if (!mayRemoveCommunityPost(actor, post)) throw forbidden();
+        const kind = KINDS.includes(input.kind) ? input.kind : null;
+        if (!kind) throw new TeamError("اختر نوع المنشور.");
+        const title = clean(input.title, 160, "العنوان");
+        if (!title) throw new TeamError("أدخل العنوان.");
+        const link = input.link ? safeLink(String(input.link).trim()) : "";
+        if (input.link && !link) throw new TeamError("الرابط يجب أن يبدأ بـ https://");
+        await platformStore.updatePost(post.id, Number(input.revision), {
+          kind,
+          title,
+          body: clean(input.body, 2000, "التفاصيل"),
+          link: link || "",
+          happensOn: input.happensOn ? date(String(input.happensOn), "تاريخ") : "",
+        });
+        await platformStore.audit({ actor: actor.fullName, actorVolunteer: actor.volunteerId, action: "post.edit", details: { kind, title }, isTest: actor.isTest });
+        return json({ saved: true });
+      }
       if (request.method === "DELETE") {
         const post = await platformStore.post(String(input.id || ""));
         if (!post || post.isTest !== actor.isTest) throw new TeamError("المنشور غير موجود.", 404);
         if (!mayRemoveCommunityPost(actor, post))
           throw forbidden();
         await platformStore.archivePost(post.id, Number(input.revision));
+        await platformStore.audit({ actor: actor.fullName, actorVolunteer: actor.volunteerId, action: "post.delete", details: { title: post.title }, isTest: actor.isTest });
         return json({ archived: true });
       }
       return json({ error: "طريقة طلب غير متاحة." }, 405);

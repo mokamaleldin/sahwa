@@ -57,7 +57,7 @@ export default function PersonForm({
   person: Volunteer | null;
   volunteers?: Volunteer[];
   roles?: RoleOptionMeta[];
-  onSave: (input: VolunteerInput) => Promise<void>;
+  onSave: (input: VolunteerInput, options?: { confirmDuplicate?: boolean }) => Promise<void>;
   onClose: () => void;
 }) {
   const idPrefix = useId();
@@ -86,24 +86,35 @@ export default function PersonForm({
     : [];
   const detailRequired = !person || roleChanged || Boolean(originalDetail);
   const [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
-  const update = (key: keyof VolunteerInput, value: string) =>
+    [error, setError] = useState(""),
+    [duplicateWarning, setDuplicateWarning] = useState(false);
+  const update = (key: keyof VolunteerInput, value: string) => {
     setInput((previous) => ({ ...previous, [key]: value }));
-  async function submit(event: FormEvent) {
-    event.preventDefault();
+    if (key === "fullName") setDuplicateWarning(false);
+  };
+  async function saveRecord(confirmDuplicate = false) {
     if (busy) return;
     setBusy(true);
     setError("");
     try {
-      await onSave({
-        ...input,
-        major: normalizeMajor(input.major),
-        ...(roles ? (!person ? { assignmentRoleId } : {}) : (!person || roleChanged ? { roleTitle, roleDetail } : {})),
-      });
+      await onSave(
+        {
+          ...input,
+          major: normalizeMajor(input.major),
+          ...(roles ? (!person ? { assignmentRoleId } : {}) : (!person || roleChanged ? { roleTitle, roleDetail } : {})),
+        },
+        confirmDuplicate ? { confirmDuplicate: true } : undefined,
+      );
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "تعذر حفظ البيانات.");
+      const err = reason as Error & { code?: string };
+      setError(err instanceof Error ? err.message : "تعذر حفظ البيانات.");
+      if (err?.code === "POSSIBLE_DUPLICATE") setDuplicateWarning(true);
       setBusy(false);
     }
+  }
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    await saveRecord(false);
   }
   const statuses = [
     ...new Set([
@@ -310,9 +321,19 @@ export default function PersonForm({
             </div>
           </div>
           {error && (
-            <p className="team-error mt-5" role="alert">
-              {error}
-            </p>
+            <div className="team-error mt-5" role="alert">
+              <p>{error}</p>
+              {duplicateWarning && !person && (
+                <button
+                  type="button"
+                  className="team-button team-button-secondary mt-3"
+                  disabled={busy}
+                  onClick={() => void saveRecord(true)}
+                >
+                  تأكيد أنه شخص مختلف وإضافته كسجل جديد
+                </button>
+              )}
+            </div>
           )}
         </fieldset>
         <div className="team-dialog-footer">

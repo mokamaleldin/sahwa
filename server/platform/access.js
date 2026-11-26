@@ -77,15 +77,35 @@ const relationsLead = (target) => [
 
 const ROLE_DEFAULTS = {
   "sahwa-lead": PERMISSIONS.filter((p) => !p.base && p.key !== "forms.review").map((p) => [p.key, scope()]).concat([["forms.review", scope(CENTRAL, null, "leadership")]]),
-  "women-sector-lead": [...rights([...managedTeam, ...activities, "forms.review", "accounts.reset", "accounts.suspend"], women), studio],
-  "university-youth-lead": [...rights([...managedTeam, ...activities, "forms.review", "accounts.reset", "accounts.suspend"], campus), studio],
-  "internal-activities-lead": [...rights([...managedTeam, ...activities, "forms.review"], internal), studio],
+  "women-sector-lead": [
+    ...rights([...managedTeam, ...activities, "events.manage", "events.delete", "forms.review", "accounts.reset", "accounts.suspend"], women),
+    studio,
+  ],
+  "university-youth-lead": [
+    ...rights([...managedTeam, ...activities, "events.manage", "events.delete", "forms.review", "accounts.reset", "accounts.suspend"], campus),
+    studio,
+  ],
+  "internal-activities-lead": [
+    ...rights([...managedTeam, "forms.review"], internal),
+    ...rights(["events.view", "events.create", "events.publish", "posts.publish"], internal),
+    ...rights(["events.edit", "events.manage", "events.delete"], campus),
+    studio,
+  ],
   "internal-activities-member": [],
-  "central-activities-lead": [...rights([...managedTeam, ...activities, "forms.review"], central), studio],
+  "central-activities-lead": [
+    ...rights([...managedTeam, "forms.review"], central),
+    ["volunteers.view", scope(null, S, "internal-activities")],
+    ...rights(["events.view", "events.create", "events.publish", "posts.publish"], central),
+    ...rights(["events.edit", "events.manage", "events.delete", "events.publish"], scope(null, S)),
+    studio,
+  ],
   "central-activities-member": [],
   "university-relations-lead": relationsLead(localRelations),
   "university-relations-member": [["relations.view", localRelations]],
-  "central-relations-lead": relationsLead(centralRelations),
+  "central-relations-lead": [
+    ...relationsLead(centralRelations),
+    ...rights(["volunteers.view", "roles.assign", "accounts.view"], scope(null, null, "university-relations")),
+  ],
   "central-relations-member": [["relations.view", centralRelations]],
   "media-lead": [...rights([...managedTeam, "forms.review"], media), studio],
 };
@@ -96,7 +116,7 @@ export function roleDefaults(roleId) {
   const role = roleById(roleId);
   if (role?.level !== "lead" || defaults.some(([key]) => key === "events.create")) return defaults;
   const target = scope(role.scope === "university" ? U : CENTRAL, role.sector === "none" ? null : S, role.team);
-  return [...defaults, ...rights(["events.create", "events.edit"], target)];
+  return [...defaults, ...rights(["events.create", "events.edit", "events.delete"], target)];
 }
 
 function fill(template, assignment) {
@@ -214,21 +234,47 @@ export function isProtectedLead(assignments) {
   return assignments.some((a) => a.roleId === "sahwa-lead");
 }
 
-export function mayManagePerson(actor, assignments, permission) {
+export function mayManagePerson(actor, assignments, permission, person = null) {
   if (isProtectedLead(assignments)) return false;
   if (isGlobalAdmin(actor)) return true;
-  return assignments.every((a) => {
-    const target = assignmentTarget(a);
+  const personSector = person ? (person.sector ?? null) : null;
+  const coversAll = assignments.every((a) => {
+    const target = { ...assignmentTarget(a), sector: a.sector || personSector || null };
     return mayAssignRole(actor, a.roleId, target) && (!permission || can(actor, permission, target));
   });
+  if (coversAll) return true;
+  // Campus and sector leads may edit basic records or create initial accounts
+  // for non-higher volunteers belonging to their campus/sector (for example,
+  // a campus student who also works with central Media), while never managing
+  // higher officials or people assigned to another university.
+  if (person && (permission === "volunteers.edit" || permission === "accounts.create" || !permission)) {
+    const base = { university: person.university || null, sector: personSector, team: null };
+    const effective = permission || "volunteers.edit";
+    if (!can(actor, effective, base)) return false;
+    const hasHigherLead = assignments.some((a) => {
+      const role = roleById(a.roleId);
+      if (role?.level !== "lead") return false;
+      const target = { ...assignmentTarget(a), sector: a.sector || personSector || null };
+      return !mayAssignRole(actor, a.roleId, target);
+    });
+    if (hasHigherLead) return false;
+    const actorUniversities = new Set(
+      actor.assignments.filter((a) => roleById(a.roleId)?.scope === "university" && a.university).map((a) => a.university),
+    );
+    if (actorUniversities.size > 0 && assignments.some((a) => a.university && !actorUniversities.has(a.university))) return false;
+    return true;
+  }
+  return false;
 }
 
-// Scope targets of a volunteer: the base record and each active assignment.
+// Scope targets of a volunteer: always keep the person's campus/sector base
+// alongside each active assignment, so university and sector leads always see
+// every volunteer in their campus/sector even when the volunteer serves on a
+// central team (e.g. Media) or a sector-neutral team (e.g. Relations).
 export function volunteerTargets(volunteer, assignments = []) {
   const base = { university: volunteer.university || null, sector: volunteer.sector || null, team: null };
-  if (!assignments.length) return [base];
-  return assignments.map((a) => ({ ...assignmentTarget(a), sector: a.sector || null }));
-
+  const roleTargets = assignments.map((a) => ({ ...assignmentTarget(a), sector: a.sector || volunteer.sector || null }));
+  return [base, ...roleTargets];
 }
 
 export function eventTarget(event) {

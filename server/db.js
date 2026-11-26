@@ -25,7 +25,7 @@ async function localClient() {
 // Platform migrations (004, 005) are additive and idempotent. When a
 // deployment reaches a database that does not have them yet, they run once
 // per server instance before the first query.
-const PLATFORM_MIGRATIONS = ["004-platform.sql", "005-owner-email-login.sql", "006-platform-simplification.sql", "007-team-workspace.sql", "008-hide-own-submissions.sql"];
+const PLATFORM_MIGRATIONS = ["004-platform.sql", "005-owner-email-login.sql", "006-platform-simplification.sql", "007-team-workspace.sql", "008-hide-own-submissions.sql", "009-platform-improvements.sql"];
 
 async function applied(client) {
   const [state] = await client.query(
@@ -33,7 +33,8 @@ async function applied(client) {
        EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sahwa_accounts' AND column_name='is_owner') AS "m005",
        EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sahwa_events' AND column_name='created_by_volunteer') AS "m006",
        to_regprocedure('sahwa_scope_allows(jsonb,text,text,text,text)') IS NOT NULL AS "m007",
-       EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sahwa_form_submissions' AND column_name='hidden_by_submitter_at') AS "m008"`,
+       EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sahwa_form_submissions' AND column_name='hidden_by_submitter_at') AS "m008",
+       EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sahwa_form_submissions' AND column_name='relation_archived_at') AS "m009"`,
   );
   return state || {};
 }

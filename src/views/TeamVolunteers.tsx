@@ -8,6 +8,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  UserPlus,
   UsersRound,
 } from "lucide-react";
 import {
@@ -15,16 +16,188 @@ import {
   GENDERS,
   STUDY_YEARS,
   UNIVERSITIES,
+  normalizeSearch,
 } from "../../shared/team-options.js";
 import PageHeading from "../components/shared/PageIdentity";
 import PersonForm from "../components/Team/PersonForm";
 import PersonDetails from "../components/Team/PersonDetails";
 import VolunteerCard from "../components/Team/VolunteerCard";
-import { teamRequest, type Volunteer, type VolunteerInput, type VolunteerMeta } from "../lib/team";
+import TeamDialog from "../components/Team/TeamDialog";
+import {
+  teamRequest,
+  type RoleOptionMeta,
+  type Volunteer,
+  type VolunteerCandidate,
+  type VolunteerInput,
+  type VolunteerMeta,
+} from "../lib/team";
+
 const PAGE_SIZE = 12;
+
+function roleLabel(role: RoleOptionMeta, gender?: string) {
+  return gender === "بنت" && role.titleWomen ? role.titleWomen : role.title;
+}
+
+function RecruitDialog({
+  candidates,
+  roles,
+  onClose,
+  onRecruited,
+}: {
+  candidates: VolunteerCandidate[];
+  roles: RoleOptionMeta[];
+  onClose: () => void;
+  onRecruited: (name: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [chosenRoles, setChosenRoles] = useState<Record<string, string>>({});
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState("");
+
+  const rolesById = useMemo(() => new Map(roles.map((r) => [r.id, r])), [roles]);
+
+  const filtered = useMemo(() => {
+    const q = normalizeSearch(query);
+    return candidates.filter((c) => {
+      if (!q) return true;
+      return normalizeSearch([c.name, c.university, ...c.groups].join(" ")).includes(q);
+    });
+  }, [candidates, query]);
+
+  async function recruit(candidate: VolunteerCandidate) {
+    const selectedRoleId = chosenRoles[candidate.id] || candidate.roleIds[0];
+    const role = rolesById.get(selectedRoleId);
+    if (!role) return;
+    setBusyId(candidate.id);
+    setError("");
+    try {
+      await teamRequest(
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "assign-role",
+            volunteerId: candidate.id,
+            roleId: selectedRoleId,
+            ...(role.scope === "university" ? { university: candidate.university } : {}),
+          }),
+        },
+        "/api/admin",
+      );
+      onRecruited(candidate.name);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "تعذر ضم المتطوع إلى الفريق.");
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <TeamDialog title="ضم متطوع موجود إلى الفريق" onClose={onClose} busy={Boolean(busyId)}>
+      <div className="team-form-body">
+        <p className="platform-muted mb-4">
+          اختر شخصًا مسجلًا بالفعل في صحوة لضمّه إلى فريقك دون إنشاء سجل مكرر.
+        </p>
+        <label className="team-search mb-4">
+          <span className="sr-only">ابحث في المتطوعين الموجودين</span>
+          <Search size={18} aria-hidden="true" />
+          <input
+            type="search"
+            autoFocus
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="ابحث بالاسم أو الجامعة أو الفريق الحالي…"
+            maxLength={100}
+          />
+        </label>
+        {error && (
+          <p className="team-error mb-3" role="alert">
+            {error}
+          </p>
+        )}
+        {filtered.length ? (
+          <div className="platform-list">
+            {filtered.slice(0, 40).map((c) => {
+              const selectedId = chosenRoles[c.id] || c.roleIds[0];
+              const options = c.roleIds
+                .map((id) => rolesById.get(id))
+                .filter((r): r is RoleOptionMeta => Boolean(r));
+              return (
+                <div key={c.id} className="platform-item">
+                  <div className="platform-row">
+                    <div>
+                      <h4 className="font-heading text-brand-primary">{c.name}</h4>
+                      <p className="platform-muted">
+                        {[c.university, c.gender].filter(Boolean).join(" · ")}
+                        {c.groups.length ? ` — ${c.groups.join("، ")}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {options.length > 1 ? (
+                        <select
+                          aria-label={`الدور لـ ${c.name}`}
+                          className="rounded-xl border border-[#75202624] bg-[#faf4ee] px-3 py-2 text-xs"
+                          value={selectedId}
+                          disabled={Boolean(busyId)}
+                          onChange={(e) =>
+                            setChosenRoles((prev) => ({ ...prev, [c.id]: e.target.value }))
+                          }
+                        >
+                          {options.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {roleLabel(r, c.gender)}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        options[0] && (
+                          <span className="platform-chip">{roleLabel(options[0], c.gender)}</span>
+                        )
+                      )}
+                      <button
+                        type="button"
+                        className="team-button"
+                        disabled={Boolean(busyId)}
+                        onClick={() => void recruit(c)}
+                      >
+                        {busyId === c.id ? (
+                          <Loader2 size={15} className="animate-spin" aria-hidden="true" />
+                        ) : (
+                          <UserPlus size={15} aria-hidden="true" />
+                        )}
+                        ضم للفريق
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {filtered.length > 40 && (
+              <p className="platform-muted text-center">
+                يُعرض أول 40 نتيجة — استخدم البحث للوصول السريع للشخص المطلوب.
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="platform-empty">لا يوجد متطوعون مطابقون للبحث.</p>
+        )}
+      </div>
+      <div className="team-dialog-footer">
+        <button
+          type="button"
+          className="team-button team-button-secondary"
+          onClick={onClose}
+          disabled={Boolean(busyId)}
+        >
+          إغلاق
+        </button>
+      </div>
+    </TeamDialog>
+  );
+}
 
 export default function TeamVolunteers({ assignment = "" }: { assignment?: string } = {}) {
   const [people, setPeople] = useState<Volunteer[]>([]),
+    [candidates, setCandidates] = useState<VolunteerCandidate[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
@@ -34,20 +207,33 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
       status: "",
       gender: "",
       studyYear: "",
+      roleState: "",
     }),
     [page, setPage] = useState(1);
   const [meta, setMeta] = useState<VolunteerMeta | undefined>(undefined);
   const [selected, setSelected] = useState<Volunteer | null>(null),
-    [editing, setEditing] = useState<Volunteer | null | undefined>(undefined);
+    [editing, setEditing] = useState<Volunteer | null | undefined>(undefined),
+    [recruiting, setRecruiting] = useState(false);
+
   const load = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     setError("");
     try {
-      const result = await teamRequest<{ volunteers: Volunteer[]; meta?: VolunteerMeta }>({ signal }, assignment ? `/api/team?assignment=${encodeURIComponent(assignment)}` : "/api/team");
+      const result = await teamRequest<{
+        volunteers: Volunteer[];
+        candidates?: VolunteerCandidate[];
+        meta?: VolunteerMeta;
+      }>(
+        { signal },
+        assignment ? `/api/team?assignment=${encodeURIComponent(assignment)}` : "/api/team",
+      );
       if (!signal?.aborted) {
         setPeople(result.volunteers);
+        setCandidates(result.candidates || []);
         setMeta(result.meta);
-        setSelected((current) => (current ? result.volunteers.find((v) => v.id === current.id) || null : null));
+        setSelected((current) =>
+          current ? result.volunteers.find((v) => v.id === current.id) || null : null,
+        );
       }
     } catch (reason) {
       if (!signal?.aborted)
@@ -58,15 +244,34 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
       if (!signal?.aborted) setLoading(false);
     }
   }, [assignment]);
+
   useEffect(() => {
     const controller = new AbortController();
     void load(controller.signal);
     return () => controller.abort();
   }, [load]);
-  const results = useMemo(
-    () => filterVolunteers(people.filter((p) => !filters.status || (filters.status === "نشط" ? p.status === "نشط" : p.status !== "نشط")), { ...filters, status: "" }),
-    [people, filters],
+
+  const hasOversight = useMemo(() => people.some((p) => p.allowed?.oversightOnly), [people]);
+  const hasUnassigned = useMemo(
+    () => people.some((p) => p.assignments && p.assignments.length === 0),
+    [people],
   );
+
+  const results = useMemo(() => {
+    const scoped = people.filter((p) => {
+      if (filters.status) {
+        const active = p.status === "نشط";
+        if (filters.status === "نشط" ? !active : active) return false;
+      }
+      if (filters.roleState === "assigned" && !p.assignments?.length) return false;
+      if (filters.roleState === "unassigned" && p.assignments?.length) return false;
+      if (filters.roleState === "direct" && p.allowed?.oversightOnly) return false;
+      if (filters.roleState === "oversight" && !p.allowed?.oversightOnly) return false;
+      return true;
+    });
+    return filterVolunteers(scoped, { ...filters, status: "" });
+  }, [people, filters]);
+
   const statuses = ["نشط", "غير نشط"];
   const universities = useMemo(
     () => [...new Set([...UNIVERSITIES, ...people.map((person) => person.university).filter(Boolean)])],
@@ -82,6 +287,7 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
     setFilters((previous) => ({ ...previous, [key]: value }));
     setPage(1);
   };
+
   async function remove(person: Volunteer) {
     await teamRequest<{ deleted: true }>({
       method: "DELETE",
@@ -90,14 +296,17 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
     });
     setPeople((previous) => previous.filter((value) => value.id !== person.id));
     setSelected(null);
-    setNotice(`تمت أرشفة «${person.fullName}». يمكن لمسؤول صحوة استرجاعه من لوحة التحكم.`);
+    setNotice(`تمت أرشفة «${person.fullName}».`);
   }
-  async function save(person: VolunteerInput) {
+
+  async function save(person: VolunteerInput, options?: { confirmDuplicate?: boolean }) {
     const result = await teamRequest<{ person: Volunteer }>({
       method: editing ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        person, ...(person.assignmentRoleId ? { assignment: { roleId: person.assignmentRoleId } } : {}),
+        person,
+        ...(person.assignmentRoleId ? { assignment: { roleId: person.assignmentRoleId } } : {}),
+        ...(options?.confirmDuplicate ? { confirmDuplicate: true } : {}),
         ...(editing ? { id: editing.id, revision: editing.revision } : {}),
       }),
     });
@@ -112,10 +321,11 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
     if (meta) await load();
     setNotice(editing ? "تم حفظ البيانات." : "تمت إضافة المتطوع إلى سجل صحوة.");
     if (!editing) {
-      setFilters({ query: "", university: "", status: "", gender: "", studyYear: "" });
+      setFilters({ query: "", university: "", status: "", gender: "", studyYear: "", roleState: "" });
       setPage(1);
     }
   }
+
   return (
     <>
       <Helmet>
@@ -123,7 +333,7 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
       </Helmet>
       <PageHeading
         title={meta?.globalAdmin ? "إدارة المتطوعين والحسابات" : "إدارة فريقي"}
-        description="سجل المتطوعين وبياناتهم وأدوارهم في صحوة."
+        description="سجل المتطوعين وبياناتهم وأدوارهم وحساباتهم في نطاقك."
       />
       <section aria-label="دليل المتطوعين">
         <div className="team-directory-toolbar">
@@ -135,8 +345,9 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
               {people.length.toLocaleString("ar-EG")} متطوع في السجل
             </span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
+              type="button"
               className="team-button team-button-secondary"
               onClick={() => void load()}
               disabled={loading}
@@ -144,17 +355,34 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
               <RefreshCw size={16} aria-hidden="true" />
               تحديث
             </button>
-            {meta?.canCreate !== false && <button
-              className="team-button"
-              disabled={loading || Boolean(error)}
-              onClick={() => {
-                setNotice("");
-                setEditing(null);
-              }}
-            >
-              <Plus size={18} aria-hidden="true" />
-              إضافة متطوع
-            </button>}
+            {meta?.canAssign && candidates.length > 0 && (
+              <button
+                type="button"
+                className="team-button team-button-secondary"
+                disabled={loading || Boolean(error)}
+                onClick={() => {
+                  setNotice("");
+                  setRecruiting(true);
+                }}
+              >
+                <UserPlus size={17} aria-hidden="true" />
+                ضم متطوع موجود
+              </button>
+            )}
+            {meta?.canCreate !== false && (
+              <button
+                type="button"
+                className="team-button"
+                disabled={loading || Boolean(error)}
+                onClick={() => {
+                  setNotice("");
+                  setEditing(null);
+                }}
+              >
+                <Plus size={18} aria-hidden="true" />
+                إضافة متطوع
+              </button>
+            )}
           </div>
         </div>
         {notice && (
@@ -165,7 +393,7 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
         {error && (
           <p className="team-error mb-5" role="alert">
             {error}{" "}
-            <button className="underline" onClick={() => void load()}>
+            <button type="button" className="underline" onClick={() => void load()}>
               إعادة المحاولة
             </button>
           </p>
@@ -214,7 +442,9 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
             >
               <option value="">الكل</option>
               {GENDERS.map((gender) => (
-                <option key={gender} value={gender}>{gender}</option>
+                <option key={gender} value={gender}>
+                  {gender}
+                </option>
               ))}
             </select>
           </label>
@@ -226,11 +456,65 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
             >
               <option value="">كل السنوات</option>
               {studyYears.map((year) => (
-                <option key={year} value={year}>{year}</option>
+                <option key={year} value={year}>
+                  {year}
+                </option>
               ))}
             </select>
           </label>
         </div>
+        {(hasUnassigned || hasOversight) && (
+          <div className="platform-tabs mt-4" role="tablist" aria-label="تصفية حسب التكليف">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filters.roleState === ""}
+              onClick={() => update("roleState", "")}
+            >
+              الكل ({people.length.toLocaleString("ar-EG")})
+            </button>
+            {hasUnassigned && (
+              <>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={filters.roleState === "assigned"}
+                  onClick={() => update("roleState", "assigned")}
+                >
+                  لديهم دور مسند
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={filters.roleState === "unassigned"}
+                  onClick={() => update("roleState", "unassigned")}
+                >
+                  دون دور مسند ({people.filter((p) => !p.assignments?.length).length.toLocaleString("ar-EG")})
+                </button>
+              </>
+            )}
+            {hasOversight && (
+              <>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={filters.roleState === "direct"}
+                  onClick={() => update("roleState", "direct")}
+                >
+                  فريقي المباشر
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={filters.roleState === "oversight"}
+                  onClick={() => update("roleState", "oversight")}
+                >
+                  تبع الجامعات للعرض
+                </button>
+              </>
+            )}
+          </div>
+        )}
         <p className="team-results-count" role="status">
           {loading
             ? "جارٍ تحميل السجل…"
@@ -256,7 +540,7 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
                 ? "أعد المحاولة لعرض البيانات."
                 : people.length
                   ? "غيّر البحث أو الفلاتر."
-                  : "أضف أول متطوع وسجّل بياناته الأساسية من هنا."}
+                  : "أضف أول متطوع أو ضم متطوعًا موجودًا إلى فريقك من هنا."}
             </p>
           </div>
         ) : (
@@ -275,6 +559,7 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
         {pages > 1 && (
           <nav className="team-pagination" aria-label="صفحات المتطوعين">
             <button
+              type="button"
               className="team-button team-button-secondary"
               disabled={current <= 1}
               onClick={() => setPage(current - 1)}
@@ -286,6 +571,7 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
               {current} / {pages}
             </span>
             <button
+              type="button"
               className="team-button team-button-secondary"
               disabled={current >= pages}
               onClick={() => setPage(current + 1)}
@@ -296,6 +582,18 @@ export default function TeamVolunteers({ assignment = "" }: { assignment?: strin
           </nav>
         )}
       </section>
+      {recruiting && meta && (
+        <RecruitDialog
+          candidates={candidates}
+          roles={meta.assignableRoles}
+          onClose={() => setRecruiting(false)}
+          onRecruited={(name) => {
+            setRecruiting(false);
+            setNotice(`تم ضم «${name}» إلى الفريق بنجاح.`);
+            void load();
+          }}
+        />
+      )}
       {editing !== undefined && (
         <PersonForm
           person={editing}

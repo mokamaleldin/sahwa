@@ -99,13 +99,13 @@ export const TEAM_TITLES = {
 // may assign roles outside this list. Assigning still needs the
 // `roles.assign` permission over the target scope.
 export const ASSIGNABLE_BY = {
-  "women-sector-lead": ["university-women-lead", "internal-activities-lead", "internal-activities-member", "central-activities-lead", "central-activities-member", "university-volunteer", "central-volunteer"],
-  "university-youth-lead": ["internal-activities-lead", "internal-activities-member", "university-volunteer"],
-  "university-women-lead": ["internal-activities-lead", "internal-activities-member", "university-volunteer"],
+  "women-sector-lead": ["university-women-lead", "internal-activities-lead", "internal-activities-member", "central-activities-lead", "central-activities-member", "university-relations-lead", "university-relations-member", "university-volunteer", "central-volunteer"],
+  "university-youth-lead": ["internal-activities-lead", "internal-activities-member", "university-relations-lead", "university-relations-member", "university-volunteer"],
+  "university-women-lead": ["internal-activities-lead", "internal-activities-member", "university-relations-lead", "university-relations-member", "university-volunteer"],
   "internal-activities-lead": ["internal-activities-member"],
   "central-activities-lead": ["central-activities-member"],
   "university-relations-lead": ["university-relations-member"],
-  "central-relations-lead": ["central-relations-member"],
+  "central-relations-lead": ["central-relations-member", "university-relations-lead", "university-relations-member"],
   "media-lead": ["media-member"],
 };
 
@@ -122,16 +122,27 @@ export function roleLinks(roleId, sector) {
       return [
         { relation: "reports", label: "تتبع إداريًا", phrase: "مسؤول صحوة في الشؤون الإدارية العامة", target: "sahwa-lead" },
         { relation: "coordinates", label: "تنسق مع", phrase: "مسؤول صحوة", target: "sahwa-lead" },
+        { relation: "coordinates", label: "تنسق مع", phrase: "أعضاء المجلس", target: "central-activities-lead", sector: "youth" },
+        { relation: "coordinates", label: "تنسق مع", phrase: "مسؤولي الوحدات المشتركة", target: "media-lead" },
+        { relation: "coordinates", label: "تنسق مع", phrase: "مسؤولي الوحدات المشتركة", target: "central-relations-lead" },
       ];
     case "university-youth-lead":
       return [
         { relation: "reports", label: "يتبع إداريًا", phrase: "مسؤول صحوة، عبر مسؤول متابعة جامعات الشباب عند تفعيل المنصب", target: "sahwa-lead" },
         { relation: "coordinates", label: "يتواصل مع", phrase: "مسؤولة الطالبات بالجامعة", target: "university-women-lead", university: "same" },
+        { relation: "coordinates", label: "يتواصل مع", phrase: "الفرق المركزية والمساندة", target: "university-relations-lead", university: "same" },
+        { relation: "coordinates", label: "يتواصل مع", phrase: "الفرق المركزية والمساندة", target: "central-activities-lead", sector: "youth" },
+        { relation: "coordinates", label: "يتواصل مع", phrase: "الفرق المركزية والمساندة", target: "media-lead" },
+        { relation: "coordinates", label: "يتواصل مع", phrase: "الفرق المركزية والمساندة", target: "central-relations-lead" },
       ];
     case "university-women-lead":
       return [
         { relation: "reports", label: "تتبع إداريًا", phrase: "مسؤولة قطاع الطالبات", target: "women-sector-lead" },
         { relation: "coordinates", label: "تتواصل مع", phrase: "مسؤول الشباب بالجامعة", target: "university-youth-lead", university: "same" },
+        { relation: "coordinates", label: "تتواصل مع", phrase: "الفرق المساندة والمركزية", target: "university-relations-lead", university: "same" },
+        { relation: "coordinates", label: "تتواصل مع", phrase: "الفرق المساندة والمركزية", target: "central-activities-lead", sector: "women" },
+        { relation: "coordinates", label: "تتواصل مع", phrase: "الفرق المساندة والمركزية", target: "media-lead" },
+        { relation: "coordinates", label: "تتواصل مع", phrase: "الفرق المساندة والمركزية", target: "central-relations-lead" },
       ];
     case "internal-activities-lead":
       return women
@@ -155,13 +166,21 @@ export function roleLinks(roleId, sector) {
       return women
         ? [
             { relation: "reports", label: "تتبع إداريًا", phrase: "مسؤولة قطاع الطالبات", target: "women-sector-lead" },
+            { relation: "coordinates", label: "تتواصل مع", phrase: "مسؤولات الطالبات", target: "university-women-lead", university: "any" },
+            { relation: "coordinates", label: "تتواصل مع", phrase: "الأنشطة الداخلية في الجامعات", target: "internal-activities-lead", sector: "women", university: "any" },
             { relation: "coordinates", label: "تتواصل مع", phrase: "مسؤول أنشطة الشباب المركزية", target: "central-activities-lead", sector: "youth" },
             { relation: "coordinates", label: "تتواصل مع", phrase: "الإعلام", target: "media-lead" },
+            { relation: "coordinates", label: "تتواصل مع", phrase: "العلاقات", target: "central-relations-lead" },
+            { relation: "coordinates", label: "تتواصل مع", phrase: "المالية", target: "finance-lead" },
           ]
         : [
             { relation: "reports", label: "يتبع إداريًا", phrase: "مسؤول صحوة", target: "sahwa-lead" },
+            { relation: "coordinates", label: "يتواصل مع", phrase: "مسؤولي الشباب", target: "university-youth-lead", university: "any" },
+            { relation: "coordinates", label: "يتواصل مع", phrase: "الأنشطة الداخلية في الجامعات", target: "internal-activities-lead", sector: "youth", university: "any" },
             { relation: "coordinates", label: "يتواصل مع", phrase: "مسؤولة أنشطة الطالبات المركزية", target: "central-activities-lead", sector: "women" },
             { relation: "coordinates", label: "يتواصل مع", phrase: "الإعلام", target: "media-lead" },
+            { relation: "coordinates", label: "يتواصل مع", phrase: "العلاقات", target: "central-relations-lead" },
+            { relation: "coordinates", label: "يتواصل مع", phrase: "المالية", target: "finance-lead" },
           ];
     case "central-activities-member":
       return women
@@ -180,10 +199,23 @@ export function roleLinks(roleId, sector) {
       return [
         { relation: "reports", label: "يتبع إداريًا", phrase: "مسؤول صحوة", target: "sahwa-lead" },
         { relation: "coordinates", label: "ينسق تخصصيًا مع", phrase: "مسؤولي العلاقات الجامعية", target: "university-relations-lead", university: "any" },
+        { relation: "coordinates", label: "يتواصل مع", phrase: "مسؤولي الجامعات", target: "university-youth-lead", university: "any" },
+        { relation: "coordinates", label: "يتواصل مع", phrase: "مسؤولي الجامعات", target: "university-women-lead", university: "any" },
+        { relation: "coordinates", label: "يتواصل مع", phrase: "الأنشطة", target: "central-activities-lead", sector: "youth" },
+        { relation: "coordinates", label: "يتواصل مع", phrase: "الأنشطة", target: "central-activities-lead", sector: "women" },
+        { relation: "coordinates", label: "يتواصل مع", phrase: "الإعلام", target: "media-lead" },
       ];
     case "media-member":
       return [{ relation: "reports", label: "يتبع", phrase: "مسؤول الإعلام المركزي", target: "media-lead" }];
     case "media-lead":
+      return [
+        { relation: "reports", label: "يتبع إداريًا", phrase: "مسؤول صحوة", target: "sahwa-lead" },
+        { relation: "coordinates", label: "يتواصل مع", phrase: "مسؤولي الجامعات", target: "university-youth-lead", university: "any" },
+        { relation: "coordinates", label: "يتواصل مع", phrase: "مسؤولي الجامعات", target: "university-women-lead", university: "any" },
+        { relation: "coordinates", label: "يتواصل مع", phrase: "الأنشطة", target: "central-activities-lead", sector: "youth" },
+        { relation: "coordinates", label: "يتواصل مع", phrase: "الأنشطة", target: "central-activities-lead", sector: "women" },
+        { relation: "coordinates", label: "يتواصل مع", phrase: "العلاقات", target: "central-relations-lead" },
+      ];
     case "finance-lead":
     case "archive-lead":
       return [{ relation: "reports", label: "يتبع إداريًا", phrase: "مسؤول صحوة", target: "sahwa-lead" }];

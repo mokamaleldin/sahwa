@@ -144,6 +144,25 @@ export function createFormsHandler(teamStore, platformStore) {
       }
       const input = await readInput(request, 32 * 1024);
       if (request.method === "DELETE") {
+        if (input.target === "inbox") {
+          if (typeof input.id !== "string" || !UUID.test(input.id)) throw new TeamError("اختر طلبًا صحيحًا.");
+          const submission = await platformStore.submission(input.id);
+          if (!submission || submission.isTest !== actor.isTest || !mayReview(actor, submission)) throw forbidden();
+          await platformStore.archiveSubmissionFromInbox(submission.id, Number(input.revision));
+          await platformStore.audit({ actor: actor.fullName, actorVolunteer: actor.volunteerId, action: "submission.delete", details: { title: submission.form?.title || "" }, isTest: actor.isTest });
+          return json({ deleted: true });
+        }
+        if (input.target === "form") {
+          if (!can(actor, "forms.manage")) throw forbidden();
+          if (typeof input.id !== "string" || !UUID.test(input.id)) throw new TeamError("اختر نموذجًا صحيحًا.");
+          const existing = await platformStore.form(input.id);
+          if (!existing) throw new TeamError("النموذج غير موجود.", 404);
+          if (existing.confidential || existing.slug === "relations-bank")
+            throw new TeamError("لا يمكن حذف هذا النموذج الأساسي للنظام؛ يمكنك تعطيله بدلًا من حذفه.", 409, "SYSTEM_FORM_PROTECTED");
+          await platformStore.archiveForm(existing.id, Number(input.revision), actor.fullName);
+          await platformStore.audit({ actor: actor.fullName, actorVolunteer: actor.volunteerId, action: "form.delete", details: { title: existing.title }, isTest: actor.isTest });
+          return json({ deleted: true });
+        }
         if (actor.kind !== "account" || !can(actor,"forms.submit",{})) throw forbidden();
         if (typeof input.id !== "string" || !UUID.test(input.id)) throw new TeamError("اختر طلبًا صحيحًا.");
         await platformStore.hideOwnSubmission(input.id, actor.volunteerId, actor.isTest);

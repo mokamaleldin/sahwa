@@ -30,36 +30,48 @@ export function createTeamHandler(store, platformStore) {
         for (const a of assignments) byPerson.set(a.volunteerId, [...(byPerson.get(a.volunteerId) || []), a]);
         const candidates = [];
         const volunteers = [];
+        const hasSharedTeamRole = PLATFORM_ROLES.some((r) => r.sector === "none" && mayAssignRole(actor, r.id));
         for (const p of people) {
           const own = byPerson.get(p.id) || [];
+          const personWithSector = { ...p, sector: sectorForGender(p.gender) };
           const targets = targetsOf(p, own);
           const groupNames = directoryGroups(p, own);
-          const visible = isGlobalAdmin(actor) || visibleToViewer(actor, actor.assignments, { ...p, sector: sectorForGender(p.gender) }, own, policy);
-          if (visible && canAny(actor, "roles.assign") && can(actor, "directory.view", targets)) {
-            const options = PLATFORM_ROLES.filter((r) => canRecruit(actor, p, own, r.id)
+          const visible = isGlobalAdmin(actor) || visibleToViewer(actor, actor.assignments, personWithSector, own, policy);
+          if ((visible || hasSharedTeamRole) && canAny(actor, "roles.assign") && can(actor, "directory.view", targets)) {
+            const options = PLATFORM_ROLES.filter((r) => (visible || r.sector === "none")
+              && canRecruit(actor, p, own, r.id)
               && !own.some((a) => a.roleId === r.id && (r.scope === "central" || a.university === p.university)));
-            if (options.length) candidates.push({ id: p.id, name: p.fullName, university: p.university, groups: groupNames, roleIds: options.map((r) => r.id) });
+            if (options.length) candidates.push({ id: p.id, name: p.fullName, university: p.university, gender: p.gender, groups: groupNames, roleIds: options.map((r) => r.id) });
           }
           if (!can(actor, "volunteers.view", targets)) continue;
-          const manage = p.id !== actor.volunteerId && mayManagePerson(actor, own);
+          const manageEdit = p.id !== actor.volunteerId && mayManagePerson(actor, own, "volunteers.edit", personWithSector);
+          const manageStrict = p.id !== actor.volunteerId && mayManagePerson(actor, own);
           const { accountId, username, accountEmail, accountStatus, mustChangePassword, lastLoginAt, lastResetAt, temporaryExpiresAt, accountCreatedAt, isTest, archivedAt, ...person } = p;
+          const assignTargetCheck = (a) => {
+            const t = { ...assignmentTarget(a), sector: a.sector || personWithSector.sector || null };
+            return mayAssignRole(actor, a.roleId, assignmentTarget(a)) || mayAssignRole(actor, a.roleId, t);
+          };
+          const canEditPerson = manageEdit && can(actor, "volunteers.edit", targets);
+          const canAssignPerson = p.id !== actor.volunteerId && !own.some((a) => a.roleId === "sahwa-lead") && can(actor, "roles.assign", targets);
+          const canCreateAcc = p.id !== actor.volunteerId && (mayManagePerson(actor, own, "accounts.create", personWithSector) || actor.kind === "owner") && can(actor, "accounts.create", targets);
           volunteers.push({
             ...person,
             groups: groupNames,
-            assignments: own.map((a) => ({ ...describeAssignment(a), canChange: mayAssignRole(actor, a.roleId, assignmentTarget(a)) && !own.some((r) => r.roleId === "sahwa-lead") && actor.volunteerId !== p.id })),
+            assignments: own.map((a) => ({ ...describeAssignment(a), canChange: assignTargetCheck(a) && !own.some((r) => r.roleId === "sahwa-lead") && actor.volunteerId !== p.id })),
             account: can(actor, "accounts.view", targets)
               ? accountId
                 ? { username, email: accountEmail, status: accountStatus, pending: mustChangePassword, lastLoginAt, lastResetAt, temporaryExpiresAt, createdAt: accountCreatedAt }
                 : { status: "none" }
               : null,
             allowed: {
-              edit: manage && can(actor, "volunteers.edit", targets),
-              archive: manage && can(actor, "volunteers.archive", targets),
-              assign: p.id !== actor.volunteerId && !own.some((a) => a.roleId === "sahwa-lead") && can(actor, "roles.assign", targets),
-              createAccount: p.id !== actor.volunteerId && (mayManagePerson(actor, own, "accounts.create") || actor.kind === "owner") && can(actor, "accounts.create", targets),
-              resetAccount: p.id !== actor.volunteerId && (mayManagePerson(actor, own, "accounts.reset")) && can(actor, "accounts.reset", targets),
-              suspendAccount: p.id !== actor.volunteerId && (mayManagePerson(actor, own, "accounts.suspend")) && can(actor, "accounts.suspend", targets),
-              level: manage && can(actor, "volunteers.edit", targets),
+              edit: canEditPerson,
+              archive: manageStrict && can(actor, "volunteers.archive", targets),
+              assign: canAssignPerson,
+              createAccount: canCreateAcc,
+              resetAccount: p.id !== actor.volunteerId && mayManagePerson(actor, own, "accounts.reset", personWithSector) && can(actor, "accounts.reset", targets),
+              suspendAccount: p.id !== actor.volunteerId && mayManagePerson(actor, own, "accounts.suspend", personWithSector) && can(actor, "accounts.suspend", targets),
+              level: canEditPerson,
+              oversightOnly: !canEditPerson && !canAssignPerson && !canCreateAcc && p.id !== actor.volunteerId,
             },
           });
         }
@@ -85,7 +97,8 @@ export function createTeamHandler(store, platformStore) {
         const role = mapped && roleById(mapped.roleId);
         const scope = role ? assignmentScope(role, { ...person, sector }, { university: input.assignment?.university, sector: mapped.sector }) : null;
         const target = scope?.target || { university: person.university, sector, team: null };
-        if (!can(actor, "volunteers.create", target) || (role && !canRecruit(actor, person, [], role.id, scope.university)))
+        const createTarget = scope ? { ...scope.target, sector: scope.target.sector || sector } : target;
+        if ((!can(actor, "volunteers.create", target) && !can(actor, "volunteers.create", createTarget)) || (role && !canRecruit(actor, person, [], role.id, scope.university)))
           throw forbidden("لا تملك صلاحية إضافة متطوع في هذا النطاق.");
         // Look for an existing record first, without revealing people outside the actor's scope.
         const same = await platformStore.sameNamePeople(realmTest, person.fullName);
@@ -114,7 +127,8 @@ export function createTeamHandler(store, platformStore) {
         await platformStore.audit({ actor: actor.fullName, actorVolunteer: actor.volunteerId, action: "volunteer.archive", target: existing.id, isTest: realmTest });
         return json({ deleted: true, archived: true });
       }
-      if (existing.id === actor.volunteerId || !mayManagePerson(actor, own, "volunteers.edit") || !can(actor, "volunteers.edit", targets)) throw forbidden();
+      const existingWithSector = { ...existing, sector: sectorForGender(existing.gender) };
+      if (existing.id === actor.volunteerId || !mayManagePerson(actor, own, "volunteers.edit", existingWithSector) || !can(actor, "volunteers.edit", targets)) throw forbidden();
       const person = validatePerson(input.person);
       let legacyChange;
       if (person.responsibility !== existing.responsibility || person.team !== existing.team || (Object.hasOwn(person, "roleId") && person.roleId !== existing.roleId)) {

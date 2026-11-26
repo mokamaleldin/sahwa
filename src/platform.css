@@ -267,3 +267,47 @@
 .personal-profile-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
 .personal-profile-preview { border:1px solid var(--line); padding:18px; border-radius:16px; background:#fff9; }
 @media(max-width:640px){ .personal-profile-details{grid-template-columns:1fr;} .personal-profile-hero{padding:14px;gap:12px;} }
+
+/* Relations compact grid & structured details */
+.relations-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.relations-toolbar .team-search { flex:1 1 260px; min-height:46px; }
+.relations-toolbar .team-search input { height:44px; }
+.relations-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+.relation-card { position:relative; display:flex; flex-direction:column; gap:12px; min-width:0; padding:18px 20px; background:#fff9; border:1px solid var(--line); border-radius:20px; box-shadow:var(--card-shadow); transition:border-color .18s ease, background .18s ease; }
+.relation-card:has(.card-trigger:hover) { border-color:var(--brand-gold); background:#fff; }
+.relation-card:has(.card-trigger:focus-visible) { outline:2px solid var(--brand-primary); outline-offset:2px; }
+.relation-card a, .relation-card button:not(.card-trigger) { position:relative; z-index:1; }
+.relation-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+.relation-card-title { margin:0; font-size:18px; line-height:1.5; color:var(--brand-primary); overflow-wrap:anywhere; }
+.relation-card-title .card-trigger { text-align:start; font:inherit; color:inherit; padding:0; border:0; background:none; width:100%; cursor:pointer; }
+.relation-card-title .card-trigger:focus-visible { outline:none; }
+.relation-card-title .card-trigger::after { content:""; position:absolute; inset:0; }
+.relation-card-snippet { margin:0; font-size:13px; line-height:1.8; color:var(--text-muted); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; line-clamp:2; overflow:clip; }
+.relation-card-footer { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:auto; padding-top:12px; border-top:1px solid var(--line); font-size:12px; color:var(--text-muted); }
+.relation-card-owner { display:inline-flex; align-items:center; gap:5px; min-width:0; overflow-wrap:anywhere; }
+.relation-card-link { display:inline-flex; align-items:center; gap:4px; padding:4px 9px; border-radius:8px; background:#7520260d; color:var(--brand-primary); font-weight:500; }
+.relation-card-link:hover { background:#7520261a; }
+.relation-card-more { display:inline-flex; align-items:center; gap:3px; color:var(--brand-primary); font-weight:500; }
+.relation-detail-list { display:grid; gap:10px; margin:0; }
+.relation-detail-row { padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:#fff8; }
+.relation-detail-row dt { font-size:12px; font-weight:600; color:var(--brand-primary); margin-bottom:4px; }
+.relation-detail-row dd { margin:0; font-size:14px; line-height:1.8; color:#350e15; overflow-wrap:anywhere; }
+.relation-detail-text { margin:0; padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:#fff8; font-size:14px; line-height:1.85; color:#350e15; white-space:pre-line; }
+@media (max-width: 1024px) { .relations-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width: 640px) { .relations-grid { grid-template-columns:1fr; } }
+
+/* Collapsible long contact lists on Dashboard */
+.dashboard-more-contacts { margin-top:6px; }
+.dashboard-more-contacts > summary { cursor:pointer; font-size:12px; font-weight:600; color:var(--brand-primary); list-style:none; display:inline-flex; align-items:center; gap:4px; padding:4px 0; }
+.dashboard-more-contacts > summary::-webkit-details-marker { display:none; }
+.dashboard-contact-pills { display:flex; flex-wrap:wrap; gap:6px; }
+.dashboard-contact-pill { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:99px; border:1px solid var(--line); background:#fff8; font-size:12px; color:#350e15; }
+.dashboard-contact-pill small { color:var(--text-muted); font-size:11px; }
+
+/* Dialog internal tabs (PersonDetails) */
+.dialog-tabs { display:flex; gap:6px; padding:12px 24px 0; border-bottom:1px solid var(--line); background:var(--bg-base); overflow-x:auto; scrollbar-width:none; }
+.dialog-tabs::-webkit-scrollbar { display:none; }
+.dialog-tabs button { flex:none; min-height:42px; padding:8px 14px; font-size:13px; font-weight:500; color:var(--text-muted); border-bottom:2px solid transparent; border-radius:8px 8px 0 0; }
+.dialog-tabs button:hover { color:var(--brand-primary); background:#75202606; }
+.dialog-tabs button[aria-selected="true"] { color:var(--brand-primary); font-weight:600; border-bottom-color:var(--brand-primary); background:#7520260a; }
+@media (max-width: 640px) { .dialog-tabs { padding-inline:16px; } }

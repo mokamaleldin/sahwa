@@ -7,16 +7,19 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  FileText,
   Loader2,
   Pencil,
   Plus,
   RefreshCw,
   Search,
+  Trash2,
   UserRound,
   UsersRound,
 } from "lucide-react";
 import PageHeading from "../components/shared/PageIdentity";
 import EventForm from "../components/Team/EventForm";
+import TeamDialog from "../components/Team/TeamDialog";
 import {
   displayDate,
   teamRequest,
@@ -29,6 +32,161 @@ import {
 import { normalizeSearch } from "../../shared/team-options.js";
 
 const PAGE_SIZE = 12;
+const PROGRESS_LABELS: Record<string, string> = {
+  planned: "مخططة",
+  completed: "مكتملة",
+  cancelled: "ملغاة",
+};
+
+function eventScopeText(event: SahwaEvent) {
+  if (!event.university && !event.sector) return "";
+  return [
+    event.university || "مركزي",
+    event.sector === "youth" ? "الشباب" : event.sector === "women" ? "الطالبات" : "",
+  ]
+    .filter(Boolean)
+    .join(" — ");
+}
+
+function EventDetails({
+  event,
+  onClose,
+  onEdit,
+  onDelete,
+}: {
+  event: SahwaEvent;
+  onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => Promise<void>;
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState("");
+  const scopeText = eventScopeText(event);
+
+  async function remove() {
+    if (deleting) return;
+    setDeleting(true);
+    setError("");
+    try {
+      await onDelete();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "تعذر حذف الفعالية.");
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <TeamDialog title={event.title} busy={deleting} onClose={onClose}>
+      <div className="team-form-body">
+        <div className="platform-chips mb-5">
+          {scopeText && <span className="platform-chip">{scopeText}</span>}
+          {event.progress && PROGRESS_LABELS[event.progress] && (
+            <span className="platform-chip platform-chip-gold">{PROGRESS_LABELS[event.progress]}</span>
+          )}
+          <span className="platform-chip platform-chip-muted">
+            {event.audience === "internal" ? "مشاركة مع أهل صحوة" : "مسجلة في السجل فقط"}
+          </span>
+        </div>
+
+        <dl className="team-detail-grid">
+          <div>
+            <dt>تاريخ الفعالية</dt>
+            <dd>{event.eventDate ? displayDate(event.eventDate) : "التاريخ غير محدد"}</dd>
+          </div>
+          <div>
+            <dt>المسؤول عنها</dt>
+            <dd>{event.responsible || "بدون مسؤول محدد"}</dd>
+          </div>
+          <div>
+            <dt>عدد الحضور</dt>
+            <dd>
+              {event.attendance === null
+                ? "غير مسجل"
+                : `${event.attendance.toLocaleString("ar-EG")} حضور`}
+            </dd>
+          </div>
+          <div>
+            <dt>النطاق</dt>
+            <dd>{scopeText || "سجل صحوة العام"}</dd>
+          </div>
+        </dl>
+
+        {event.notes && (
+          <div className="mt-5 rounded-2xl border border-[#75202618] bg-white/70 p-4">
+            <h3 className="mb-2 text-xs font-semibold text-brand-primary">ملاحظات وتفاصيل</h3>
+            <p className="whitespace-pre-wrap text-sm leading-7 text-brand-muted">{event.notes}</p>
+          </div>
+        )}
+
+        {error && (
+          <p className="team-error mt-4" role="alert">
+            {error}
+          </p>
+        )}
+
+        {confirmDelete && (
+          <div className="team-delete-confirm" role="alert">
+            <p>هل تريد حذف فعالية «{event.title}» من السجل؟</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="team-button team-button-secondary"
+                autoFocus
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleting}
+              >
+                تراجع
+              </button>
+              <button
+                type="button"
+                className="team-button team-button-danger"
+                onClick={() => void remove()}
+                disabled={deleting}
+              >
+                {deleting && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
+                {deleting ? "جارٍ الحذف…" : "نعم، احذف الفعالية"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+      <div className="team-dialog-footer">
+        {event.canEdit === true && (
+          <button
+            type="button"
+            className="team-button"
+            onClick={onEdit}
+            disabled={deleting || confirmDelete}
+          >
+            <Pencil size={16} aria-hidden="true" />
+            تعديل الفعالية
+          </button>
+        )}
+        <button
+          type="button"
+          className="team-button team-button-secondary"
+          onClick={onClose}
+          disabled={deleting}
+        >
+          إغلاق
+        </button>
+        {event.canDelete === true && (
+          <button
+            type="button"
+            className="team-text-button team-delete-action"
+            onClick={() => setConfirmDelete(true)}
+            disabled={deleting || confirmDelete}
+          >
+            <Trash2 size={16} aria-hidden="true" />
+            حذف الفعالية
+          </button>
+        )}
+      </div>
+    </TeamDialog>
+  );
+}
+
 export default function TeamEvents({ openNew = false }: { openNew?: boolean } = {}) {
   const [volunteers, setVolunteers] = useState<ResponsibleVolunteer[]>([]);
   const [scopes, setScopes] = useState<EventScope[]>([]);
@@ -39,6 +197,7 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
     [notice, setNotice] = useState(""),
     [query, setQuery] = useState(""),
     [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<SahwaEvent | null>(null);
   const [editing, setEditing] = useState<SahwaEvent | null | undefined>(
     undefined,
   );
@@ -57,6 +216,7 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
         setVolunteers(data.volunteers);
         setScopes(data.scopes || []);
         setCanCreate(data.canCreate === true);
+        setSelected((curr) => (curr ? data.events.find((e) => e.id === curr.id) || null : null));
         if (openNew && data.canCreate) setEditing(null);
       }
     } catch (e) {
@@ -75,7 +235,7 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
     () =>
       events
         .filter((e) =>
-          normalizeSearch(`${e.title} ${e.responsible}`).includes(
+          normalizeSearch(`${e.title} ${e.responsible} ${e.university || ""}`).includes(
             normalizeSearch(query),
           ),
         )
@@ -142,18 +302,18 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
     setQuery("");
     setPage(1);
   }
-  async function remove() {
-    if (!editing) return;
+  async function removeEvent(target: SahwaEvent) {
     await teamRequest(
       {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: editing.id, revision: editing.revision }),
+        body: JSON.stringify({ id: target.id, revision: target.revision }),
       },
       "/api/events",
     );
-    setEvents((all) => all.filter((e) => e.id !== editing.id));
+    setEvents((all) => all.filter((e) => e.id !== target.id));
     setEditing(undefined);
+    setSelected(null);
     setNotice("تم حذف الفعالية.");
   }
   return (
@@ -177,6 +337,7 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
           </div>
           <div className="flex gap-2">
             <button
+              type="button"
               className="team-button team-button-secondary"
               onClick={() => void load()}
               disabled={loading}
@@ -185,6 +346,7 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
               تحديث
             </button>
             {canCreate && <button
+              type="button"
               className="team-button"
               onClick={() => {
                 setNotice("");
@@ -205,7 +367,7 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
         {error && (
           <p className="team-error mb-5" role="alert">
             {error}{" "}
-            <button className="underline" onClick={() => void load()}>
+            <button type="button" className="underline" onClick={() => void load()}>
               إعادة المحاولة
             </button>
           </p>
@@ -270,20 +432,22 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
             </details>
           </section>
         )}
-        <label className="team-search">
-          <span className="sr-only">البحث في الفعاليات</span>
-          <Search size={20} />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setPage(1);
-            }}
-            placeholder="ابحث باسم الفعالية أو المسؤول عنها…"
-            maxLength={160}
-          />
-        </label>
+        <search>
+          <label className="team-search">
+            <span className="sr-only">البحث في الفعاليات</span>
+            <Search size={20} />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setPage(1);
+              }}
+              placeholder="ابحث باسم الفعالية أو المسؤول عنها…"
+              maxLength={160}
+            />
+          </label>
+        </search>
         <p className="team-results-count" role="status">
           {loading
             ? "جارٍ تحميل الفعاليات…"
@@ -316,61 +480,85 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
           <div className="team-events-grid">
             {results
               .slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)
-              .map((event) => (
-                <article className="team-event-card" key={event.id}>
-                  <div className="team-event-top">
-                    <span className="team-event-date">
-                      <CalendarDays size={16} />
-                      {event.eventDate ? (
-                        <time dateTime={event.eventDate}>
-                          {displayDate(event.eventDate)}
-                        </time>
-                      ) : (
-                        <span>التاريخ غير محدد</span>
+              .map((event) => {
+                const scopeText = eventScopeText(event);
+                return (
+                  <article className="team-event-card" key={event.id}>
+                    <div className="team-event-top">
+                      <span className="team-event-date">
+                        <CalendarDays size={15} aria-hidden="true" />
+                        {event.eventDate ? (
+                          <time dateTime={event.eventDate}>
+                            {displayDate(event.eventDate)}
+                          </time>
+                        ) : (
+                          <span>بدون تاريخ</span>
+                        )}
+                      </span>
+                      {event.canEdit === true && (
+                        <button
+                          type="button"
+                          className="team-icon-button"
+                          onClick={() => setEditing(event)}
+                          aria-label={`تعديل فعالية ${event.title}`}
+                        >
+                          <Pencil size={16} aria-hidden="true" />
+                        </button>
                       )}
-                    </span>
-                    {event.canEdit === true && <button
-                      className="team-icon-button"
-                      onClick={() => setEditing(event)}
-                      aria-label={`تعديل فعالية ${event.title}`}
-                    >
-                      <Pencil size={17} />
-                    </button>}
-                  </div>
-                  <h2 className="font-heading">{event.title}</h2>
-                  {(event.university || event.sector) && (
-                    <div className="platform-chips mt-2">
-                      <span className="platform-chip platform-chip-muted">
-                        {[event.university || "مركزي", event.sector === "youth" ? "الشباب" : event.sector === "women" ? "الطالبات" : ""]
-                          .filter(Boolean)
-                          .join(" — ")}
-                      </span>
                     </div>
-                  )}
-                  <div className="team-event-meta">
-                    <p>
-                      <UserRound size={16} />
-                      <span>{event.responsible || "بدون مسؤول محدد"}</span>
-                    </p>
-                    <p>
-                      <UsersRound size={16} />
-                      <span>
-                        {event.attendance === null
-                          ? "عدد الحضور غير مسجل"
-                          : `${event.attendance.toLocaleString("ar-EG")} حضور`}
+                    <h2 className="font-heading">
+                      <button
+                        type="button"
+                        className="card-trigger"
+                        onClick={() => setSelected(event)}
+                      >
+                        {event.title}
+                      </button>
+                    </h2>
+                    {(scopeText || (event.progress && PROGRESS_LABELS[event.progress])) && (
+                      <div className="platform-chips mt-2">
+                        {scopeText && <span className="platform-chip platform-chip-muted">{scopeText}</span>}
+                        {event.progress && PROGRESS_LABELS[event.progress] && (
+                          <span className="platform-chip platform-chip-gold">{PROGRESS_LABELS[event.progress]}</span>
+                        )}
+                      </div>
+                    )}
+                    <div className="team-event-meta">
+                      <p>
+                        <UserRound size={15} aria-hidden="true" />
+                        <span>{event.responsible || "بدون مسؤول"}</span>
+                      </p>
+                      <p>
+                        <UsersRound size={15} aria-hidden="true" />
+                        <span>
+                          {event.attendance === null
+                            ? "غير مسجل"
+                            : `${event.attendance.toLocaleString("ar-EG")} حضور`}
+                        </span>
+                      </p>
+                    </div>
+                    <footer className="team-event-footer">
+                      <span className="team-event-hint">
+                        {event.notes ? (
+                          <>
+                            <FileText size={13} aria-hidden="true" />
+                            توجد ملاحظات
+                          </>
+                        ) : (
+                          "عرض التفاصيل"
+                        )}
                       </span>
-                    </p>
-                  </div>
-                  {event.notes && (
-                    <p className="team-event-notes">{event.notes}</p>
-                  )}
-                </article>
-              ))}
+                      <ChevronLeft size={15} aria-hidden="true" />
+                    </footer>
+                  </article>
+                );
+              })}
           </div>
         )}
         {pages > 1 && (
           <nav className="team-pagination" aria-label="صفحات الفعاليات">
             <button
+              type="button"
               className="team-button team-button-secondary"
               disabled={current === 1}
               onClick={() => setPage(current - 1)}
@@ -382,6 +570,7 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
               {current} / {pages}
             </span>
             <button
+              type="button"
               className="team-button team-button-secondary"
               disabled={current === pages}
               onClick={() => setPage(current + 1)}
@@ -392,12 +581,23 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
           </nav>
         )}
       </section>
+      {selected && editing === undefined && (
+        <EventDetails
+          event={selected}
+          onClose={() => setSelected(null)}
+          onEdit={() => {
+            setEditing(selected);
+            setSelected(null);
+          }}
+          onDelete={() => removeEvent(selected)}
+        />
+      )}
       {editing !== undefined && (
         <EventForm
           event={editing}
           volunteers={volunteers}
           onSave={save}
-          onDelete={remove}
+          onDelete={() => (editing ? removeEvent(editing) : Promise.resolve())}
           onClose={() => setEditing(undefined)}
           scopes={scopes}
         />

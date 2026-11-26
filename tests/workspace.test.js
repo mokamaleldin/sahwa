@@ -6,9 +6,9 @@ import { workspaceData, communityData } from "../server/platform/service.js";
 
 const campusLead = ["volunteers", "events", "publish", "studio"];
 const activityLead = [...campusLead, "inbox"];
-const relationsLead = ["volunteers", "create-relation", "relations", "inbox", "studio", "events"];
+const relationsLead = ["volunteers", "relations", "inbox", "studio", "events"];
 const expected = {
-  "sahwa-lead": [...activityLead, "permissions", "forms", "relations", "create-relation"],
+  "sahwa-lead": [...activityLead, "forms", "relations", "audit"],
   "women-sector-lead": activityLead, "university-youth-lead": activityLead, "university-women-lead": activityLead,
   "internal-activities-lead": activityLead, "central-activities-lead": activityLead,
   "internal-activities-member": ["events"], "central-activities-member": ["events"],
@@ -50,6 +50,18 @@ test("page access, record access, explicit delegation and denial remain independ
   actor.grants.push({id:"stop",permission:"studio.use",effect:"deny"});
   actor.permissions = buildPermissions(actor);
   assert.deepEqual(workspaceData(actor).map((t) => t.id),["events"]);
+});
+
+test("sahwa-lead workspace places audit/settings after studio, uses standalone forms route, and omits create-relation", () => {
+  const actor = member(PLATFORM_ROLES.find((r) => r.id === "sahwa-lead"), "نشط");
+  const tools = workspaceData(actor);
+  const ids = tools.map((t) => t.id);
+  assert.ok(!ids.includes("create-relation"));
+  assert.ok(!ids.includes("permissions"));
+  assert.equal(ids.at(-1), "audit");
+  assert.ok(ids.indexOf("audit") > ids.indexOf("studio"));
+  assert.equal(tools.find((t) => t.id === "forms")?.href, "/team/forms/manage");
+  assert.equal(tools.find((t) => t.id === "audit")?.href, "/team/admin");
 });
 
 test("community keeps confirmed completions in the seven Istanbul calendar days and applies per-team visibility", () => {

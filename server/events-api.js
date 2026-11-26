@@ -1,7 +1,7 @@
 import { recordVersion, validateEvent, TeamError } from "./team-data.js";
 import { json, readInput, errorResponse } from "./http.js";
 import { requireActor, forbidden } from "./platform/session.js";
-import { can, canAny, denied, eventTarget, operationScopes, scopeMatches, volunteerTargets } from "./platform/access.js";
+import { can, canAny, denied, eventTarget, operationScopes, scopeMatches, scopesFor, volunteerTargets } from "./platform/access.js";
 import { todayInIstanbul } from "../shared/team-options.js";
 import { CENTRAL, sectorForGender } from "../shared/platform-roles.js";
 
@@ -14,13 +14,32 @@ function creationScope(actor, requested) {
   return { ...match, university: match.university === CENTRAL ? null : match.university };
 }
 
+function isLegacyUntagged(event) {
+  return !event.university && !event.sector && !event.team;
+}
+
+function hasWideEventRight(actor, permission, event) {
+  const target = eventTarget(event);
+  if (denied(actor, permission, target)) return false;
+  return scopesFor(actor, permission).some((s) => s.university === null);
+}
+
 function editable(actor, event) {
   const target = eventTarget(event);
   if (denied(actor, "events.edit", target)) return false;
+  if (can(actor, "events.manage", target)) return true;
+  if (isLegacyUntagged(event) && hasWideEventRight(actor, "events.manage", event)) return true;
   const mine = actor.volunteerId && [event.creatorId, event.responsibleId].includes(actor.volunteerId);
-  return can(actor, "events.manage", target)
-    || Boolean(mine && actor.status === "نشط"
-      && (can(actor, "events.edit", target) || can(actor, "events.create", target)));
+  return Boolean(mine && actor.status === "نشط"
+    && (event.responsibleId === actor.volunteerId || can(actor, "events.edit", target) || can(actor, "events.create", target)));
+}
+
+function deletable(actor, event) {
+  const target = eventTarget(event);
+  if (denied(actor, "events.delete", target)) return false;
+  if (can(actor, "events.delete", target) && (can(actor, "events.manage", target) || (actor.volunteerId && event.creatorId === actor.volunteerId))) return true;
+  if (isLegacyUntagged(event) && hasWideEventRight(actor, "events.delete", event)) return true;
+  return false;
 }
 
 async function responsibleOptions(platform, actor, targets) {
@@ -32,8 +51,10 @@ async function responsibleOptions(platform, actor, targets) {
   }
   return people.filter((p) => {
     const scopes = volunteerTargets({ ...p, sector: sectorForGender(p.gender) }, byPerson.get(p.id));
-    return p.status === "نشط" && targets.some((t) => can(actor, "events.manage", t) || (t.team === "women-sector" && sectorForGender(p.gender) === "women") || scopeMatches(t, scopes) ||
-      (t.team === "university-team" && scopeMatches({ ...t, team: null }, scopes)));
+    return p.status === "نشط" && targets.some((t) => can(actor, "events.manage", t)
+      || (isLegacyUntagged(t) && hasWideEventRight(actor, "events.manage", t))
+      || (t.team === "women-sector" && sectorForGender(p.gender) === "women") || scopeMatches(t, scopes)
+      || (t.team === "university-team" && scopeMatches({ ...t, team: null }, scopes)));
   }).map(({ id, fullName, university }) => ({ id, fullName, university }));
 }
 
@@ -49,7 +70,7 @@ export function createEventsHandler(store, platformStore) {
       const actor = await requireActor(request, { teamStore: store, platformStore });
       const { isTest } = actor;
       const options = operationScopes(actor, "events.create");
-      const present = (e) => ({ ...e, canEdit: editable(actor, e), canDelete: can(actor, "events.delete", eventTarget(e)), canPublish: can(actor, "events.publish", eventTarget(e)) });
+      const present = (e) => ({ ...e, canEdit: editable(actor, e), canDelete: deletable(actor, e), canPublish: can(actor, "events.publish", eventTarget(e)) || (isLegacyUntagged(e) && hasWideEventRight(actor, "events.publish", e)) });
       if (request.method === "GET") {
         if (!canAny(actor, "events.view") && !options.length) throw forbidden();
         const events = canAny(actor, "events.view") ? await store.listEvents(isTest, actor.permissions) : [];
@@ -66,8 +87,9 @@ export function createEventsHandler(store, platformStore) {
       const scope = creating ? creationScope(actor, input.scope) : eventTarget(existing);
       const target = eventTarget(scope);
       if (request.method === "DELETE") {
-        if (!can(actor, "events.delete", target)) throw forbidden();
+        if (!deletable(actor, existing)) throw forbidden();
         await store.deleteEvent(input.id, input.revision);
+        await platformStore.audit({ actor: actor.fullName, actorVolunteer: actor.volunteerId, action: "event.delete", details: { title: existing.title }, isTest });
         return json({ deleted: true });
       }
       if (!creating && !editable(actor, existing)) throw forbidden();
@@ -76,7 +98,7 @@ export function createEventsHandler(store, platformStore) {
       const event = validateEvent(input.event);
       const audience = input.audience === undefined ? existing?.audience || "private" : input.audience;
       if (!["private", "internal"].includes(audience)) throw new TeamError("اختر جمهورًا صحيحًا.");
-      if (audience !== (existing?.audience || "private") && !can(actor, "events.publish", target)) throw forbidden();
+      if (audience !== (existing?.audience || "private") && !can(actor, "events.publish", target) && !(existing && isLegacyUntagged(existing) && hasWideEventRight(actor, "events.publish", existing))) throw forbidden();
       if (event.responsibleId && event.responsibleId !== existing?.responsibleId) {
         const options = await responsibleOptions(platformStore, actor, [target]);
         if (!options.some((p) => p.id === event.responsibleId)) throw new TeamError("اختر مسؤولًا من القائمة المتاحة لهذه الفعالية.");

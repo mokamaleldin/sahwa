@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import PageHeading from "../../components/shared/PageIdentity";
 import { teamRequest } from "../../lib/team";
 
@@ -37,6 +37,7 @@ function Item({
   const [status, setStatus] = useState(s.status);
   const [response, setResponse] = useState(s.response);
   const [busy, setBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState("");
 
   async function save() {
@@ -54,6 +55,25 @@ function Item({
       onSaved();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "تعذر الحفظ.");
+      setBusy(false);
+    }
+  }
+
+  async function remove() {
+    setBusy(true);
+    setError("");
+    try {
+      await teamRequest(
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ target: "inbox", id: s.id, revision: s.revision }),
+        },
+        "/api/forms",
+      );
+      onSaved();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "تعذر حذف الطلب.");
       setBusy(false);
     }
   }
@@ -105,10 +125,33 @@ function Item({
             {error}
           </p>
         )}
-        <div>
-          <button type="button" className="team-button" onClick={() => void save()} disabled={busy}>
+        {confirmDelete && (
+          <div className="team-delete-confirm" role="alert">
+            <p>هل تريد حذف هذا الطلب من صندوق الطلبات الواردة؟</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" className="team-button team-button-secondary" autoFocus onClick={() => setConfirmDelete(false)} disabled={busy}>
+                تراجع
+              </button>
+              <button type="button" className="team-button team-button-danger" onClick={() => void remove()} disabled={busy}>
+                {busy && <Loader2 size={15} className="animate-spin" aria-hidden="true" />}
+                تأكيد الحذف
+              </button>
+            </div>
+          </div>
+        )}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <button type="button" className="team-button" onClick={() => void save()} disabled={busy || confirmDelete}>
             {busy && <Loader2 size={15} className="animate-spin" aria-hidden="true" />}
             حفظ
+          </button>
+          <button
+            type="button"
+            className="team-text-button team-delete-action"
+            onClick={() => setConfirmDelete(true)}
+            disabled={busy || confirmDelete}
+          >
+            <Trash2 size={15} aria-hidden="true" />
+            حذف الطلب
           </button>
         </div>
       </div>

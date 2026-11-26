@@ -3,8 +3,18 @@
 import { useState, type FormEvent } from "react";
 import { Award, KeyRound, Loader2, Save, UserRound } from "lucide-react";
 import PageHeading from "../../components/shared/PageIdentity";
+import TeamComboField, { type ComboGroup, type ComboOption } from "../../components/Team/TeamComboField";
 import { teamRequest } from "../../lib/team";
 import { useSession } from "../../auth/useSession";
+import {
+  MAJORS,
+  MAJOR_SEARCH_KEYWORDS,
+  STUDY_YEARS,
+  ageFromBirthDate,
+  normalizeMajor,
+  normalizeSearch,
+  todayInIstanbul,
+} from "../../../shared/team-options.js";
 import ProfileEditor from "./ProfileEditor";
 
 interface Profile {
@@ -20,6 +30,16 @@ interface Profile {
   isPublic: boolean;
 }
 
+export interface AccountPerson {
+  fullName: string;
+  university: string;
+  major: string;
+  studyYear?: string;
+  birthDate?: string;
+  phone?: string;
+  gender?: string;
+}
+
 export interface AccountHubProps {
   kind: "owner" | "account";
   fullName: string;
@@ -28,8 +48,185 @@ export interface AccountHubProps {
   forced: boolean;
   initialTab?: string;
   profile?: Profile | null;
-  person?: { fullName: string; university: string; major: string } | null;
+  person?: AccountPerson | null;
   roles?: string[];
+}
+
+const MAJOR_OPTIONS: ComboOption[] = MAJORS.map((title, index) => ({
+  id: `self-major-${index}`,
+  title,
+  keywords: MAJOR_SEARCH_KEYWORDS.get(title),
+}));
+const MAJOR_GROUPS: ComboGroup[] = [{ options: MAJOR_OPTIONS }];
+const MAJOR_BY_TITLE = new Map(
+  MAJOR_OPTIONS.map((option) => [normalizeSearch(option.title), option]),
+);
+function exactMajor(raw: string): ComboOption | undefined {
+  const normalized = normalizeMajor(raw);
+  return normalized ? MAJOR_BY_TITLE.get(normalizeSearch(normalized)) : undefined;
+}
+
+function PersonalInfoSection({
+  person,
+  onUpdated,
+}: {
+  person: AccountPerson;
+  onUpdated: (updated: AccountPerson) => void;
+}) {
+  const { refresh } = useSession();
+  const [fullName, setFullName] = useState(person.fullName);
+  const [birthDate, setBirthDate] = useState(person.birthDate || "");
+  const [phone, setPhone] = useState(person.phone || "");
+  const [major, setMajor] = useState(person.major || "");
+  const [studyYear, setStudyYear] = useState(person.studyYear || "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  const age = ageFromBirthDate(birthDate);
+  const studyYears = [
+    ...new Set([...STUDY_YEARS, ...(studyYear && !STUDY_YEARS.includes(studyYear) ? [studyYear] : [])]),
+  ];
+
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    setNotice("");
+    const normalizedMajor = normalizeMajor(major);
+    try {
+      const result = await teamRequest<{ person: AccountPerson }>(
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            personal: {
+              fullName,
+              birthDate,
+              phone,
+              major: normalizedMajor,
+              studyYear,
+            },
+          }),
+        },
+        "/api/account",
+      );
+      setMajor(normalizedMajor);
+      onUpdated({ ...person, ...result.person });
+      await refresh({ force: true });
+      setNotice("تم حفظ بياناتك الشخصية بنجاح.");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "تعذر حفظ البيانات.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="platform-card" style={{ maxWidth: 680 }} aria-labelledby="personal-info-heading">
+      <h2 id="personal-info-heading" className="font-heading flex items-center gap-2">
+        <UserRound size={18} aria-hidden="true" />
+        بياناتي الشخصية
+      </h2>
+      <p className="platform-muted mb-4">
+        يمكنك تحديث اسمك وتاريخ ميلادك وهاتفك وتخصصك وسنتك الدراسية في أي وقت.
+      </p>
+      <div className="platform-chips mb-4">
+        {person.university && <span className="platform-chip">الجامعة: {person.university}</span>}
+        {person.gender && <span className="platform-chip platform-chip-muted">{person.gender}</span>}
+        {age !== null && <span className="platform-chip platform-chip-gold">العمر: {age.toLocaleString("ar-EG")} سنة</span>}
+      </div>
+      <form className="platform-form" onSubmit={save} aria-busy={busy}>
+        <div className="team-form-grid">
+          <label className="team-field team-field-full">
+            <span>الاسم الكامل *</span>
+            <input
+              name="fullName"
+              required
+              autoComplete="name"
+              maxLength={120}
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+            />
+          </label>
+          <label className="team-field">
+            <span>
+              تاريخ الميلاد <small>يُستخدم لحساب العمر وإتاحة الصفحة العامة</small>
+            </span>
+            <input
+              name="birthDate"
+              type="date"
+              min="1900-01-01"
+              max={todayInIstanbul()}
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+            />
+          </label>
+          <label className="team-field">
+            <span>
+              رقم الهاتف <small>اختياري</small>
+            </span>
+            <input
+              name="phone"
+              type="tel"
+              dir="ltr"
+              autoComplete="tel"
+              maxLength={30}
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+90 ..."
+            />
+          </label>
+          <TeamComboField
+            label="التخصص"
+            name="major"
+            optional
+            value={major}
+            onChange={setMajor}
+            onBlurValue={() => setMajor(normalizeMajor(major))}
+            groups={MAJOR_GROUPS}
+            exactMatch={exactMajor}
+            placeholder="اختر تخصصًا أو اكتب تخصصك"
+            listLabel="التخصصات"
+            openLabel="عرض التخصصات"
+            closeLabel="إغلاق قائمة التخصصات"
+          />
+          <label className="team-field">
+            <span>
+              السنة الدراسية <small>اختياري</small>
+            </span>
+            <select name="studyYear" value={studyYear} onChange={(e) => setStudyYear(e.target.value)}>
+              <option value="">غير محدد</option>
+              {studyYears.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <p className="platform-muted">
+          لتعديل الجامعة أو الأدوار التنظيمية، تواصل مع مسؤول فريقك.
+        </p>
+        {error && (
+          <p className="team-error" role="alert">
+            {error}
+          </p>
+        )}
+        {notice && (
+          <p className="team-success" role="status">
+            {notice}
+          </p>
+        )}
+        <div>
+          <button type="submit" className="team-button" disabled={busy}>
+            {busy ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : <Save size={16} aria-hidden="true" />}
+            حفظ بياناتي الشخصية
+          </button>
+        </div>
+      </form>
+    </section>
+  );
 }
 
 function PasswordSection({ email, forced }: { email: string; forced: boolean }) {
@@ -190,13 +387,15 @@ export default function AccountHub({
   forced,
   initialTab,
   profile = null,
-  person = null,
+  person: initialPerson = null,
   roles = [],
 }: AccountHubProps) {
+  const [person, setPerson] = useState<AccountPerson | null>(initialPerson);
   const isAccount = kind === "account" && Boolean(person);
   const tabs = isAccount
     ? ([
-        { id: "profile", label: "ملفي الشخصي" },
+        { id: "personal", label: "بياناتي الشخصية" },
+        { id: "profile", label: "صفحتي العامة" },
         { id: "security", label: "كلمة المرور والأمان" },
         { id: "achievements", label: "إنجازاتي" },
       ] as const)
@@ -226,7 +425,7 @@ export default function AccountHub({
     <>
       <PageHeading
         title="حسابي"
-        description="ملفك الشخصي، وكلمة المرور، وإنجازاتك في مكان واحد."
+        description="بياناتك الشخصية، وصفحتك العامة، وكلمة المرور في مكان واحد."
       />
       <div className="platform-tabs" role="tablist" aria-label="أقسام الحساب">
         {tabs.map((t) => (
@@ -242,6 +441,12 @@ export default function AccountHub({
           </button>
         ))}
       </div>
+
+      {tab === "personal" && isAccount && person && (
+        <div role="tabpanel" aria-labelledby="account-tab-personal">
+          <PersonalInfoSection person={person} onUpdated={setPerson} />
+        </div>
+      )}
 
       {tab === "profile" && isAccount && person && (
         <div role="tabpanel" aria-labelledby="account-tab-profile">

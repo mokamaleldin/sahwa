@@ -93,12 +93,14 @@ const contactPerson = (realm, a) => {
 export function resolveContacts(realm, assignment, selfId) {
   const links = roleLinks(assignment.roleId, assignment.sector).map((link) => {
     const query = linkTarget(link, assignment);
+    const targetRole = roleById(query.roleId);
     const people = holders(realm, query).filter((a) => a.volunteerId !== selfId).map((a) => contactPerson(realm, a));
     return {
       relation: link.relation,
       label: link.label,
       phrase: link.phrase,
       targetTitle: roleTitle(query.roleId, query.sector),
+      deferred: Boolean(targetRole?.deferred),
       people,
       vacant: people.length === 0,
     };
@@ -227,7 +229,8 @@ export function mayRemoveCommunityPost(actor, post) {
 }
 export function presentCommunityPost(actor, post) {
   const { authorLabel, authorVolunteer, ...safe } = post;
-  return { ...safe, canDelete: mayRemoveCommunityPost(actor, post) };
+  const editable = mayRemoveCommunityPost(actor, post);
+  return { ...safe, canDelete: editable, canEdit: editable };
 }
 export function communityData(actor, posts, events, today) {
   const visible = posts.filter((p) => audienceVisible(actor, p.audienceUniversity, p.audienceSector, p.audienceTeam)).map(p => presentCommunityPost(actor, p));
@@ -257,15 +260,15 @@ export function workspaceData(actor) {
     if (canAny(actor, permission) && canAny(actor, page)) tools.push({ id, title, href });
   };
   add("volunteers.view", "volunteers", canAny(actor, "permissions.manage") ? "إدارة المتطوعين والحسابات" : "إدارة فريقي وحساباته", "/team/volunteers", "volunteers.open");
-  if (canAny(actor, "permissions.manage") || canAny(actor, "permissions.delegate"))
-    tools.push({ id: "permissions", title: "إدارة الصلاحيات", href: "/team/admin?tab=grants" });
   add("events.view", "events", "سجل الفعاليات", "/team/events", "events.open");
-  add("relations.create", "create-relation", "إضافة علاقة", "/team/relations?new=1", "relations.open");
-  add("relations.view", "relations", "سجل العلاقات", "/team/relations", "relations.open");
-  add("forms.manage", "forms", "إدارة النماذج", "/team/admin?tab=forms");
+  if ((canAny(actor, "relations.view") || canAny(actor, "relations.create")) && canAny(actor, "relations.open"))
+    tools.push({ id: "relations", title: "سجل العلاقات", href: "/team/relations" });
+  add("forms.manage", "forms", "إدارة النماذج", "/team/forms/manage");
   add("forms.review", "inbox", "الطلبات الواردة", "/team/forms/inbox", "inbox.open");
   add("posts.publish", "publish", "نشر مستجد", "/team/workspace/publish");
   add("studio.use", "studio", "استوديو صحوة", "/team/workspace/studio");
+  if (canAny(actor, "audit.view") || canAny(actor, "settings.manage"))
+    tools.push({ id: "audit", title: "سجل التغييرات والإعدادات", href: "/team/admin" });
   return tools;
 }
 

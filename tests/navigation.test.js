@@ -23,7 +23,7 @@ const at = compileUI(output, [
 fs.mkdirSync(`${output}/src/lib`, { recursive: true });
 fs.writeFileSync(
   `${output}/src/lib/navigation.js`,
-  `import React from 'react';export const NavContext=React.createContext({path:'/team',navigate:()=>{}});export const useLocation=()=>({pathname:React.useContext(NavContext).path});export const useNavigate=()=>React.useContext(NavContext).navigate;export function Link({to,children,end,...props}){const go=useNavigate();return React.createElement('a',{...props,href:to,onClick:e=>{e.preventDefault();go(to);}},children);}export const NavLink=Link;export function Navigate({to}){const go=useNavigate();React.useEffect(()=>go(to),[go,to]);return null;}`,
+  `import React from 'react';export const NavContext=React.createContext({path:'/team',navigate:()=>{}});export const useLocation=()=>({pathname:React.useContext(NavContext).path});export const useNavigate=()=>React.useContext(NavContext).navigate;export function Link({to,children,end,scroll,...props}){const go=useNavigate();return React.createElement('a',{...props,href:to,onClick:e=>{e.preventDefault();go(to);}},children);}export const NavLink=Link;export function Navigate({to}){const go=useNavigate();React.useEffect(()=>go(to),[go,to]);return null;}`,
 );
 
 test("Next.js shell preserves the open Studio across team navigation and updates role visibility", async () => {
@@ -61,7 +61,7 @@ test("Next.js shell preserves the open Studio across team navigation and updates
     at("src/views/Studio.js"),
     at("src/lib/navigation.js"),
   ]);
-  let role = "volunteer",
+  let isAdmin = false,
     calls = 0;
   const client = createSessionClient(async () => {
     calls++;
@@ -72,7 +72,14 @@ test("Next.js shell preserves the open Studio across team navigation and updates
         fullName: "أحمد",
         university: "استنيا",
         email: "one@example.invalid",
-        accessRole: role,
+        accessRole: isAdmin ? "admin" : "volunteer",
+        nav: { dashboard: true, workspace: true, directory: true, guide: true, forms: true },
+        workspaceTools: isAdmin
+          ? [
+              { id: "volunteers", title: "إدارة المتطوعين والحسابات", href: "/team/volunteers" },
+              { id: "events", title: "سجل الفعاليات", href: "/team/events" },
+            ]
+          : [],
       },
     });
   });
@@ -120,12 +127,12 @@ test("Next.js shell preserves the open Studio across team navigation and updates
     const frame = document.querySelector("iframe");
     assert.ok(frame);
     assert.equal(frame.getAttribute("src"), "/api/studio?embed=1");
-    await React.act(async () => go("/team"));
+    await React.act(async () => go("/team/workspace"));
     assert.equal(document.querySelector("iframe"), frame);
     assert.equal(document.querySelector("header"), header);
     assert.equal(frame.closest("main").hidden, true);
     assert.equal(calls, 1);
-    role = "admin";
+    isAdmin = true;
     await React.act(async () => client.refresh({ force: true }));
     assert.ok(document.querySelector('a[href="/team/events"]'));
     assert.ok(document.querySelector('a[href="/team/volunteers"]'));

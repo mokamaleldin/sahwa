@@ -6,7 +6,7 @@ import {JSDOM} from 'jsdom';
 import {compileUI} from './helpers/compile-ui.js';
 import {person} from './helpers/database.js';
 import {ageFromBirthDate} from '../shared/team-options.js';
-const at=compileUI('tmp/forms-tests',['shared/team-options.js','shared/platform-roles.js','shared/volunteer-roles.js','src/components/Team/TeamComboField.tsx','src/components/Team/VolunteerRoleField.tsx','src/lib/team.ts','src/components/shared/PageIdentity.tsx','src/components/Team/TeamDialog.tsx','src/components/Team/PersonForm.tsx','src/components/Team/CreateAccountForm.tsx','src/components/Team/PersonAccess.tsx','src/components/Team/PersonDetails.tsx','src/components/Team/VolunteerCard.tsx','src/components/Team/EventForm.tsx','src/views/TeamVolunteers.tsx']);
+const at=compileUI('tmp/forms-tests',['shared/team-options.js','shared/platform-roles.js','shared/volunteer-roles.js','src/components/Team/TeamComboField.tsx','src/components/Team/OrganizationalRoleOptions.tsx','src/components/Team/VolunteerRoleField.tsx','src/lib/team.ts','src/components/shared/PageIdentity.tsx','src/components/Team/TeamDialog.tsx','src/components/Team/PersonForm.tsx','src/components/Team/CreateAccountForm.tsx','src/components/Team/PersonAccess.tsx','src/components/Team/PersonDetails.tsx','src/components/Team/VolunteerCard.tsx','src/components/Team/EventForm.tsx','src/views/TeamVolunteers.tsx']);
 const{default:PersonForm}=await at('src/components/Team/PersonForm.js');
 const{default:EventForm}=await at('src/components/Team/EventForm.js');
 const{default:VolunteerCard}=await at('src/components/Team/VolunteerCard.js');
@@ -24,7 +24,7 @@ test('volunteer modal has exactly five required fields and no login controls',()
  assert.ok([...document.querySelectorAll('select option')].some(option=>option.textContent==='السنة الخامسة فأعلى'));
  assert.ok([...document.querySelectorAll('select option')].some(option=>option.textContent==='متخرج'));
  const statusSelect=document.querySelector('select[name="status"]');
- assert.deepEqual([...statusSelect.querySelectorAll('option')].map(option=>option.textContent),['نشط','غير نشط','متوقف مؤقتًا']);
+ assert.deepEqual([...statusSelect.querySelectorAll('option')].map(option=>option.textContent),['نشط','غير نشط']);
  dom.window.close();
 });
 test('event modal requires only its name and selects responsible people from volunteers',()=>{

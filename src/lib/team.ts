@@ -40,6 +40,7 @@ export interface VolunteerAllowed {
   resetAccount: boolean;
   suspendAccount: boolean;
   level: boolean;
+  oversightOnly?: boolean;
 }
 export interface RoleOptionMeta {
   id: string;
@@ -54,6 +55,14 @@ export interface VolunteerMeta {
   canCreate: boolean;
   assignableRoles: RoleOptionMeta[];
   globalAdmin: boolean;
+}
+export interface VolunteerCandidate {
+  id: string;
+  name: string;
+  university: string;
+  gender?: string;
+  groups: string[];
+  roleIds: string[];
 }
 export interface Volunteer extends VolunteerInput {
   groups?: string[];
@@ -128,8 +137,11 @@ export async function teamRequest<T>(
     throw new Error("انتهت الجلسة. سجّل الدخول مجددًا.");
   }
   const result = await response.json().catch(() => null);
-  if (!response.ok)
-    throw new Error(result?.error || "تعذر حفظ التعديل. حاول مجددًا.");
+  if (!response.ok) {
+    const err = new Error(result?.error || "تعذر حفظ التعديل. حاول مجددًا.") as Error & { code?: string };
+    if (result?.code) err.code = String(result.code);
+    throw err;
+  }
   if (!result) throw new Error("تعذر قراءة البيانات. حاول مجددًا.");
   return result as T;
 }

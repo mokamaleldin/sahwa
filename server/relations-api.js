@@ -32,11 +32,19 @@ export function createRelationsHandler(teamStore, platformStore) {
         const scopes = [...places].filter((u) => u && can(actor, "relations.create", targetOf(u === CENTRAL ? null : u)));
         const members = teamMembers.filter((a) => can(actor, "relations.manage", targetOf(a.university)));
         const names = members.length ? new Map((await platformStore.people(actor.isTest)).map((p) => [p.id, p.fullName])) : new Map();
-        return json({ records: records.map((r) => ({ ...r, canEdit: canEdit(r), canAssign: can(actor, "relations.manage", targetOf(r.university)) })),
+        return json({ records: records.map((r) => ({ ...r, canEdit: canEdit(r), canDelete: canEdit(r), canAssign: can(actor, "relations.manage", targetOf(r.university)) })),
           scopes, members: members.map((a) => ({ id: a.volunteerId, name: names.get(a.volunteerId), university: a.university })) });
       }
-      if (!["POST", "PUT"].includes(request.method)) return json({ error: "طلب غير متاح." },405);
+      if (!["POST", "PUT", "DELETE"].includes(request.method)) return json({ error: "طلب غير متاح." },405);
       const input = await readInput(request);
+      if (request.method === "DELETE") {
+        recordVersion(input);
+        const record = records.find((r) => r.id === input.id);
+        if (!record || !canEdit(record)) throw forbidden();
+        await platformStore.deleteRelation(actor, input.id, input.revision);
+        await platformStore.audit({ actor: actor.fullName, actorVolunteer: actor.volunteerId, action: "relation.delete", details: { name: record.details?.name || "", university: record.university || "مركزي" }, isTest: actor.isTest });
+        return json({ deleted: true });
+      }
       const creating = request.method === "POST";
       if (!creating) recordVersion(input);
       const record = creating ? null : records.find((r) => r.id === input.id);
@@ -48,8 +56,13 @@ export function createRelationsHandler(teamStore, platformStore) {
       if (ownerId !== previousOwner && (!can(actor, "relations.manage", target)
         || (ownerId && !teamMembers.some((a) => a.volunteerId === ownerId && a.university === university)))) throw forbidden();
       const details = fields(input);
-      if (creating) return json({ id: await platformStore.registerRelation(actor, university, details, ownerId) }, 201);
+      if (creating) {
+        const id = await platformStore.registerRelation(actor, university, details, ownerId);
+        await platformStore.audit({ actor: actor.fullName, actorVolunteer: actor.volunteerId, action: "relation.create", details: { name: details.name, university: university || "مركزي" }, isTest: actor.isTest });
+        return json({ id }, 201);
+      }
       await platformStore.updateRelation(actor, input.id, input.revision, details, ownerId);
+      await platformStore.audit({ actor: actor.fullName, actorVolunteer: actor.volunteerId, action: "relation.edit", details: { name: details.name, university: university || "مركزي" }, isTest: actor.isTest });
       return json({ saved: true });
     } catch (error) { return errorResponse(error); }
   };

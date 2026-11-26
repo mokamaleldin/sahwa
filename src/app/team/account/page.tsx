@@ -40,7 +40,15 @@ export default async function Page({ searchParams }: { searchParams?: Promise<{ 
       forced={actor.mustChangePassword}
       initialTab={initialTab}
       profile={profile || null}
-      person={person ? { fullName: person.fullName, university: person.university, major: person.major } : null}
+      person={person ? {
+        fullName: person.fullName,
+        university: person.university,
+        major: person.major,
+        studyYear: person.studyYear || "",
+        birthDate: person.birthDate || "",
+        phone: person.phone || "",
+        gender: person.gender || "",
+      } : null}
       roles={roles}
     />
   );

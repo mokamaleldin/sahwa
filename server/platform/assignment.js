@@ -26,5 +26,7 @@ export function canRecruit(actor, person, assignments, roleId, university = null
   if (role.sector === "required" && !sector) return false;
   const scope = assignmentScope(role, { ...person, sector }, { university });
   if (!isGlobalAdmin(actor) && role.scope === "university" && person.university !== scope.university) return false;
-  return mayAssignRole(actor, roleId, scope.target) && can(actor, "roles.assign", scope.target);
+  const checkTarget = { ...scope.target, sector: scope.target.sector || sector };
+  return (mayAssignRole(actor, roleId, scope.target) && can(actor, "roles.assign", scope.target))
+    || (mayAssignRole(actor, roleId, checkTarget) && can(actor, "roles.assign", checkTarget));
 }

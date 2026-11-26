@@ -210,7 +210,7 @@ export default function TeamForms() {
               </Link>
             )}
             {user?.nav?.manageForms && (
-              <Link className="team-button" href="/team/admin?tab=forms">
+              <Link className="team-button" href="/team/forms/manage">
                 <Settings2 size={16} aria-hidden="true" />
                 إدارة وإضافة النماذج
               </Link>
