@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { parseStructureBook, type StructureEntry } from "./structureParser";
+import { parseStructureBook, parseDecisionsBook, type StructureEntry } from "./structureParser";
 import type { GovernanceBlock } from "../data/sahwaGovernance";
 import { guideEntriesFor, roleById } from "../../shared/platform-roles.js";
 
@@ -48,4 +48,17 @@ export function roleText(roleId: string, sector: string | null): RoleText {
     pendingTitles: (role?.pendingGuide || []).map((id: string) => structure().entries.get(id)?.title || id),
     needsApproval: Boolean(role?.guideNeedsApproval),
   };
+}
+
+export function boardText() {
+  return structure().entries.get("board") || null;
+}
+
+export function decisionTexts(boardMember: boolean) {
+  const source = readFileSync(join(process.cwd(), "docs/guide/decisions.md"), "utf8");
+  return parseDecisionsBook(source).filter((chapter) => boardMember || !["3.2", "3.3"].includes(chapter.id));
+}
+
+export function generalVolunteerText() {
+  return structure().entries.get("membership-levels") || null;
 }

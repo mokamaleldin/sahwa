@@ -35,7 +35,7 @@ export const PERMISSIONS = [
   { key: "permissions.delegate", label: "تفويض صلاحيات يملكها" },
   { key: "audit.view", label: "عرض سجل التغييرات الإدارية" },
   { key: "settings.manage", label: "إدارة إعدادات المنصة" },
-  { key: "events.view", label: "عرض سجل الفعاليات" },
+  { key: "events.view", label: "عرض سجل الفعاليات", base: true },
   { key: "events.create", label: "إضافة فعالية" },
   { key: "events.edit", label: "تعديل فعالية" },
   { key: "events.manage", label: "تعديل جميع الفعاليات في النطاق" },
@@ -80,9 +80,9 @@ const ROLE_DEFAULTS = {
   "women-sector-lead": [...rights([...managedTeam, ...activities, "forms.review", "accounts.reset", "accounts.suspend"], women), studio],
   "university-youth-lead": [...rights([...managedTeam, ...activities, "forms.review", "accounts.reset", "accounts.suspend"], campus), studio],
   "internal-activities-lead": [...rights([...managedTeam, ...activities, "forms.review"], internal), studio],
-  "internal-activities-member": rights(["events.view", "events.create"], internal),
+  "internal-activities-member": [],
   "central-activities-lead": [...rights([...managedTeam, ...activities, "forms.review"], central), studio],
-  "central-activities-member": rights(["events.view", "events.create"], central),
+  "central-activities-member": [],
   "university-relations-lead": relationsLead(localRelations),
   "university-relations-member": [["relations.view", localRelations]],
   "central-relations-lead": relationsLead(centralRelations),
@@ -92,7 +92,11 @@ const ROLE_DEFAULTS = {
 ROLE_DEFAULTS["university-women-lead"] = ROLE_DEFAULTS["university-youth-lead"];
 
 export function roleDefaults(roleId) {
-  return ROLE_DEFAULTS[roleId] || [];
+  const defaults = ROLE_DEFAULTS[roleId] || [];
+  const role = roleById(roleId);
+  if (role?.level !== "lead" || defaults.some(([key]) => key === "events.create")) return defaults;
+  const target = scope(role.scope === "university" ? U : CENTRAL, role.sector === "none" ? null : S, role.team);
+  return [...defaults, ...rights(["events.create", "events.edit"], target)];
 }
 
 function fill(template, assignment) {

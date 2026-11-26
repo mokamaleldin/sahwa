@@ -38,7 +38,7 @@ function PersonCard({ c, manager = false }: { c: Card; manager?: boolean }) {
 }
 
 export default function PeopleDirectory({ data, policy }: { data: Data; policy: string }) {
-  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>(data.groups.length ? "team" : data.university.length ? "university" : "all");
+  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("all");
   const [query, setQuery] = useState("");
   const list = useMemo(() => {
     const q = normalizeSearch(query);

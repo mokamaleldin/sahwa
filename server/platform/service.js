@@ -10,7 +10,7 @@ import {
   sectorForGender,
   teamKeys,
 } from "../../shared/platform-roles.js";
-import { can, canAny, scopesFor, volunteerTargets, assignmentTarget, mayAssignRole } from "./access.js";
+import { can, canAny, scopesFor, volunteerTargets, assignmentTarget, mayAssignRole, isGlobalAdmin } from "./access.js";
 
 export function scopeLabel(assignment) {
   const role = roleById(assignment.roleId);
@@ -171,14 +171,15 @@ export function directoryCard(realm, person, { leadsOnly = false } = {}) {
 }
 
 export function directoryData(actor, realm, policy = "leads") {
-  if (actor.kind === "owner") return { all: realm.people.filter((p) => p.status === "نشط").map((p) => directoryCard(realm, p)), university: [], team: [], groups: [] };
+  if (actor.kind === "owner") return { all: realm.people.map((p) => directoryCard(realm, p)), university: [], team: [], groups: [] };
   const viewer = realm.byId.get(actor.volunteerId);
   const viewerAssignments = realm.assignmentsByPerson.get(actor.volunteerId) || [];
   const viewerTeams = new Set(viewerAssignments.flatMap(teamKeys));
+  const global = isGlobalAdmin(actor);
   const visible = realm.people
-    .filter((p) => p.status !== "غير نشط" || p.id === viewer.id)
+    .filter((p) => global || p.status !== "غير نشط" || p.id === viewer.id)
     .filter((p) => can(actor, "directory.view", volunteerTargets(p, realm.assignmentsByPerson.get(p.id))))
-    .filter((p) => visibleToViewer(viewer, viewerAssignments, p, realm.assignmentsByPerson.get(p.id) || [], policy));
+    .filter((p) => global || visibleToViewer(viewer, viewerAssignments, p, realm.assignmentsByPerson.get(p.id) || [], policy));
   const card = (p) => {
     const sameTeam = (realm.assignmentsByPerson.get(p.id) || []).some((a) => teamKeys(a).some((k) => viewerTeams.has(k)));
     const leadsOnly = p.sector && viewer.sector && p.sector !== viewer.sector && !sameTeam && policy !== "all";
@@ -249,14 +250,13 @@ export function workspaceData(actor) {
   add("volunteers.view", "volunteers", canAny(actor, "permissions.manage") ? "إدارة المتطوعين والحسابات" : "إدارة فريقي وحساباته", "/team/volunteers", "volunteers.open");
   if (canAny(actor, "permissions.manage") || canAny(actor, "permissions.delegate"))
     tools.push({ id: "permissions", title: "إدارة الصلاحيات", href: "/team/admin?tab=grants" });
-  add("events.create", "create-event", "إضافة فعالية", "/team/events?new=1", "events.open");
   add("events.view", "events", "سجل الفعاليات", "/team/events", "events.open");
   add("relations.create", "create-relation", "إضافة علاقة", "/team/relations?new=1", "relations.open");
   add("relations.view", "relations", "سجل العلاقات", "/team/relations", "relations.open");
   add("forms.manage", "forms", "إدارة النماذج", "/team/admin?tab=forms");
   add("forms.review", "inbox", "الطلبات الواردة", "/team/forms/inbox", "inbox.open");
-  add("posts.publish", "publish", "نشر مستجد", "/team?publish=1#community");
-  add("studio.use", "studio", "استوديو صحوة", "/studio");
+  add("posts.publish", "publish", "نشر مستجد", "/team/workspace/publish");
+  add("studio.use", "studio", "استوديو صحوة", "/team/workspace/studio");
   return tools;
 }
 

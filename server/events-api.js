@@ -20,7 +20,7 @@ function editable(actor, event) {
   const mine = actor.volunteerId && [event.creatorId, event.responsibleId].includes(actor.volunteerId);
   return can(actor, "events.manage", target)
     || Boolean(mine && actor.status === "نشط"
-      && (can(actor, "events.edit", target) || can(actor, "events.create", target) || can(actor, "events.view", target)));
+      && (can(actor, "events.edit", target) || can(actor, "events.create", target)));
 }
 
 async function responsibleOptions(platform, actor, targets) {

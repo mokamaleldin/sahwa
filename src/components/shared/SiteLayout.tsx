@@ -9,7 +9,7 @@ import StudioWorkspace from '../Studio/StudioWorkspace';
 export default function SiteLayout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { status } = useSession();
-  const isStudio = pathname.replace(/\/$/, '') === '/studio';
+  const isStudio = ['/studio', '/team/workspace/studio'].includes(pathname.replace(/\/$/, ''));
   const internal = isStudio || pathname === "/team" || pathname.startsWith("/team/");
   const [openedStudio, setOpenedStudio] = useState(isStudio);
   useEffect(() => { if (isStudio) setOpenedStudio(true); }, [isStudio]);
