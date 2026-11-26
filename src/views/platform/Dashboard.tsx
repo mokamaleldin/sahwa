@@ -248,6 +248,7 @@ function RoleCard({ role }: { role: DashboardRole }) {
 
 interface Props {
   name: string;
+  women?: boolean;
   roles: DashboardRole[];
   owner: boolean;
   reviewActivity: boolean;
@@ -255,13 +256,20 @@ interface Props {
   general: StructureEntry | null;
   children: ReactNode;
 }
-export default function Dashboard({ name, roles, owner, reviewActivity, boardMember, general, children }: Props) {
+export default function Dashboard({ name, women = false, roles, owner, reviewActivity, boardMember, general, children }: Props) {
+  const firstName = name.trim().split(/\s+/)[0];
   return (
     <>
       <section className="platform-welcome-hero dashboard-welcome">
         <div className="platform-welcome-main">
-          <h1 className="font-heading">أهلًا بك يا {name.trim().split(/\s+/)[0]} في صحوتك</h1>
-          <p>جزاك الله خيرًا على ما تبذله من وقتك وجهدك في صحوة</p>
+          <h1 className="font-heading">
+            {women ? `أهلًا بكِ يا ${firstName} في صحوتكِ` : `أهلًا بك يا ${firstName} في صحوتك`}
+          </h1>
+          <p>
+            {women
+              ? "جزاكِ الله خيرًا على ما تبذلينه من وقتكِ وجهدكِ في صحوة"
+              : "جزاك الله خيرًا على ما تبذله من وقتك وجهدك في صحوة"}
+          </p>
           <div className="dashboard-daily-message">
             <p>
               <strong>قال رسول الله ﷺ:</strong>
@@ -270,9 +278,13 @@ export default function Dashboard({ name, roles, owner, reviewActivity, boardMem
               «فوالله لأن يهدي الله بك رجلًا واحدًا خير لك من حمر النعم» — متفق عليه.
             </p>
             <p>
-              لعل لقاءً ساهمت في إقامته، أو كلمةً ساعدت في إيصالها، أو جهدًا بذلته ولم يلتفت إليه أحد، يكون سببًا في صلاح إنسان، وأثرًا يمتد إلى ما بعد عمرك.
+              {women
+                ? "لعل لقاءً ساهمتِ في إقامته، أو كلمةً ساعدتِ في إيصالها، أو جهدًا بذلتِه ولم يلتفت إليه أحد، يكون سببًا في صلاح إنسان، وأثرًا يمتد إلى ما بعد عمركِ."
+                : "لعل لقاءً ساهمت في إقامته، أو كلمةً ساعدت في إيصالها، أو جهدًا بذلته ولم يلتفت إليه أحد، يكون سببًا في صلاح إنسان، وأثرًا يمتد إلى ما بعد عمرك."}
             </p>
-            <p className="mt-2">بارك الله في وقتك وعملك، وتقبّل منك.</p>
+            <p className="mt-2">
+              {women ? "بارك الله في وقتكِ وعملكِ، وتقبّل منكِ." : "بارك الله في وقتك وعملك، وتقبّل منك."}
+            </p>
           </div>
         </div>
       </section>
