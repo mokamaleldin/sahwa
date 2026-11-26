@@ -8,7 +8,7 @@ import { teamRequest } from "../../lib/team";
 interface Field { id: string; label: string }
 interface Submission {
   id: string; form: { title: string; fields: Field[] }; answers: Record<string, string>; status: string; statusLabel: string; response: string;
-  revision: number; createdAt: string; submitterName: string | null; submitterUniversity: string | null; routeTitle: string; routeUniversity: string | null;
+  revision: number; createdAt: string; submitterName: string | null; submitterUniversity: string | null; routeTitle: string; routeUniversity: string | null; routeSector: string | null;
 }
 
 function Item({ s, statuses, onSaved }: { s: Submission; statuses: Record<string, string>; onSaved: () => void }) {
@@ -51,12 +51,17 @@ export default function FormsInbox() {
     try { setData(await teamRequest({}, "/api/forms?view=inbox")); } catch (reason) { setError(reason instanceof Error ? reason.message : "تعذر التحميل."); }
   }, []);
   useEffect(() => { void load(); }, [load]);
+  const groups = new Map<string, Submission[]>();
+  for (const item of data?.submissions || []) {
+    const label = [item.routeTitle, item.routeUniversity, item.routeSector === "women" ? "الطالبات" : item.routeSector === "youth" ? "الشباب" : ""].filter(Boolean).join(" · ");
+    groups.set(label, [...groups.get(label) || [], item]);
+  }
   return (
     <>
       <PageHeading title="الطلبات الواردة" description="الأفكار والطلبات الموجهة إلى دورك ونطاقك." />
       {error && <p className="team-error" role="alert">{error}</p>}
       {!data ? !error && <p className="team-loading"><Loader2 className="animate-spin" aria-hidden="true" /> جارٍ التحميل…</p>
-        : data.submissions.length ? <div className="platform-list">{data.submissions.map((s) => <Item key={s.id + s.revision} s={s} statuses={data.statuses} onSaved={() => void load()} />)}</div>
+        : data.submissions.length ? [...groups].map(([label, items]) => <section key={label}><h2 className="platform-section-title font-heading">{label}</h2><div className="platform-list">{items.map((s) => <Item key={s.id + s.revision} s={s} statuses={data.statuses} onSaved={() => void load()} />)}</div></section>)
         : <p className="platform-empty">لا توجد طلبات موجهة إليك حاليًا.</p>}
     </>
   );

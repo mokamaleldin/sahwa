@@ -18,6 +18,7 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [adding, setAdding] = useState(false);
+  const [replacing, setReplacing] = useState<string | null>(null);
   const [roleId, setRoleId] = useState("");
   const [issued, setIssued] = useState<IssuedCredential | null>(null);
   const [password, setPassword] = useState("");
@@ -41,7 +42,7 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
   function assign(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    void act({ action: "assign-role", volunteerId: person.id, roleId, university: form.get("university"), startsOn: form.get("startsOn") }, () => { setAdding(false); setRoleId(""); });
+    void act({ action: replacing ? "replace-role" : "assign-role", assignmentId: replacing, volunteerId: person.id, roleId, university: form.get("university"), startsOn: form.get("startsOn") }, () => { setAdding(false); setReplacing(null); setRoleId(""); });
   }
   const credential = (r: { fullName: string; username: string; temporaryPassword?: string; chosenPassword?: boolean; expiresAt?: string | null }) => {
     const secret = r.temporaryPassword || (r.chosenPassword ? password : "");
@@ -57,8 +58,9 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
           {person.assignments.map((a) => (
             <li key={a.id} className="platform-item platform-row">
               <span><strong>{a.title}</strong> <span className="platform-muted">— {a.scope}{a.deferred ? " — مساحة العمل مؤجلة" : ""}</span></span>
-              {allowed.assign && meta.assignableRoles.some((r) => r.id === a.roleId) && (
-                <button className="team-text-button" disabled={busy} onClick={() => confirm(`إنهاء دور «${a.title}»؟ يبقى سجل الشخص وحسابه.`) && void act({ action: "end-role", assignmentId: a.id })}><X size={14} />إنهاء الدور</button>
+              {a.canChange && (<>
+                <button className="team-text-button" disabled={busy} onClick={() => {setReplacing(a.id); setRoleId(a.roleId); setAdding(true);}}>تعديل التكليف</button>
+                <button className="team-text-button" disabled={busy} onClick={() => confirm(`إنهاء دور «${a.title}»؟ يبقى سجل الشخص وحسابه.`) && void act({ action: "end-role", assignmentId: a.id })}><X size={14} />إنهاء الدور</button></>
               )}
             </li>
           ))}
@@ -82,7 +84,7 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
           <p className="platform-muted">الإضافة التقنية لا تعني تعيينًا إداريًا نافذًا؛ تُعتمد التعيينات وفق النظام.</p>
           <div className="flex gap-2"><button className="team-button" disabled={busy || !roleId}>إسناد</button><button type="button" className="team-button team-button-secondary" onClick={() => setAdding(false)}>إلغاء</button></div>
         </form>
-      ) : <button className="team-text-button mt-2" onClick={() => setAdding(true)}><Plus size={15} />إضافة دور</button>)}
+      ) : <button className="team-text-button mt-2" onClick={() => {setReplacing(null); setRoleId(""); setAdding(true);}}><Plus size={15} />إضافة دور</button>)}
 
       {allowed.level && (
         <label className="team-field mt-4" style={{ maxWidth: 260 }}><span>المستوى التنظيمي</span>
@@ -104,7 +106,7 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
           </p>
           {creating && (
             <div className="mt-2"><CreateAccountForm volunteerId={person.id} fullName={person.fullName} onCancel={() => setCreating(false)}
-              onCreated={async (a) => { setCreating(false); setIssued({ fullName: a.fullName, username: a.email ? `${a.email} (${a.username})` : a.username, temporaryPassword: a.password, expiresAt: "" }); await onChanged(); }} /></div>
+              onCreated={async (a) => { setCreating(false); setIssued({ fullName: a.fullName, username: a.email ? `${a.email} (${a.username})` : a.username, temporaryPassword: a.password, expiresAt: a.expiresAt || "" }); await onChanged(); }} /></div>
           )}
           {allowed.resetAccount && person.account.status !== "none" && (
             <label className="team-field mt-2" style={{ maxWidth: 320 }}><span>كلمة مرور جديدة عند إعادة الضبط <small>اختياري؛ فارغة = كلمة مؤقتة تلقائية</small></span>

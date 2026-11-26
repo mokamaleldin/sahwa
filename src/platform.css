@@ -67,3 +67,36 @@
   .platform-contact { grid-template-columns:minmax(0,1fr); gap:3px; }
   .platform-card { padding:18px; border-radius:18px; }
 }
+
+.internal-header { position: relative; z-index: 30; background: #f2e9e2; border-bottom: 1px solid #75202624; }
+.internal-nav, .internal-links, .internal-account summary { display: flex; align-items: center; }
+.internal-nav { min-height: 66px; gap: clamp(12px, 3vw, 42px); }
+.internal-brand img { width: 38px; height: 46px; object-fit: contain; }
+.internal-links { gap: 4px; }
+.internal-links a, .internal-account summary { padding: 9px 15px; color: #552127; border-radius: 9px; font-weight: 600; white-space: nowrap; }
+.internal-links a.active, .internal-links a[aria-current="page"], .internal-links a:hover { background: #752026; color: white; }
+.internal-account { position: relative; margin-inline-start: auto; }
+.internal-account summary { gap: 6px; cursor: pointer; list-style: none; border: 1px solid #75202630; }
+.internal-account summary::-webkit-details-marker { display: none; }
+.internal-account > div { display: grid; position: absolute; inset-inline-end: 0; top: calc(100% + 6px); min-width: 180px; background: #fffaf6; border: 1px solid #75202625; border-radius: 10px; padding: 5px; box-shadow: 0 8px 24px #350e1515; }
+.internal-account a, .internal-account button { display: flex; gap: 6px; align-items: center; padding: 9px 12px; text-align: start; border-radius: 6px; }
+.internal-account a:hover, .internal-account button:hover { background: #f2e9e2; }
+.internal-page { padding-top: clamp(16px, 3vw, 36px); }
+.internal-page .sahwa-page-heading { text-align: start; margin-bottom: 1.25rem; }
+.internal-page .sahwa-page-heading h1, .dashboard-welcome h1 { font-size: clamp(1.45rem, 3vw, 2.1rem); line-height: 1.5; color: #752026; }
+.internal-page .sahwa-page-heading-icon, .internal-page .sahwa-page-heading-rule { display: none; }
+.internal-page .sahwa-page-heading-description { margin: .25rem 0 0; }
+.dashboard-welcome p { color: #675256; }
+.internal-page .platform-section-title { margin-block: 1.3rem .65rem; }
+.internal-page .platform-shortcuts { gap: .5rem; }
+.internal-page .platform-shortcut { padding: .65rem .95rem; }
+.community-columns { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+.community-columns > section { min-width: 0; border-top: 2px solid #d6ad63; padding-top: 10px; }
+.community-columns h3 { color: #752026; margin-bottom: .45rem; }
+@media (max-width: 720px) {
+  .internal-nav { flex-wrap: wrap; gap: 4px 12px; padding-block: 7px; }
+  .internal-links { order: 3; width: 100%; flex-wrap: wrap; }
+  .internal-links a { padding: 7px 9px; font-size: .86rem; }
+  .internal-account summary { padding: 7px 10px; }
+  .community-columns { grid-template-columns: 1fr; }
+}

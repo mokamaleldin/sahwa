@@ -1,12 +1,12 @@
 import { TeamError, UUID } from "./team-data.js";
 import { json, readInput, errorResponse } from "./http.js";
 import { requireActor, forbidden } from "./platform/session.js";
-import { can, canAny, isGlobalAdmin } from "./platform/access.js";
+import { can, canAny } from "./platform/access.js";
 import { roleById, roleTitle } from "../shared/platform-roles.js";
 
 const FIELD_TYPES = ["short_text", "long_text", "select", "url"];
 const STATUSES = { new: "جديد", reviewing: "قيد المراجعة", accepted: "مقبول", postponed: "مؤجل", rejected: "مرفوض", closed: "مغلق" };
-const ROUTE_ROLES = ["internal-activities-lead", "central-activities-lead", "university-relations-lead", "central-relations-lead", "media-lead"];
+const ROUTE_ROLES = ["sahwa-lead", "internal-activities-lead", "central-activities-lead", "university-relations-lead", "central-relations-lead", "media-lead"];
 
 // Where a submission goes is computed on the server from the submitter's
 // own record and assignments; the browser never chooses the receiving person.
@@ -50,13 +50,7 @@ function formVisibleTo(form, actor) {
 // Reviewers: holders of the routed role in the routed scope. Confidential
 // forms are only ever visible to the routed role, never to platform admins.
 function mayReview(actor, submission) {
-  const held = actor.assignments.some(
-    (a) => a.roleId === submission.routeRole
-      && (submission.routeUniversity === null || a.university === submission.routeUniversity)
-      && (submission.routeSector === null || a.sector === submission.routeSector),
-  );
-  if (held) return true;
-  if (submission.form?.confidential) return false;
+  if (submission.form?.confidential || !ROUTE_ROLES.includes(submission.routeRole)) return false;
   return can(actor, "forms.review", { university: submission.routeUniversity || "*central*", sector: submission.routeSector, team: roleById(submission.routeRole)?.team || null });
 }
 
@@ -106,14 +100,14 @@ export function createFormsHandler(teamStore, platformStore) {
           return json({ forms, routeRoles: ROUTE_ROLES.map((id) => ({ id, title: roleTitle(id) })) });
         }
         if (view === "inbox") {
-          const routeRoles = new Set(actor.assignments.map((a) => a.roleId).filter((r) => ROUTE_ROLES.includes(r) || r === "review-lead"));
-          const extra = canAny(actor, "forms.review") ? ROUTE_ROLES : [];
-          const submissions = (await platformStore.submissionsForRoles(actor.isTest, [...new Set([...routeRoles, ...extra])])).filter((s) => mayReview(actor, s));
+          if (!canAny(actor, "forms.review")) throw forbidden();
+          const submissions = (await platformStore.submissionsForRoles(actor.isTest, ROUTE_ROLES, actor.permissions)).filter((s) => mayReview(actor, s));
           return json({
             submissions: submissions.map((s) => ({ ...s, routeTitle: roleTitle(s.routeRole, s.routeSector), statusLabel: STATUSES[s.status] })),
             statuses: STATUSES,
           });
         }
+        if (!canAny(actor, "forms.submit")) throw forbidden();
         if (actor.kind !== "account") return json({ forms: [], submissions: [], statuses: STATUSES });
         const mine = await platformStore.submissionsBy(actor.volunteerId);
         return json({
@@ -150,20 +144,21 @@ export function createFormsHandler(teamStore, platformStore) {
       if (request.method === "PUT" && input.action === "respond") {
         const submission = await platformStore.submission(String(input.id || ""));
         if (!submission || submission.isTest !== actor.isTest || !mayReview(actor, submission)) throw forbidden();
-        if (!STATUSES[input.status]) throw new TeamError("اختر حالة صحيحة.");
+        if (!Object.hasOwn(STATUSES, input.status)) throw new TeamError("اختر حالة صحيحة.");
         const response = typeof input.response === "string" ? input.response.trim().slice(0, 1000) : "";
         await platformStore.respond(submission.id, Number(input.revision), input.status, response, actor.fullName);
         return json({ saved: true });
       }
       if (request.method === "PUT" && input.action === "save-form") {
-        if (!canAny(actor, "forms.manage") || !isGlobalAdmin(actor)) throw forbidden();
+        if (!can(actor, "forms.manage")) throw forbidden();
         const definition = validateDefinition(input.form || {});
         const label = actor.fullName;
         if (input.id) {
           const existing = await platformStore.form(String(input.id));
           if (!existing) throw new TeamError("النموذج غير موجود.", 404);
           if (existing.confidential && definition.active) throw new TeamError("لا يُفعّل نموذج الشكاوى قبل اعتماد جهة استقبال مستقلة ومسار وصول آمن.", 409, "CONFIDENTIAL_LOCKED");
-          await platformStore.updateForm(existing.id, Number(input.revision), definition, label);
+          const routing = existing.confidential ? existing.routing : validateRouting(input.form?.routing || existing.routing, definition.fields);
+          await platformStore.updateForm(existing.id, Number(input.revision), { ...definition, routing }, label);
         } else {
           const slug = `form-${Date.now().toString(36)}`;
           await platformStore.createForm({ ...definition, slug, routing: validateRouting(input.form?.routing, definition.fields) }, label);

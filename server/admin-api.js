@@ -1,3 +1,4 @@
+import { assignmentScope, canRecruit } from "./platform/assignment.js";
 import { TeamError, UUID, date } from "./team-data.js";
 import { json, readInput, errorResponse } from "./http.js";
 import { requireActor, forbidden, temporaryCredential, validateNewPassword, USERNAME } from "./platform/session.js";
@@ -11,11 +12,12 @@ import {
   covers,
   isGlobalAdmin,
   mayAssignRole,
+  isProtectedLead,
   mayManagePerson,
   scopesFor,
   volunteerTargets,
 } from "./platform/access.js";
-import { describeAssignment, loadRealm } from "./platform/service.js";
+import { describeAssignment, directoryGroups, loadRealm, visibleToViewer } from "./platform/service.js";
 import { uniqueUsername, RESERVED } from "./platform/usernames.js";
 import {
   CENTRAL,
@@ -39,23 +41,10 @@ const uuid = (value, label = "السجل") => {
 
 async function loadTarget(platformStore, actor, volunteerId) {
   const person = await platformStore.person(uuid(volunteerId, "المتطوع"));
-  if (!person || person.isTest !== actor.isTest) throw new TeamError("المتطوع غير موجود.", 404, "NOT_FOUND");
-  const assignments = await platformStore.assignmentsOf(person.id);
+  if (!person || person.isTest !== actor.isTest || person.archivedAt) throw new TeamError("المتطوع غير موجود.", 404, "NOT_FOUND");
+  const assignments = await platformStore.assignmentsOf(person.id, { includeScheduled: true });
   const sector = sectorForGender(person.gender);
   return { person: { ...person, sector }, assignments, targets: volunteerTargets({ ...person, sector }, assignments) };
-}
-
-// The assignment's own scope, used both for validation and permission checks.
-export function assignmentScope(role, person, input) {
-  if (!role) throw new TeamError("اختر دورًا من التصنيفات المعتمدة.");
-  let sector = null;
-  if (role.sector === "youth" || role.sector === "women") sector = role.sector;
-  else if (role.sector === "required") sector = sectorValue(input.sector) || person.sector;
-  if ((role.sector !== "none") && !sector) throw new TeamError("حدد القطاع (شباب/طالبات) لهذا الدور.");
-  if (sector && person.sector && sector !== person.sector) throw new TeamError("قطاع الدور لا يطابق النوع المسجل لهذا الشخص.");
-  const university = role.scope === "university" ? nullableText(input.university, 120) || person.university || null : null;
-  if (role.scope === "university" && !university) throw new TeamError("حدد الجامعة لهذا الدور.");
-  return { university, sector, team: role.team, target: { university: university || CENTRAL, sector, team: role.team } };
 }
 
 function actorLabel(actor) {
@@ -156,11 +145,17 @@ export function createAdminHandler(teamStore, platformStore) {
         }
         if (view === "grants") {
           if (!canAny(actor, "permissions.manage") && !canAny(actor, "permissions.delegate")) throw forbidden();
-          const [grants, people] = await Promise.all([platformStore.allGrants(isTest), platformStore.people(isTest)]);
+          const [grants, realm] = await Promise.all([platformStore.allGrants(isTest), loadRealm(platformStore, isTest)]);
+          const global = isGlobalAdmin(actor);
+          const people = realm.people.flatMap((p) => {
+            const own = realm.assignmentsByPerson.get(p.id) || [];
+            if (p.id === actor.volunteerId || isProtectedLead(own) || (!global && !can(actor, "permissions.delegate", volunteerTargets(p, own)))) return [];
+            return [{ id: p.id, fullName: p.fullName, university: p.university, groups: directoryGroups(p, own) }];
+          });
           return json({
-            grants: isGlobalAdmin(actor) ? grants : grants.filter((g) => g.grantedBy === label),
-            people: people.map((p) => ({ id: p.id, fullName: p.fullName, university: p.university })),
-            permissions: PERMISSIONS.map((p) => ({ ...p, delegable: !NON_DELEGABLE.has(p.key) })),
+            grants: global ? grants : grants.filter((g) => g.grantedBy === label),
+            people,
+            permissions: PERMISSIONS.filter((p) => global || (!NON_DELEGABLE.has(p.key) && canAny(actor,p.key))).map((p) => ({ ...p, delegable: !NON_DELEGABLE.has(p.key) })),
             teams: Object.entries(TEAM_TITLES).map(([id, title]) => ({ id, title })),
             delegateScopes: isGlobalAdmin(actor) ? null : scopesFor(actor, "permissions.delegate"),
           });
@@ -191,16 +186,30 @@ export function createAdminHandler(teamStore, platformStore) {
       const input = await readInput(request, 32 * 1024);
       const action = input.action;
 
-      if (action === "assign-role") {
-        const { person, assignments, targets } = await loadTarget(platformStore, actor, input.volunteerId);
+      if (action === "assign-role" || action === "replace-role") {
+        const { person, assignments } = await loadTarget(platformStore, actor, input.volunteerId);
         if (person.archivedAt) throw new TeamError("السجل مؤرشف.", 409);
         if (person.id === actor.volunteerId) throw forbidden("لا يمكنك تعديل أدوارك بنفسك.");
         const role = roleById(input.roleId);
         const scope = assignmentScope(role, person, input);
         if (!mayAssignRole(actor, role.id)) throw forbidden("لا تملك حق إسناد هذا الدور.");
-        if (!can(actor, "roles.assign", scope.target) || !can(actor, "roles.assign", targets)) throw forbidden("هذا الإسناد خارج نطاق صلاحياتك.");
+        if (!canRecruit(actor, person, assignments, role.id, scope.university)) throw forbidden("هذا الإسناد خارج نطاق صلاحياتك.");
+        if (!isGlobalAdmin(actor)) {
+          const policy = await platformStore.setting("directory.crossSector", "leads");
+          if (!visibleToViewer(actor, actor.assignments, person, assignments, policy)
+            || !can(actor, "directory.view", volunteerTargets(person, assignments))) throw forbidden();
+        }
         const startsOn = input.startsOn ? date(String(input.startsOn), "تاريخ بداية التكليف") : "";
-        const id = await platformStore.addAssignment({ volunteerId: person.id, roleId: role.id, university: scope.university, sector: scope.sector, startsOn, assignedBy: label, source: isTest ? "test" : "manual" });
+        const next = { volunteerId: person.id, roleId: role.id, university: scope.university, sector: scope.sector, startsOn, assignedBy: label, source: isTest ? "test" : "manual" };
+        if (action === "replace-role") {
+          const previous = assignments.find((a) => a.id === input.assignmentId);
+          if (!previous || !mayAssignRole(actor, previous.roleId, { university: previous.university || CENTRAL, sector: previous.sector, team: roleById(previous.roleId)?.team })) throw forbidden();
+          if (startsOn && startsOn > new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Istanbul" })) throw new TeamError("اختر تاريخ اليوم أو تاريخًا سابقًا لاستبدال التكليف.");
+          const id = await platformStore.replaceAssignment(previous.id, next);
+          await audit("role.replace", person.id, { previous: previous.id, assignmentId: id, roleId: role.id });
+          return json({ assigned: true, id });
+        }
+        const id = await platformStore.addAssignment(next);
         await audit("role.assign", person.id, { roleId: role.id, university: scope.university, sector: scope.sector, assignmentId: id, previousCount: assignments.length });
         return json({ assigned: true, id });
       }
@@ -208,11 +217,12 @@ export function createAdminHandler(teamStore, platformStore) {
       if (action === "end-role") {
         const assignment = await platformStore.assignment(uuid(input.assignmentId, "الإسناد"));
         if (!assignment) throw new TeamError("الإسناد غير موجود.", 404);
-        const { person } = await loadTarget(platformStore, actor, assignment.volunteerId);
+        const { person, assignments } = await loadTarget(platformStore, actor, assignment.volunteerId);
+        if (isProtectedLead(assignments)) throw forbidden();
         if (person.id === actor.volunteerId) throw forbidden("لا يمكنك تعديل أدوارك بنفسك.");
         const role = roleById(assignment.roleId);
         const target = { university: assignment.university || CENTRAL, sector: assignment.sector, team: role?.team || null };
-        if (!mayAssignRole(actor, assignment.roleId) || !can(actor, "roles.assign", target)) throw forbidden("إنهاء هذا الدور خارج نطاق صلاحياتك.");
+        if (!mayAssignRole(actor, assignment.roleId, target) || !can(actor, "roles.assign", target)) throw forbidden("إنهاء هذا الدور خارج نطاق صلاحياتك.");
         await platformStore.endAssignment(assignment.id, label);
         await audit("role.end", person.id, { roleId: assignment.roleId, university: assignment.university, sector: assignment.sector });
         return json({ ended: true });
@@ -231,14 +241,14 @@ export function createAdminHandler(teamStore, platformStore) {
         const { person, assignments, targets } = await loadTarget(platformStore, actor, input.volunteerId);
         if (person.archivedAt) throw new TeamError("السجل مؤرشف.", 409);
         if (person.id === actor.volunteerId) throw forbidden("لا يمكنك إدارة حسابك من هنا. استخدم إعدادات الحساب.");
-        if (!mayManagePerson(actor, assignments)) throw forbidden("هذا الشخص يحمل دورًا لا تملك إدارته.");
+
         const permission = { "create-account": "accounts.create", "reset-account": "accounts.reset", "suspend-account": "accounts.suspend", "reactivate-account": "accounts.suspend" }[action];
-        if (!can(actor, permission, targets)) throw forbidden();
+        const bootstrapHead = action === "create-account" && actor.kind === "owner";
+        if ((!bootstrapHead && !mayManagePerson(actor, assignments, permission)) || !can(actor, permission, targets)) throw forbidden();
         const account = await platformStore.accountForVolunteer(person.id);
-        // The administrator may set the initial password; otherwise a unique
-        // temporary one is generated. Only the hash is ever stored.
+        // Custom passwords are accepted only on an explicit reset of an existing account.
         async function credentialFor() {
-          if (typeof input.password === "string" && input.password) {
+          if (action === "reset-account" && typeof input.password === "string" && input.password) {
             validateNewPassword(input.password);
             const mustChange = input.requireChange !== false;
             return { chosen: true, hash: await hashPassword(input.password), expiresAt: null, mustChange };
@@ -258,7 +268,12 @@ export function createAdminHandler(teamStore, platformStore) {
             if (await platformStore.usernameTaken(username)) throw new TeamError("اسم المستخدم هذا مستخدم بالفعل.", 409, "USERNAME_TAKEN");
           } else username = await uniqueUsername(person.fullName, (u) => platformStore.usernameTaken(u));
           const credential = await credentialFor();
-          await platformStore.createAccount({ volunteerId: person.id, username, email, passwordHash: credential.hash, mustChange: credential.mustChange, expiresAt: credential.expiresAt, createdBy: label });
+          const created = await platformStore.createAccount({ volunteerId: person.id, username, email, passwordHash: credential.hash, mustChange: credential.mustChange, expiresAt: credential.expiresAt, createdBy: label });
+          if (!created) {
+            const current = await platformStore.accountForVolunteer(person.id);
+            if (current) return json({ existing: true, username: current.username, status: current.accountStatus });
+            throw new TeamError("تزامن إنشاء حساب آخر. أعد المحاولة.", 409);
+          }
           await audit("account.create", person.id, { username, email });
           return json({ created: true, fullName: person.fullName, university: person.university, username, email, temporaryPassword: credential.password, chosenPassword: Boolean(credential.chosen), expiresAt: credential.expiresAt }, 201);
         }
@@ -276,7 +291,8 @@ export function createAdminHandler(teamStore, platformStore) {
       }
 
       if (action === "grant") {
-        const { person } = await loadTarget(platformStore, actor, input.volunteerId);
+        const { person, assignments, targets } = await loadTarget(platformStore, actor, input.volunteerId);
+        if (isProtectedLead(assignments) || (!isGlobalAdmin(actor) && !can(actor, "permissions.delegate", targets))) throw forbidden();
         if (person.id === actor.volunteerId) throw forbidden("لا يمكنك تعديل صلاحياتك بنفسك.");
         const grant = grantInput(input);
         if (!isGlobalAdmin(actor)) {
@@ -285,6 +301,8 @@ export function createAdminHandler(teamStore, platformStore) {
           const instance = { university: grant.university, sector: grant.sector, team: grant.team };
           const delegates = scopesFor(actor, "permissions.delegate").some((s) => covers(s, instance));
           const holds = scopesFor(actor, grant.permission).some((s) => covers(s, instance));
+          const overlaps = (d) => ["university", "sector", "team"].every((k) => !instance[k] || !d[k] || d[k] === instance[k]);
+          if (actor.permissions.deny.some((d) => [grant.permission, "permissions.delegate"].includes(d.permission) && overlaps(d))) throw forbidden();
           if (!delegates || !holds || NON_DELEGABLE.has(grant.permission) || grant.effect === "deny") throw forbidden("لا يمكنك تفويض صلاحية لا تملكها أو خارج نطاقك.");
         }
         const id = await platformStore.addGrant({ ...grant, volunteerId: person.id, grantedBy: label, grantedByVolunteer: actor.volunteerId });
@@ -295,7 +313,8 @@ export function createAdminHandler(teamStore, platformStore) {
       if (action === "revoke-grant") {
         const grant = await platformStore.grant(uuid(input.grantId, "الصلاحية"));
         if (!grant) throw new TeamError("الصلاحية غير موجودة أو أُلغيت.", 404);
-        const { person } = await loadTarget(platformStore, actor, grant.volunteerId);
+        const { person, assignments, targets } = await loadTarget(platformStore, actor, grant.volunteerId);
+        if (isProtectedLead(assignments) || (!isGlobalAdmin(actor) && !can(actor, "permissions.delegate", targets))) throw forbidden();
         if (person.id === actor.volunteerId) throw forbidden("لا يمكنك تعديل صلاحياتك بنفسك.");
         if (!isGlobalAdmin(actor) && grant.grantedByVolunteer !== actor.volunteerId) throw forbidden();
         await platformStore.revokeGrant(grant.id, label);

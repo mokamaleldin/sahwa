@@ -1,6 +1,6 @@
-import { BookOpenCheck, CalendarDays, ChevronDown, ClipboardList, LayoutGrid, Lightbulb, UsersRound } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import Link from "next/link";
-import PageHeading from "../../components/shared/PageIdentity";
+import type { ReactNode } from "react";
 import { GuideGovernanceBlocks } from "../../components/Team/GuideGovernance";
 import type { RoleText } from "../../lib/roleTexts";
 
@@ -11,12 +11,6 @@ export interface DashboardRole {
   contacts: { links: ContactLink[]; followers: ContactPerson[] };
   text: RoleText;
 }
-export interface DashboardProps {
-  person: { fullName: string; university: string; major: string; membershipLevel: string; status: string; teams: string[]; username: string };
-  roles: DashboardRole[];
-  eventsThisYear: number | null;
-}
-
 const RELATION_TITLES: Record<string, string> = { reports: "التبعية", coordinates: "التنسيق والتواصل", team: "ضمن الفريق" };
 
 function People({ people }: { people: ContactPerson[] }) {
@@ -33,12 +27,13 @@ function People({ people }: { people: ContactPerson[] }) {
 
 function RoleCard({ role }: { role: DashboardRole }) {
   const seen = new Set<string>();
-  const links = role.contacts.links.filter((l) => {
-    const key = l.people.map((p) => p.id).join(",") || l.targetTitle;
-    if (l.relation !== "reports" && seen.has(key)) return false;
-    seen.add(key);
-    return true;
+  const reports = role.contacts.links.filter((link) => link.relation === "reports" || link.relation === "team");
+  const managers = reports.flatMap((link) => link.people).filter((p) => !seen.has(p.id) && Boolean(seen.add(p.id)));
+  const links = role.contacts.links.filter((l) => !reports.includes(l)).flatMap((l) => {
+    const people = l.people.filter((p) => !seen.has(p.id) && Boolean(seen.add(p.id)));
+    return people.length || l.vacant ? [{ ...l, people }] : [];
   });
+  const followers = role.contacts.followers.filter((p) => !seen.has(p.id) && Boolean(seen.add(p.id)));
   return (
     <article className="platform-card platform-role-card" aria-labelledby={`role-${role.id}`}>
       <div className="platform-role-head">
@@ -47,11 +42,14 @@ function RoleCard({ role }: { role: DashboardRole }) {
           <div className="platform-chips">
             <span className="platform-chip">{role.scope}</span>
             {role.teamTitle && <span className="platform-chip platform-chip-muted">{role.teamTitle}</span>}
-            {role.deferred && <span className="platform-chip platform-chip-gold">مساحة العمل مؤجلة</span>}
+
           </div>
         </div>
-        {role.number && <span className="platform-role-number">{String(role.number).padStart(2, "0")}</span>}
+
       </div>
+      {managers.length > 0 && <p className="platform-muted">المسؤول المباشر · <strong>{managers.map((p) => p.name).join("، ")}</strong></p>}
+      {reports.filter((l) => l.vacant).map((l) => <p key={l.targetTitle} className="platform-muted">{l.targetTitle} · غير معيّن حاليًا</p>)}
+      <details className="platform-details"><summary>التعريف والمسؤوليات والصلاحيات والتواصل <ChevronDown size={16} /></summary><div>
       {role.text.definition && (
         <div className="platform-definition">
           <GuideGovernanceBlocks blocks={[role.text.definition]} />
@@ -59,7 +57,7 @@ function RoleCard({ role }: { role: DashboardRole }) {
       )}
       <div>
         <h4 className="text-sm text-[#350E15] font-semibold mb-1">أتواصل مع مين؟</h4>
-        {links.length || role.contacts.followers.length ? (
+        {links.length || followers.length ? (
           <div className="platform-contacts">
             {links.map((link, i) => (
               <div className="platform-contact" key={i}>
@@ -70,15 +68,15 @@ function RoleCard({ role }: { role: DashboardRole }) {
                 </span>
               </div>
             ))}
-            {role.contacts.followers.length > 0 && (
+            {followers.length > 0 && (
               <div className="platform-contact">
                 <span className="platform-contact-label">يتبعونك وفق نصوص أدوارهم</span>
-                <People people={role.contacts.followers} />
+                <People people={followers} />
               </div>
             )}
           </div>
         ) : (
-          <p className="platform-muted">لا يحدد النص الرسمي لهذا الدور جهة تبعية ثابتة يمكن ربطها بشخص. ارجع إلى النص الكامل أدناه.</p>
+          <p className="platform-muted">لا توجد جهات تواصل إضافية لهذا التكليف.</p>
         )}
         <p className="platform-muted mt-2">التنسيق والتواصل لا يعنيان التبعية، ولا يخوّلان التكليف.</p>
       </div>
@@ -101,54 +99,35 @@ function RoleCard({ role }: { role: DashboardRole }) {
           {role.text.pendingTitles.length > 0 && <p className="platform-notice">نص «{role.text.pendingTitles.join("، ")}» محفوظ في دليل صحوة، ويُربط بهذه البطاقة بعد اعتماد الربط.</p>}
         </div>
       </details>
+      </div></details>
     </article>
   );
 }
 
-export default function Dashboard({ person, roles, eventsThisYear }: DashboardProps) {
-  const shortcuts = [
-    { href: "/team/community", label: "أهل صحوة", icon: UsersRound },
-    { href: "/team/workspace", label: "مساحة العمل", icon: LayoutGrid },
-    { href: "/team/guide", label: "دليل صحوة", icon: BookOpenCheck },
-    { href: "/team/forms", label: "قدّم فكرة", icon: Lightbulb },
-  ];
-  return (
-    <>
-      <PageHeading title="لوحتي" description="من أنت في صحوة، وما أدوارك، ومن تتواصل معه." />
-      <section className="platform-card mb-6" aria-label="بطاقتي">
-        <div className="platform-person">
-          <div>
-            <h1 className="font-heading">{person.fullName}</h1>
-            <p className="platform-muted">{[person.university, person.major].filter(Boolean).join(" — ")}</p>
-          </div>
-          <div className="platform-chips">
-            {person.membershipLevel && <span className="platform-chip platform-chip-gold">{person.membershipLevel}</span>}
-            {person.teams.map((t) => <span key={t} className="platform-chip">{t}</span>)}
-            <span className="platform-chip platform-chip-muted" title="حالة العضوية تظهر لك وحدك">{person.status}</span>
-          </div>
-        </div>
-      </section>
-      <nav className="platform-shortcuts mb-6" aria-label="اختصارات">
-        {shortcuts.map(({ href, label, icon: Icon }) => (
-          <Link key={href} href={href} className="platform-shortcut"><Icon size={20} aria-hidden="true" />{label}</Link>
-        ))}
-      </nav>
-      <h2 className="platform-section-title font-heading">دوري في صحوة <small>{roles.length ? `${roles.length.toLocaleString("ar-EG")} ${roles.length === 1 ? "دور" : "أدوار"}` : ""}</small></h2>
-      {roles.length ? (
-        <div className="platform-grid">{roles.map((role) => <RoleCard key={role.id} role={role} />)}</div>
-      ) : (
-        <p className="platform-empty">لا يوجد دور تنظيمي مسند لك حاليًا. يمكنك المشاركة في الفرص وتقديم الأفكار، وسيظهر دورك هنا عند تكليفك.</p>
-      )}
-      {eventsThisYear !== null && (
-        <section className="platform-card" aria-label="ملخص">
-          <div className="platform-row">
-            <div className="flex items-center gap-3"><span className="team-icon team-icon-small"><CalendarDays size={22} aria-hidden="true" /></span><span className="platform-muted">فعاليات مسجلة نفذتها صحوة هذا العام</span></div>
-            <span className="platform-stat">{eventsThisYear.toLocaleString("ar-EG")}</span>
-          </div>
-          <p className="platform-muted mt-2">من سجل الفعاليات: الفعاليات ذات التاريخ من بداية العام حتى اليوم.</p>
-        </section>
-      )}
-      <p className="platform-muted mt-6"><ClipboardList size={14} className="inline" aria-hidden="true" /> النصوص التنظيمية تُعرض كما وردت في النظام الإداري لصحوة دون إعادة صياغة.</p>
-    </>
-  );
+interface Props {
+  name: string;
+  roles: DashboardRole[];
+  owner: boolean;
+  reviewActivity: boolean;
+  tools: { id: string; title: string; href: string }[];
+  children: ReactNode;
+}
+export default function Dashboard({ name, roles, owner, reviewActivity, tools, children }: Props) {
+  return <>
+    <section className="dashboard-welcome">
+      <h1 className="font-heading">أهلًا، {name.trim().split(/\s+/)[0]}</h1>
+      <p>شكرًا على تطوعك في صحوة، جزاك الله خيرًا على وقتك وجهدك.</p>
+    </section>
+    <section aria-labelledby="my-role">
+      <h2 id="my-role" className="platform-section-title font-heading">دوري في صحوة</h2>
+      {reviewActivity && <p className="platform-notice">صلاحيات العمل معلّقة بسبب حالة النشاط. يُرجى مراجعة تكليفك مع مسؤولك.</p>}
+      {roles.length ? <div className="platform-grid">{roles.map((role) => <RoleCard key={role.id} role={role} />)}</div>
+        : <p className="platform-muted">{owner ? "حساب إدارة المنصة" : "لم يُسند إليك دور تنظيمي بعد."}</p>}
+    </section>
+    {tools.length > 0 && <section id="workspace">
+      <h2 className="platform-section-title font-heading">مساحة العمل</h2>
+      <div className="platform-shortcuts">{tools.map((tool) => <Link key={tool.id} className="platform-shortcut" href={tool.href}>{tool.title}</Link>)}</div>
+    </section>}
+    {children}
+  </>;
 }

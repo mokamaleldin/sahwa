@@ -1,6 +1,6 @@
 export const UNIVERSITIES = ["استنيا", "بيلجي", "جليشيم"];
 export const GENDERS = ["شاب", "بنت"];
-export const PERSON_STATUSES = ["نشط", "غير نشط"];
+export const PERSON_STATUSES = ["نشط", "غير نشط", "متوقف مؤقتًا"];
 export const STUDY_YEARS = [
   "سنة تحضيرية",
   "السنة الأولى",

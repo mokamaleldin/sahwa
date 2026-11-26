@@ -1,4 +1,5 @@
 export interface VolunteerInput {
+  assignmentRoleId?: string;
   fullName: string;
   university: string;
   major: string;
@@ -13,6 +14,8 @@ export interface VolunteerInput {
   phone: string;
 }
 export interface VolunteerAssignment {
+  canChange?: boolean;
+  teamTitle?: string;
   id: string;
   roleId: string;
   title: string;
@@ -47,11 +50,13 @@ export interface RoleOptionMeta {
   deferred: boolean;
 }
 export interface VolunteerMeta {
+  canAssign?: boolean;
   canCreate: boolean;
   assignableRoles: RoleOptionMeta[];
   globalAdmin: boolean;
 }
 export interface Volunteer extends VolunteerInput {
+  groups?: string[];
   roleId?: string | null;
   id: string;
   revision: number;
@@ -95,12 +100,17 @@ export interface SahwaEvent extends SahwaEventInput {
   audience?: "private" | "internal";
   canEdit?: boolean;
   canDelete?: boolean;
+  canPublish?: boolean;
+  progress?: string | null;
 }
 export interface EventScope {
+  team?: string | null;
+  canPublish?: boolean;
   university: string | null;
   sector: string | null;
 }
 export interface EventExtra {
+  progress?: string | null;
   scope?: EventScope;
   audience: "private" | "internal";
 }

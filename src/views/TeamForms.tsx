@@ -1,9 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { ArrowUpLeft, ClipboardList, Inbox, Lightbulb, Loader2, Lock, MessageSquare } from 'lucide-react';
+import { ArrowUpLeft, Loader2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-import Link from 'next/link';
 import PageHeading from '../components/shared/PageIdentity';
 import TeamDialog from '../components/Team/TeamDialog';
 import { TEAM_FORMS } from '../data/teamForms';
@@ -15,7 +14,7 @@ interface FormDef { id: string; slug: string; title: string; description: string
 interface Submission { id: string; title: string; status: string; statusLabel: string; response: string; respondedBy: string; routeTitle: string; createdAt: string }
 interface Data { forms: FormDef[]; pending: { id: string; title: string; description: string; confidential: boolean }[]; submissions: Submission[] }
 
-const icons = [MessageSquare, Lightbulb];
+
 
 function FormDialog({ form, onClose, onSent }: { form: FormDef; onClose: () => void; onSent: (message: string) => void }) {
   const [busy, setBusy] = useState(false);
@@ -70,10 +69,6 @@ export default function TeamForms() {
   return <>
     <Helmet><title>النماذج والاقتراحات | صحوة</title></Helmet>
     <PageHeading title="النماذج والاقتراحات" description="صوتك وأفكارك يساهمان في تطوير صحوة. اختر النموذج المناسب." />
-    <div className="platform-row mb-4">
-      <span />
-      <Link className="team-button team-button-secondary" href="/team/forms/inbox"><Inbox size={16} aria-hidden="true" />الطلبات الواردة إليّ</Link>
-    </div>
     {notice && <p className="team-success" role="status">{notice}</p>}
     {error && <p className="team-error" role="alert">{error}</p>}
     {user?.kind === 'account' && (
@@ -86,12 +81,6 @@ export default function TeamForms() {
                   <h3 className="font-heading">{form.title}</h3><p>{form.description}</p>
                   <span className="team-card-action">تقديم <ArrowUpLeft size={16} aria-hidden="true" /></span>
                 </button>
-              ))}
-              {data.pending.map((form) => (
-                <div key={form.id} className="platform-card opacity-80">
-                  <h3 className="font-heading flex items-center gap-2">{form.confidential && <Lock size={16} aria-hidden="true" />}{form.title}</h3>
-                  <p>{form.confidential ? 'المسار السري المستقل غير مفعل بعد إلى أن تُعتمد جهة الاستقبال. استخدم المسار المعتمد الحالي أدناه.' : 'هذا النموذج غير مفعل حاليًا.'}</p>
-                </div>
               ))}
             </div>
             <h2 className="platform-section-title font-heading">طلباتي</h2>
@@ -110,17 +99,7 @@ export default function TeamForms() {
         )}
       </>
     )}
-    <h2 className="platform-section-title font-heading"><ClipboardList size={20} aria-hidden="true" />النماذج الحالية</h2>
-    <section className="team-portal-grid team-portal-grid-two" aria-label="نماذج صحوة المهمة">
-      {TEAM_FORMS.map((form, index) => {
-        const Icon = icons[index] || ClipboardList;
-        return <a className="team-portal-card" key={form.id} href={form.url} target="_blank" rel="noopener noreferrer">
-          <div className="team-portal-top"><span className="team-icon"><Icon size={29} strokeWidth={1.5} aria-hidden="true" /></span><span className="team-card-number">0{index + 1}</span></div>
-          <h2 className="font-heading">{form.title}</h2><p>{form.description}</p>
-          <span className="team-card-action">فتح النموذج<span className="sr-only"> في نافذة جديدة</span><ArrowUpLeft size={18} aria-hidden="true" /></span>
-        </a>;
-      })}
-    </section>
+    {TEAM_FORMS.filter((f) => f.id === "feedback").map((f) => <p className="mt-4" key={f.id}><a className="team-text-button" href={f.url} target="_blank" rel="noopener noreferrer">تقديم شكوى عبر المسار المعتمد <ArrowUpLeft size={15} /></a></p>)}
     {open && <FormDialog form={open} onClose={() => setOpen(null)} onSent={(m) => { setOpen(null); setNotice(m); void load(); }} />}
   </>;
 }

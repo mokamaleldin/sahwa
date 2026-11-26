@@ -43,7 +43,7 @@ export default function VolunteerCard({
         {[person.major, person.studyYear].filter(Boolean).join(" · ") || "—"}
       </p>
       <div className="team-person-role">
-        <strong>{volunteerRoleLabel(person) || "الدور غير محدد"}</strong>
+        <strong>{person.assignments?.map((a) => a.title).join("، ") || volunteerRoleLabel(person) || "الدور غير محدد"}</strong>
         {role?.status && <span>{role.status}</span>}
       </div>
       <span className="team-person-open">

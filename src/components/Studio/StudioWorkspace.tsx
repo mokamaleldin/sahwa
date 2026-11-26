@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import TeamNavigation from '../Team/TeamNavigation';
 
 export default function StudioWorkspace({ active }: { active: boolean }) {
   const frame = useRef<HTMLIFrameElement>(null);
@@ -54,9 +53,8 @@ export default function StudioWorkspace({ active }: { active: boolean }) {
     window.addEventListener('resize', schedule);
     return () => { cancelAnimationFrame(scheduled); window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); };
   }, [active, ready, modal]);
-  return <main className="app-shell pt-24 sm:pt-28 pb-10" hidden={!active} style={active ? undefined : { display: 'none' }} aria-label="استوديو صحوة">
+  return <main className="app-shell internal-page pb-10" hidden={!active} style={active ? undefined : { display: 'none' }} aria-label="استوديو صحوة">
     <div className="page-container">
-      <TeamNavigation />
       {!ready && <div className="team-loading" role="status">{failed ? <><p role="alert">تعذر فتح المحرر. أعد المحاولة.</p><button className="team-button" onClick={() => { setFailed(false); setAttempt(value => value + 1); }}>إعادة المحاولة</button></> : <><Loader2 className="animate-spin" size={23} aria-hidden="true" /><p>جارٍ فتح الاستوديو…</p></>}</div>}
       <div style={!ready ? { height: 0, overflow: 'hidden' } : active && modal ? { minHeight: height } : undefined}>
       <iframe key={attempt} ref={frame} title="محرر قوالب استوديو صحوة" src="/api/studio?embed=1" allow="clipboard-write"

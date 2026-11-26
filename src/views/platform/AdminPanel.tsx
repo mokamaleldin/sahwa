@@ -1,212 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
-import { Download, KeyRound, Loader2, RefreshCw, ShieldCheck, UserPlus } from "lucide-react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Loader2, ShieldCheck } from "lucide-react";
 import PageHeading from "../../components/shared/PageIdentity";
 import TeamDialog from "../../components/Team/TeamDialog";
 import { teamRequest } from "../../lib/team";
-import CreateAccountForm from "../../components/Team/CreateAccountForm";
 import { UNIVERSITIES } from "../../../shared/team-options.js";
 
 type Json = Record<string, unknown>;
 const post = <T,>(body: Json) => teamRequest<T>({ method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }, "/api/admin");
 const get = <T,>(view: string) => teamRequest<T>({}, `/api/admin?view=${view}`);
 const SECTOR: Record<string, string> = { youth: "الشباب", women: "الطالبات" };
-const ACCOUNT_STATUS: Record<string, string> = { none: "لا يوجد حساب", active: "فعال", suspended: "موقوف" };
-
-export interface Credential { fullName: string; university?: string; role?: string; username: string; status: string; temporaryPassword?: string; expiresAt?: string }
-
-// One-time credentials: shown here only, never stored in plain text.
-export function CredentialsReport({ items, onClear }: { items: Credential[]; onClear: () => void }) {
-  if (!items.length) return null;
-  function download() {
-    const rows = [["اسم الشخص", "الجامعة", "الدور", "الدخول", "حالة الحساب", "كلمة المرور", "تنتهي في"], ...items.map((c) => [c.fullName, c.university || "", c.role || "", c.username, c.status, c.temporaryPassword || "", c.expiresAt ? new Date(c.expiresAt).toLocaleString("ar-EG") : ""])];
-    const csv = "﻿" + rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `sahwa-activation-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-  return (
-    <section className="platform-card mb-6" aria-label="تقرير بيانات التفعيل" style={{ borderColor: "#D6AD63" }}>
-      <div className="platform-row mb-3">
-        <h2 className="font-heading flex items-center gap-2"><KeyRound size={19} aria-hidden="true" />بيانات الدخول (تظهر مرة واحدة)</h2>
-        <div className="flex gap-2">
-          <button className="team-button" onClick={download}><Download size={16} aria-hidden="true" />تنزيل التقرير</button>
-          <button className="team-button team-button-secondary" onClick={onClear}>إخفاء</button>
-        </div>
-      </div>
-      <p className="platform-notice">سلّم كل شخص بياناته عبر وسيلة خاصة. الكلمات المولدة تلقائيًا تنتهي بعد 7 أيام. لا تُحفظ هذه البيانات في المنصة ولا في GitHub، ولا يمكن عرضها مرة أخرى؛ عند فقدانها أعد ضبط الحساب.</p>
-      <div className="platform-table-wrap">
-        <table className="platform-table">
-          <thead><tr><th>اسم الشخص</th><th>الجامعة</th><th>الدور</th><th>الدخول (البريد / اسم المستخدم)</th><th>حالة الحساب</th><th>كلمة المرور</th></tr></thead>
-          <tbody>{items.map((c, i) => (
-            <tr key={i}><td>{c.fullName}</td><td>{c.university}</td><td>{c.role}</td><td className="platform-secret">{c.username}</td><td>{c.status}</td><td>{c.temporaryPassword ? <span className="platform-secret">{c.temporaryPassword}</span> : "حساب موجود — لم تتغير كلمة مروره"}</td></tr>
-          ))}</tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-interface Official {
-  volunteerId: string; fullName: string; university: string; role: { title: string; scope: string };
-  account: { status: string; username?: string; email?: string | null; pending?: boolean; lastResetAt?: string; lastLoginAt?: string };
-  canCreate: boolean; canReset: boolean; canSuspend: boolean;
-}
-
-function Officials({ onCredentials }: { onCredentials: (c: Credential[]) => void }) {
-  const [groups, setGroups] = useState<{ id: string; title: string; people: Official[] }[] | null>(null);
-  const [creatingFor, setCreatingFor] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [password, setPassword] = useState("");
-  const [requireChange, setRequireChange] = useState(true);
-  const load = useCallback(async () => {
-    setError("");
-    try { setGroups((await get<{ groups: { id: string; title: string; people: Official[] }[] }>("officials")).groups); } catch (r) { setError(r instanceof Error ? r.message : "تعذر التحميل."); }
-  }, []);
-  useEffect(() => { void load(); }, [load]);
-  const byId = useMemo(() => new Map((groups || []).flatMap((g) => g.people.map((p) => [p.volunteerId, p] as const))), [groups]);
-  async function run(action: string, ids: string[]) {
-    setBusy(true);
-    setError("");
-    const results: Credential[] = [];
-    for (const id of ids) {
-      const person = byId.get(id);
-      try {
-        const withPassword = (action === "create-account" || action === "reset-account") && password ? { password, requireChange } : {};
-        const r = await post<Json>({ action, volunteerId: id, ...withPassword });
-        if (r.temporaryPassword || r.existing || r.chosenPassword) results.push({ fullName: person?.fullName || "", university: person?.university, role: person?.role.title, username: String(r.username), status: r.existing ? ACCOUNT_STATUS[String(r.status)] || String(r.status) : "فعال", temporaryPassword: (r.temporaryPassword as string | undefined) || (r.chosenPassword ? password : undefined), expiresAt: r.expiresAt as string | undefined });
-      } catch (reason) {
-        setError(`${person?.fullName}: ${reason instanceof Error ? reason.message : "تعذر التنفيذ"}`);
-      }
-    }
-    if (results.length) onCredentials(results);
-    await load();
-    setBusy(false);
-  }
-  if (!groups) return error ? <p className="team-error">{error}</p> : <p className="team-loading"><Loader2 className="animate-spin" /> جارٍ التحميل…</p>;
-  return (
-    <>
-      <div className="platform-row mb-3">
-        <p className="platform-muted">الأشخاص المكلفون فعليًا بحسب الإسنادات المسجلة. لإضافة شخص غير موجود: «إدارة المتطوعين» ← إضافة متطوع، ثم أسند له الدور وأنشئ حسابه من ملفه.</p>
-        <div className="flex gap-2">
-          <button className="team-button team-button-secondary" onClick={() => void load()} disabled={busy}><RefreshCw size={15} />تحديث</button>
-        </div>
-      </div>
-      <div className="platform-card platform-form mb-4" style={{ maxWidth: 560 }}>
-        <label className="team-field"><span>كلمة المرور عند «إعادة ضبط» حساب <small>اختياري — فارغة = كلمة مؤقتة تلقائية</small></span>
-          <input type="text" dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} minLength={8} maxLength={128} autoComplete="off" placeholder="8 أحرف على الأقل" />
-        </label>
-        <label className="platform-check"><input type="checkbox" checked={requireChange} onChange={(e) => setRequireChange(e.target.checked)} />يُطلب من الشخص تغييرها عند أول دخول</label>
-      </div>
-      {error && <p className="team-error mb-3" role="alert">{error}</p>}
-      {groups.map((g) => (
-        <section key={g.id} className="mb-6">
-          <h3 className="platform-section-title font-heading">{g.title} <small>{g.people.length.toLocaleString("ar-EG")}</small></h3>
-          {g.people.length ? (
-            <div className="platform-table-wrap">
-              <table className="platform-table">
-                <thead><tr><th>الاسم</th><th>الجامعة</th><th>الدور</th><th>الدخول</th><th>حالة الحساب</th><th>إجراءات</th></tr></thead>
-                <tbody>{g.people.map((p) => [
-                  <tr key={p.volunteerId + p.role.title}>
-                    <td>{p.fullName}</td><td>{p.university}</td><td>{p.role.title}<br /><small className="platform-muted">{p.role.scope}</small></td>
-                    <td className="platform-ltr">{p.account.email || p.account.username || "—"}{p.account.email && p.account.username && <><br /><small className="platform-muted">{p.account.username}</small></>}</td>
-                    <td>{ACCOUNT_STATUS[p.account.status] || p.account.status}{p.account.pending && p.account.status === "active" ? " — بانتظار أول دخول" : ""}{p.account.lastResetAt && <><br /><small className="platform-muted">آخر ضبط: {new Date(p.account.lastResetAt).toLocaleDateString("ar-EG")}</small></>}</td>
-                    <td className="whitespace-nowrap">
-                      {p.account.status === "none" && p.canCreate && <button className="team-text-button" disabled={busy} onClick={() => setCreatingFor(creatingFor === p.volunteerId ? null : p.volunteerId)}><UserPlus size={14} />إنشاء حساب</button>}
-                      {p.account.status !== "none" && p.canReset && <button className="team-text-button" disabled={busy} onClick={() => confirm(`إعادة ضبط حساب ${p.fullName}؟ ستتوقف كلمة مروره الحالية.`) && void run("reset-account", [p.volunteerId])}>إعادة ضبط</button>}
-                      {p.account.status === "active" && p.canSuspend && <button className="team-text-button" disabled={busy} onClick={() => confirm(`إيقاف حساب ${p.fullName}؟`) && void run("suspend-account", [p.volunteerId])}>إيقاف</button>}
-                      {p.account.status === "suspended" && p.canSuspend && <button className="team-text-button" disabled={busy} onClick={() => void run("reactivate-account", [p.volunteerId])}>إعادة تفعيل</button>}
-                    </td>
-                  </tr>,
-                  creatingFor === p.volunteerId && (
-                    <tr key={`${p.volunteerId}-create`}><td colSpan={6}>
-                      <CreateAccountForm volunteerId={p.volunteerId} fullName={p.fullName} onCancel={() => setCreatingFor(null)}
-                        onCreated={(a) => { setCreatingFor(null); onCredentials([{ fullName: a.fullName, university: p.university, role: p.role.title, username: a.email ? `${a.email} / ${a.username}` : a.username, status: "فعال", temporaryPassword: a.password }]); void load(); }} />
-                    </td></tr>
-                  ),
-                ])}</tbody>
-              </table>
-            </div>
-          ) : <p className="platform-empty">لا يوجد شاغل مسجل لهذه المناصب.</p>}
-        </section>
-      ))}
-    </>
-  );
-}
-
-interface ReviewItem { id: string; fullName: string; university: string; gender: string; currentTitle: string; detail: string; suggestedRole: string | null; suggestedTitle: string; reason: string }
-interface RoleOption { id: string; title: string; titleWomen: string | null; scope: string; sector: string; deferred: boolean }
-
-function Review() {
-  const [items, setItems] = useState<ReviewItem[] | null>(null);
-  const [roles, setRoles] = useState<RoleOption[]>([]);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const load = useCallback(async () => {
-    try {
-      const [review, team] = await Promise.all([get<{ items: ReviewItem[] }>("review"), teamRequest<{ meta: { assignableRoles: RoleOption[] } }>()]);
-      setItems(review.items);
-      setRoles(team.meta.assignableRoles);
-    } catch (r) { setError(r instanceof Error ? r.message : "تعذر التحميل."); }
-  }, []);
-  useEffect(() => { void load(); }, [load]);
-  async function assign(item: ReviewItem, roleId: string) {
-    setError("");
-    try {
-      await post({ action: "assign-role", volunteerId: item.id, roleId, university: item.university });
-      setNotice(`تم إسناد الدور إلى ${item.fullName}.`);
-      await load();
-    } catch (r) { setError(`${item.fullName}: ${r instanceof Error ? r.message : "تعذر الإسناد"}`); }
-  }
-  if (!items) return error ? <p className="team-error">{error}</p> : <p className="team-loading"><Loader2 className="animate-spin" /> جارٍ التحميل…</p>;
-  return (
-    <>
-      <p className="platform-muted mb-3">سجلات تحمل مسمى دور قديمًا لم يُطابق تلقائيًا مع التصنيفات العشرين. لا يتغير دور أي شخص إلا بتأكيدك. المسمى القديم يبقى محفوظًا.</p>
-      {notice && <p className="team-success">{notice}</p>}
-      {error && <p className="team-error" role="alert">{error}</p>}
-      {items.length ? (
-        <div className="platform-table-wrap">
-          <table className="platform-table">
-            <thead><tr><th>الاسم</th><th>الجامعة</th><th>المسمى الحالي</th><th>سبب المراجعة</th><th>الإجراء</th></tr></thead>
-            <tbody>{items.map((item) => <ReviewRow key={item.id} item={item} roles={roles} onAssign={assign} />)}</tbody>
-          </table>
-        </div>
-      ) : <p className="platform-empty">لا توجد حالات تحتاج مراجعة.</p>}
-    </>
-  );
-}
-
-function ReviewRow({ item, roles, onAssign }: { item: ReviewItem; roles: RoleOption[]; onAssign: (i: ReviewItem, r: string) => Promise<void> }) {
-  const [roleId, setRoleId] = useState(item.suggestedRole || "");
-  const [busy, setBusy] = useState(false);
-  return (
-    <tr>
-      <td>{item.fullName}<br /><small className="platform-muted">{item.gender}</small></td><td>{item.university}</td>
-      <td>{item.currentTitle}{item.detail && ` — ${item.detail}`}</td>
-      <td className="platform-muted" style={{ maxWidth: 260 }}>{item.reason}{item.suggestedTitle && <><br />المقترح: {item.suggestedTitle}</>}</td>
-      <td>
-        <div className="flex gap-2 items-center">
-          <select aria-label="الدور" value={roleId} onChange={(e) => setRoleId(e.target.value)}>
-            <option value="">اختر دورًا</option>
-            {roles.map((r) => <option key={r.id} value={r.id}>{item.gender === "بنت" && r.titleWomen ? r.titleWomen : r.title}</option>)}
-          </select>
-          <button className="team-button" disabled={!roleId || busy} onClick={async () => { setBusy(true); await onAssign(item, roleId); setBusy(false); }}>إسناد</button>
-        </div>
-      </td>
-    </tr>
-  );
-}
-
 interface Grant { id: string; fullName: string; permission: string; effect: string; university: string | null; sector: string | null; team: string | null; reason: string; expiresAt: string | null; grantedBy: string; createdAt: string }
 interface PermissionDef { key: string; label: string; base?: boolean; delegable: boolean }
 
 function Grants() {
-  const [data, setData] = useState<{ grants: Grant[]; people: { id: string; fullName: string; university: string }[]; permissions: PermissionDef[]; teams: { id: string; title: string }[] } | null>(null);
+  const [data, setData] = useState<{ grants: Grant[]; people: { id: string; fullName: string; university: string; groups: string[] }[]; permissions: PermissionDef[]; teams: { id: string; title: string }[] } | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [query, setQuery] = useState("");
@@ -229,6 +38,7 @@ function Grants() {
   if (!data) return error ? <p className="team-error">{error}</p> : <p className="team-loading"><Loader2 className="animate-spin" /> جارٍ التحميل…</p>;
   const label = (key: string) => data.permissions.find((p) => p.key === key)?.label || key;
   const people = data.people.filter((p) => !query || p.fullName.includes(query));
+  const groups = [...new Set(people.flatMap((p) => p.groups))].sort();
   return (
     <>
       <p className="platform-muted mb-3">الصلاحيات الإضافية تُضاف فوق صلاحيات الأدوار. «منع» يتقدم على أي منح. الحقول الفارغة في النطاق تعني «أي». كل تغيير يُسجل في سجل التغييرات.</p>
@@ -236,7 +46,7 @@ function Grants() {
         <h3 className="font-heading flex items-center gap-2"><ShieldCheck size={18} />منح صلاحية أو منعها</h3>
         <div className="platform-grid" style={{ marginBottom: 0 }}>
           <label className="team-field"><span>بحث عن الشخص</span><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="اكتب جزءًا من الاسم" /></label>
-          <label className="team-field"><span>الشخص</span><select name="volunteerId" required defaultValue="">{<option value="" disabled>اختر</option>}{people.map((p) => <option key={p.id} value={p.id}>{p.fullName} — {p.university}</option>)}</select></label>
+          <label className="team-field"><span>الشخص</span><select name="volunteerId" required defaultValue="">{<option value="" disabled>اختر</option>}{groups.map((g) => <optgroup label={g} key={g}>{people.filter((p) => p.groups.includes(g)).map((p) => <option key={p.id} value={p.id}>{p.fullName}</option>)}</optgroup>)}</select></label>
           <label className="team-field"><span>الصلاحية</span><select name="permission" required>{data.permissions.map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}</select></label>
           <label className="team-field"><span>النوع</span><select name="effect"><option value="allow">منح</option><option value="deny">منع</option></select></label>
           <label className="team-field"><span>نطاق الجامعة <small>فارغ = أي جامعة</small></span><select name="university" defaultValue=""><option value="">أي</option>{UNIVERSITIES.map((u: string) => <option key={u}>{u}</option>)}<option value="*central*">المركزي فقط</option></select></label>
@@ -286,6 +96,7 @@ function Forms() {
   return (
     <>
       <p className="platform-muted mb-3">إدارة تعريفات النماذج دون تعديل الكود. الطلبات السابقة تحتفظ بتعريف النموذج وقت إرسالها. التوجيه يُحسب في الخادم من سجل مقدم الطلب.</p>
+      <button className="team-button mb-3" onClick={() => setEditing({ id: "", title: "", description: "", fields: [{id:"title",label:"العنوان",type:"short_text",required:true}], audience:{sectors:["youth","women"]}, active:false, confidential:false, sortOrder:100, revision:1, routing:{by:"fixed",role:"sahwa-lead"} })}>إنشاء نموذج</button>
       <div className="platform-list">
         {data.forms.map((f) => (
           <div key={f.id} className="platform-item">
@@ -296,12 +107,12 @@ function Forms() {
           </div>
         ))}
       </div>
-      {editing && <FormEditor form={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); void load(); }} />}
+      {editing && <FormEditor routeRoles={data.routeRoles} form={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); void load(); }} />}
     </>
   );
 }
 
-function FormEditor({ form, onClose, onSaved }: { form: FormDef; onClose: () => void; onSaved: () => void }) {
+function FormEditor({ form, routeRoles, onClose, onSaved }: { form: FormDef; routeRoles: {id: string; title: string}[]; onClose: () => void; onSaved: () => void }) {
   const [draft, setDraft] = useState(form);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -315,10 +126,13 @@ function FormEditor({ form, onClose, onSaved }: { form: FormDef; onClose: () => 
     } catch (r) { setError(r instanceof Error ? r.message : "تعذر الحفظ."); setBusy(false); }
   }
   return (
-    <TeamDialog title={`تعديل: ${form.title}`} onClose={onClose} busy={busy}>
+    <TeamDialog title={form.id ? `تعديل ${form.title}` : "إنشاء نموذج"} onClose={onClose} busy={busy}>
       <div className="team-form-body platform-form">
         <label className="team-field"><span>العنوان</span><input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} maxLength={120} /></label>
         <label className="team-field"><span>الوصف</span><textarea value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} maxLength={600} /></label>
+        {!form.confidential && draft.routing.by === "fixed" && <label className="team-field"><span>الجهة المستقبلة</span>
+          <select value={String(draft.routing.role)} onChange={(e) => setDraft({...draft,routing:{by:"fixed",role:e.target.value}})}>
+          {routeRoles.map((r) => <option key={r.id} value={r.id}>{r.title}</option>)}</select></label>}
         <fieldset className="team-field"><span>الحقول</span>
           {draft.fields.map((f, i) => (
             <div key={i} className="platform-item">
@@ -409,8 +223,6 @@ function Archived() {
 }
 
 const TABS = [
-  { id: "officials", label: "المسؤولون والحسابات", needs: "accounts" },
-  { id: "review", label: "مطابقة الأدوار", needs: "global" },
   { id: "grants", label: "الصلاحيات", needs: "grants" },
   { id: "forms", label: "النماذج", needs: "forms" },
   { id: "audit", label: "سجل التغييرات", needs: "audit" },
@@ -418,19 +230,15 @@ const TABS = [
   { id: "archived", label: "المؤرشفون", needs: "global" },
 ] as const;
 
-export default function AdminPanel({ abilities }: { abilities: Record<string, boolean> }) {
+export default function AdminPanel({ abilities, initial }: { abilities: Record<string, boolean>; initial?: string }) {
   const tabs = TABS.filter((t) => abilities[t.needs]);
-  const [tab, setTab] = useState<string>(tabs[0]?.id || "officials");
-  const [credentials, setCredentials] = useState<Credential[]>([]);
+  const [tab, setTab] = useState<string>(tabs.find((t) => t.id === initial)?.id || tabs[0]?.id || "");
   return (
     <>
-      <PageHeading title="لوحة التحكم الإدارية" description="إدارة الحسابات والأدوار والصلاحيات دون تعديل الكود." />
-      <CredentialsReport items={credentials} onClear={() => setCredentials([])} />
+      <PageHeading title={tabs.find((t) => t.id === tab)?.label || "الإعدادات"} />
       <div className="platform-tabs" role="tablist" aria-label="أقسام لوحة التحكم">
         {tabs.map((t) => <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}>{t.label}</button>)}
       </div>
-      {tab === "officials" && <Officials onCredentials={(c) => setCredentials((prev) => [...prev, ...c])} />}
-      {tab === "review" && <Review />}
       {tab === "grants" && <Grants />}
       {tab === "forms" && <Forms />}
       {tab === "audit" && <Audit />}

@@ -8,6 +8,7 @@ import { createTeamHandler } from "../server/team-api.js";
 import { createEventsHandler } from "../server/events-api.js";
 import { createAdminHandler } from "../server/admin-api.js";
 import { createAccountHandler, createPostsHandler } from "../server/account-api.js";
+import { createRelationsHandler } from "../server/relations-api.js";
 import { createFormsHandler } from "../server/forms-api.js";
 import { createPlatformStore } from "../server/platform/store.js";
 import { currentActor } from "../server/platform/session.js";
@@ -26,6 +27,7 @@ const handlers = () => ({
   account: createAccountHandler(store, platform),
   posts: createPostsHandler(store, platform),
   forms: createFormsHandler(store, platform),
+  relations: createRelationsHandler(store, platform),
 });
 const req = (path, method = "GET", input, cookie = "") =>
   new Request(`https://sahwa.world/api/${path}`, {
@@ -139,7 +141,7 @@ test("delegation only passes on permissions the delegator holds, within scope", 
   const helper = await member("مساعد", { account: false });
   assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "events.view", university: "استنيا", sector: "youth", reason: "تنسيق" }, lead.cookie))).status, 200);
   assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "events.view", university: "بيلجي", sector: "youth", reason: "x" }, lead.cookie))).status, 403);
-  assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "accounts.create", university: "استنيا", sector: "youth", reason: "x" }, lead.cookie))).status, 403, "not held");
+  assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "accounts.reset", university: "استنيا", sector: "youth", reason: "x" }, lead.cookie))).status, 403, "not held");
   assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "permissions.manage", reason: "x" }, lead.cookie))).status, 403);
 });
 
@@ -199,22 +201,23 @@ test("accounts are created with e-mail and username, and sign in with either", a
   const lead = await member("سارة أحمد", { gender: "بنت", account: false, roles: [{ roleId: "women-sector-lead" }] });
   const created = await admin(req("admin", "POST", { action: "create-account", volunteerId: lead.id, email: "Sara@Sahwa.com", username: "sara.lead", password: "Fixture-Pass-9x", requireChange: false }, owner));
   assert.equal(created.status, 201);
-  for (const identifier of ["sara@sahwa.com", "SARA.LEAD"]) assert.equal((await auth(req("auth", "POST", { identifier, password: "Fixture-Pass-9x" }))).status, 200);
+  const activation = (await created.json()).temporaryPassword;
+  for (const identifier of ["sara@sahwa.com", "SARA.LEAD"]) assert.equal((await auth(req("auth", "POST", { identifier, password: activation }))).status, 200);
   const other = await member("آخر", { account: false });
   assert.equal((await admin(req("admin", "POST", { action: "create-account", volunteerId: other.id, email: "sara@sahwa.com", password: "Fixture-Pass-9x" }, owner))).status, 409, "e-mail unique");
   assert.equal((await admin(req("admin", "POST", { action: "create-account", volunteerId: other.id, username: "sara.lead", password: "Fixture-Pass-9x" }, owner))).status, 409, "username unique");
 });
 
-test("the administrator can set the initial password and choose whether it must change", async () => {
+test("activation is always one-time, including for older clients that submit a password", async () => {
   const { admin, auth } = handlers();
   const head = await member("رئيس", { roles: [{ roleId: "sahwa-lead" }] });
   const lead = await member("خالد علي", { account: false, roles: [{ roleId: "media-lead" }] });
   const created = await (await admin(req("admin", "POST", { action: "create-account", volunteerId: lead.id, password: "Fixture-Pass-9x", requireChange: false }, head.cookie))).json();
-  assert.equal(created.chosenPassword, true);
-  assert.ok(!("temporaryPassword" in created) || created.temporaryPassword === undefined);
-  const login = await auth(req("auth", "POST", { identifier: created.username, password: "Fixture-Pass-9x" }));
+  assert.equal(created.chosenPassword, false);
+  assert.ok(created.temporaryPassword && created.temporaryPassword !== "Fixture-Pass-9x");
+  const login = await auth(req("auth", "POST", { identifier: created.username, password: created.temporaryPassword }));
   assert.equal(login.status, 200);
-  assert.equal((await login.json()).user.mustChangePassword, false);
+  assert.equal((await login.json()).user.mustChangePassword, true);
   assert.equal((await admin(req("admin", "POST", { action: "reset-account", volunteerId: lead.id, password: "short" }, head.cookie))).status, 400);
   const stored = (await db.query("SELECT password_hash FROM sahwa_accounts WHERE volunteer_id=$1", [lead.id])).rows[0].password_hash;
   assert.ok(!stored.includes("Fixture-Pass-9x"));
@@ -348,4 +351,104 @@ test("the migration maps clear legacy roles and leaves the rest for review", asy
   assert.equal((await fresh.db.query("SELECT count(*)::int AS c FROM sahwa_volunteers")).rows[0].c, 6, "nobody removed");
   assert.equal((await fresh.db.query("SELECT count(*)::int AS c FROM sahwa_volunteers WHERE role_id IS NOT NULL")).rows[0].c, 6, "legacy values kept");
   await fresh.db.close();
+});
+
+test("central teams recruit across campuses, replace or end an appointment without deleting the person, and issue access once", async () => {
+  const { admin, team } = handlers();
+  const lead = await member("قائد تجريبي", {roles:[{roleId:"central-activities-lead",sector:"youth"}]});
+  const newPerson = await member("طالب جامعة أخرى",{university:"بيلجي",account:false});
+  const report = await (await team(req("team","GET",undefined,lead.cookie))).json();
+  assert.ok(report.candidates.find((p) => p.id === newPerson.id).roleIds.includes("central-activities-member"));
+  const assign = (data) => admin(req("admin","POST",data,lead.cookie));
+  const attached = await assign({action:"assign-role",volunteerId:newPerson.id,roleId:"central-activities-member"});
+  assert.equal(attached.status,200);
+  const id = (await attached.json()).id;
+  const fresh = await (await team(req("team","GET",undefined,lead.cookie))).json();
+  assert.ok(fresh.volunteers.find((p) => p.id === newPerson.id).allowed.createAccount);
+  const actor = await currentActor(req("auth","GET",undefined,lead.cookie),{platformStore:platform});
+  const groups = directoryData(actor,await loadRealm(platform,false)).groups;
+  assert.deepEqual(groups[0].people.map((p) => p.id),[newPerson.id]);
+  const create = () => assign({action:"create-account",volunteerId:newPerson.id});
+  const issued = await Promise.all([create(),create()]);
+  assert.deepEqual(issued.map((r) => r.status).sort(),[200,201]);
+  const active = await assign({action:"replace-role",assignmentId:id,volunteerId:newPerson.id,roleId:"central-activities-member"});
+  assert.equal(active.status,200);
+  assert.equal((await assign({action:"end-role",assignmentId:(await active.json()).id})).status,200);
+  assert.equal((await platform.assignmentsOf(newPerson.id)).length,0);
+  assert.equal((await platform.accountForVolunteer(newPerson.id)).accountStatus,"active");
+  const created = await team(req("team","POST",{person:person({fullName:"عضو جديد باختبار",university:"جليشيم"}),assignment:{roleId:"central-activities-member"}},lead.cookie));
+  assert.equal(created.status,201);
+  assert.equal((await created.json()).person.assignments[0].roleId,"central-activities-member");
+});
+
+test("account changes require coverage of every appointment and cannot touch the head of Sahwa",async () => {
+  const {admin,team} = handlers();
+  const uni = await member("قائد محلي",{roles:[{roleId:"university-youth-lead",university:"استنيا",sector:"youth"}]});
+  for (const p of ["accounts.reset","accounts.suspend","permissions.delegate"]) await grant(uni.id,p,{university:"استنيا",sector:"youth"});
+  const person = await member("عضو بفريقين",{roles:["استنيا","بيلجي"].map((university) => ({roleId:"internal-activities-member",university,sector:"youth"}))});
+  const head = await member("رئيس تجريبي",{roles:[{roleId:"sahwa-lead"}]});
+  for (const target of [person,head]) for (const action of ["suspend-account","reset-account"]) {
+    assert.equal((await admin(req("admin","POST",{action,volunteerId:target.id},uni.cookie))).status,403);
+  }
+  assert.equal((await team(req("team","PUT",{id:head.id,revision:1,person:{...await platform.person(head.id),status:"غير نشط"}},uni.cookie))).status,403);
+  assert.equal((await admin(req("admin","POST",{action:"grant",volunteerId:head.id,permission:"events.view",reason:"اختبار"},uni.cookie))).status,403);
+});
+
+test("a live session loses work tools on pause, keeps its personal profile and can submit ideas",async () => {
+  const { admin,team,events,forms,account,posts } = handlers();
+  const lead = await member("مسؤول متوقف",{roles:[{roleId:"internal-activities-lead",university:"استنيا",sector:"youth"}]});
+  await grant(lead.id,"relations.create");
+  await db.query("UPDATE sahwa_volunteers SET status='متوقف مؤقتًا' WHERE id=$1",[lead.id]);
+  for(const [handler,path,method,input] of [
+    [team,"team","GET"],[events,"events","POST",{event:{title:"لقاء"}}],[forms,"forms?view=inbox","GET"],
+    [posts,"posts","POST",{kind:"news",title:"خبر"}],[admin,"admin","POST",{action:"settings",key:"directory.crossSector",value:"all"}],
+  ]) assert.equal((await handler(req(path,method,input,lead.cookie))).status,403,path);
+  assert.equal((await account(req("account","PUT",{profile:{handle:"fixture.person",bio:"نبذة"}},lead.cookie))).status,200);
+  const bank = (await platform.forms()).find((f) => f.slug==="general-suggestions");
+  assert.equal((await forms(req("forms","POST",{formId:bank.id,answers:{title:"عنوان",details:"اقتراح"}},lead.cookie))).status,201);
+  assert.equal((await platform.assignmentsOf(lead.id)).length,1);
+});
+
+test("an event is scoped to its selected assignment and edits to another person's event require management",async () => {
+  const {events} = handlers();
+  const scope = {roleId:"central-activities-lead",sector:"youth"};
+  const one = await member("منشئ",{roles:[scope,{roleId:"internal-activities-lead",university:"استنيا",sector:"youth"}]});
+  const two = await member("مسؤول زميل",{roles:[scope]});
+  const assigned = await member("عضو مكلف",{university:"بيلجي",roles:[{roleId:"central-activities-member",sector:"youth"}]});
+  const visible = await (await events(req("events","GET",undefined,one.cookie))).json();
+  const target = visible.scopes.find((s) => s.team === "central-activities");
+  const made = await events(req("events","POST",{scope:target,event:{title:"فعالية",responsibleId:assigned.id},audience:"internal"},one.cookie));
+  assert.equal(made.status,201);
+  const record = (await made.json()).event;
+  const edit = (cookie,extra={}) => events(req("events","PUT",{id:record.id,revision:record.revision,event:{...record,title:"تحديث"},...extra},cookie));
+  assert.equal((await edit(two.cookie)).status,403);
+  assert.equal((await edit(one.cookie,{scope:{university:"بيلجي",sector:"youth"}})).status,403);
+  assert.equal((await store.eventById(record.id)).title,"فعالية");
+  assert.equal((await edit(assigned.cookie)).status,200);
+  assert.equal((await platform.internalEvents(false)).length,1);
+});
+
+test("the relations ledger reuses accepted bank proposals and limits changes to the assigned contact",async () => {
+  const {forms,relations} = handlers();
+  const central = await member("مسؤول علاقات",{roles:[{roleId:"central-relations-lead"}]});
+  const campus = await member("علاقات الجامعة",{roles:[{roleId:"university-relations-lead",university:"استنيا"}]});
+  const peer = await member("عضو علاقات",{roles:[{roleId:"central-relations-member"}]});
+  const bank = (await platform.forms()).find((f) => f.slug==="relations-bank");
+  const proposal = await forms(req("forms","POST",{formId:bank.id,answers:{name:"جهة تجريبية",reason:"تعاون",scope:"مركزي"}},peer.cookie));
+  const {id} = await proposal.json();
+  assert.equal((await forms(req("forms","PUT",{action:"respond",id,revision:1,status:"accepted"},central.cookie))).status,200);
+  const rows = async (cookie) => (await (await relations(req("relations","GET",undefined,cookie))).json()).records;
+  const accepted = (await rows(peer.cookie))[0];
+  assert.equal(accepted.id,id);
+  assert.deepEqual(await rows(campus.cookie),[]);
+  assert.equal((await relations(req("relations","PUT",{id,revision:accepted.revision,name:"اسم آخر"},peer.cookie))).status,403);
+  const changed = await relations(req("relations","PUT",{id,revision:accepted.revision,name:"اسم السجل",ownerId:peer.id},central.cookie));
+  assert.equal(changed.status,200);
+  await grant(peer.id,"relations.edit",{university:"*central*",team:"central-relations"});
+  assert.equal((await relations(req("relations","PUT",{id,revision:accepted.revision+1,name:"متابعة"},peer.cookie))).status,200);
+  assert.equal((await platform.submission(id)).answers.name,"جهة تجريبية");
+  assert.equal((await relations(req("relations","POST",{name:"علاقة مباشرة"},central.cookie))).status,201);
+  const inbox = await (await forms(req("forms?view=inbox","GET",undefined,central.cookie))).json();
+  assert.equal(inbox.submissions.length,1);
+  assert.equal((await rows(central.cookie)).length,2);
 });

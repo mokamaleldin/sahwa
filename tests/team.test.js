@@ -40,7 +40,7 @@ test('Arabic directory search combines with university and current-status filter
 });
 
 test('operational statuses remain separate from academic graduation',()=>{
- assert.deepEqual(PERSON_STATUSES,['نشط','غير نشط']);
+ assert.deepEqual(PERSON_STATUSES,['نشط','غير نشط','متوقف مؤقتًا']);
  assert.deepEqual(UNIVERSITIES,['استنيا','بيلجي','جليشيم']);
  assert.ok(STUDY_YEARS.includes('متخرج'));
  assert.equal(validatePerson(person({status:'غير نشط',studyYear:'متخرج'})).status,'غير نشط');

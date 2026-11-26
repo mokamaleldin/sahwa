@@ -1,80 +1,92 @@
 import { recordVersion, validateEvent, TeamError } from "./team-data.js";
 import { json, readInput, errorResponse } from "./http.js";
 import { requireActor, forbidden } from "./platform/session.js";
-import { can, canAny, eventTarget, scopesFor, volunteerTargets } from "./platform/access.js";
+import { can, canAny, denied, eventTarget, operationScopes, scopeMatches, volunteerTargets } from "./platform/access.js";
+import { todayInIstanbul } from "../shared/team-options.js";
 import { CENTRAL, sectorForGender } from "../shared/platform-roles.js";
 
-function readScope(input, fallback) {
-  const raw = input && typeof input === "object" ? input : fallback;
-  const university = typeof raw?.university === "string" && raw.university && raw.university !== CENTRAL ? raw.university.slice(0, 120) : null;
-  const sector = raw?.sector === "youth" || raw?.sector === "women" ? raw.sector : null;
-  return { university, sector };
+function creationScope(actor, requested) {
+  const options = operationScopes(actor, "events.create");
+  const match = !requested ? options[0] : options.find((s) =>
+    (s.university || null) === (requested.university || null) && s.sector === (requested.sector || null)
+      && (requested.team === undefined || requested.team === s.team));
+  if (!match) throw forbidden("اختر نطاقًا من تكليفاتك المتاحة.");
+  return { ...match, university: match.university === CENTRAL ? null : match.university };
 }
 
-// Event records are scoped by university and sector. An event stays private
-// until its owner chooses an internal audience for «أهل صحوة».
+function editable(actor, event) {
+  const target = eventTarget(event);
+  if (denied(actor, "events.edit", target)) return false;
+  const mine = actor.volunteerId && [event.creatorId, event.responsibleId].includes(actor.volunteerId);
+  return can(actor, "events.manage", target)
+    || Boolean(mine && actor.status === "نشط"
+      && (can(actor, "events.edit", target) || can(actor, "events.create", target) || can(actor, "events.view", target)));
+}
+
+async function responsibleOptions(platform, actor, targets) {
+  const [people, assignments] = await Promise.all([platform.people(actor.isTest), platform.assignments(actor.isTest)]);
+  const byPerson = new Map();
+  for (const a of assignments) {
+    if (!byPerson.has(a.volunteerId)) byPerson.set(a.volunteerId, []);
+    byPerson.get(a.volunteerId).push(a);
+  }
+  return people.filter((p) => {
+    const scopes = volunteerTargets({ ...p, sector: sectorForGender(p.gender) }, byPerson.get(p.id));
+    return p.status === "نشط" && targets.some((t) => can(actor, "events.manage", t) || (t.team === "women-sector" && sectorForGender(p.gender) === "women") || scopeMatches(t, scopes) ||
+      (t.team === "university-team" && scopeMatches({ ...t, team: null }, scopes)));
+  }).map(({ id, fullName, university }) => ({ id, fullName, university }));
+}
+
+function progressValue(value) {
+  if (value == null || value === "") return null;
+  if (!["planned", "completed", "cancelled"].includes(value)) throw new TeamError("اختر حالة فعالية صحيحة.");
+  return value;
+}
+
 export function createEventsHandler(store, platformStore) {
-  const stores = { teamStore: store, platformStore };
   return async (request) => {
     try {
-      const actor = await requireActor(request, stores);
-      if (!canAny(actor, "events.view")) throw forbidden("سجل الفعاليات متاح للأدوار المعنية فقط.");
-      const isTest = actor.isTest;
+      const actor = await requireActor(request, { teamStore: store, platformStore });
+      const { isTest } = actor;
+      const options = operationScopes(actor, "events.create");
+      const present = (e) => ({ ...e, canEdit: editable(actor, e), canDelete: can(actor, "events.delete", eventTarget(e)), canPublish: can(actor, "events.publish", eventTarget(e)) });
       if (request.method === "GET") {
-        const [events, people] = await Promise.all([store.listEvents(isTest), store.listResponsibleVolunteers(isTest)]);
-        const createScopes = scopesFor(actor, "events.create");
-        const visibleEvents = events
-          .filter((e) => can(actor, "events.view", eventTarget(e)))
-          .map(({ isTest: _hidden, ...e }) => ({
-            ...e,
-            canEdit: can(actor, "events.edit", eventTarget(e)),
-            canDelete: can(actor, "events.delete", eventTarget(e)),
-          }));
-        const volunteers = people
-          .filter((p) => {
-            const sector = sectorForGender(p.gender);
-            return can(actor, "volunteers.view", volunteerTargets({ ...p, sector }))
-              || createScopes.some((s) => (s.university === null || s.university === CENTRAL || s.university === p.university) && (s.sector === null || s.sector === sector));
-          })
-          .map(({ gender: _g, ...p }) => p);
-        return json({
-          events: visibleEvents,
-          volunteers,
-          scopes: createScopes.map(({ university, sector }) => ({ university, sector })),
-          canCreate: createScopes.length > 0,
-        });
+        if (!canAny(actor, "events.view") && !options.length) throw forbidden();
+        const events = canAny(actor, "events.view") ? await store.listEvents(isTest, actor.permissions) : [];
+        const editTargets = events.filter((e) => editable(actor, e)).map(eventTarget);
+        const volunteers = options.length || editTargets.length ? await responsibleOptions(platformStore, actor, [...options, ...editTargets]) : [];
+        return json({ events: events.map(present), volunteers, scopes: options.map((s) => ({ ...s, canPublish: can(actor, "events.publish", eventTarget(s)) })), canCreate: options.length > 0 });
       }
-      if (!["POST", "PUT", "DELETE"].includes(request.method)) return json({ error: "طريقة طلب غير متاحة." }, 405);
+      if (!["POST", "PUT", "DELETE"].includes(request.method)) return json({ error: "طلب غير متاح." }, 405);
       const input = await readInput(request);
-      if (request.method === "POST") {
-        const event = validateEvent(input.event);
-        const scope = readScope(input.scope, scopesFor(actor, "events.create")[0]);
-        const target = eventTarget(scope);
-        if (!can(actor, "events.create", target)) throw forbidden("لا تملك صلاحية إضافة فعالية في هذا النطاق.");
-        const audience = input.audience === "internal" ? "internal" : "private";
-        const saved = await store.createEvent(event, { ...scope, audience, isTest });
-        return json({ event: { ...saved, canEdit: true, canDelete: can(actor, "events.delete", target) } }, 201);
-      }
-      recordVersion(input);
-      const existing = await store.eventById(input.id);
-      if (!existing || existing.isTest !== isTest) throw new TeamError("تم تعديل السجل من جهاز آخر، أو لم يعد موجودًا. حدّث القائمة وافتحه من جديد.", 409, "CONFLICT");
-      const target = eventTarget(existing);
+      const creating = request.method === "POST";
+      if (!creating) recordVersion(input);
+      const existing = creating ? null : await store.eventById(input.id);
+      if (!creating && (!existing || existing.isTest !== isTest)) throw new TeamError("تعذر العثور على السجل. حدّث القائمة.", 409, "CONFLICT");
+      const scope = creating ? creationScope(actor, input.scope) : eventTarget(existing);
+      const target = eventTarget(scope);
       if (request.method === "DELETE") {
         if (!can(actor, "events.delete", target)) throw forbidden();
         await store.deleteEvent(input.id, input.revision);
         return json({ deleted: true });
       }
-      if (!can(actor, "events.edit", target)) throw forbidden();
+      if (!creating && !editable(actor, existing)) throw forbidden();
+      if (!creating && input.scope && (eventTarget(input.scope).university !== target.university || (input.scope.sector || null) !== target.sector || (input.scope.team !== undefined && input.scope.team !== target.team)))
+        throw forbidden("نطاق الفعالية مرتبط بالتكليف الذي سُجّلت من خلاله.");
       const event = validateEvent(input.event);
-      let saved = await store.updateEvent(input.id, input.revision, event);
-      if (input.scope !== undefined || input.audience !== undefined) {
-        const scope = input.scope !== undefined ? readScope(input.scope) : { university: existing.university, sector: existing.sector };
-        if (!can(actor, "events.edit", eventTarget(scope))) throw forbidden("لا يمكنك نقل الفعالية إلى نطاق خارج صلاحياتك.");
-        const audience = input.audience === "internal" ? "internal" : input.audience === "private" ? "private" : existing.audience;
-        saved = await store.setEventScope(input.id, { ...scope, audience });
+      const audience = input.audience === undefined ? existing?.audience || "private" : input.audience;
+      if (!["private", "internal"].includes(audience)) throw new TeamError("اختر جمهورًا صحيحًا.");
+      if (audience !== (existing?.audience || "private") && !can(actor, "events.publish", target)) throw forbidden();
+      if (event.responsibleId && event.responsibleId !== existing?.responsibleId) {
+        const options = await responsibleOptions(platformStore, actor, [target]);
+        if (!options.some((p) => p.id === event.responsibleId)) throw new TeamError("اختر مسؤولًا من القائمة المتاحة لهذه الفعالية.");
       }
-      const { isTest: _hidden, ...publicEvent } = saved;
-      return json({ event: { ...publicEvent, canEdit: true, canDelete: can(actor, "events.delete", eventTarget(saved)) } });
+      const progress = input.progress === undefined ? existing?.progress || null : progressValue(input.progress);
+      if (progress === "completed" && (!event.eventDate || event.eventDate > todayInIstanbul())) throw new TeamError("اختر تاريخًا صحيحًا للفعالية المكتملة.");
+      const saved = creating
+        ? await store.createEvent(event, { ...scope, audience, progress, creatorId: actor.volunteerId, isTest })
+        : await store.updateEvent(input.id, input.revision, event, { audience, progress });
+      return json({ event: present(saved) }, creating ? 201 : 200);
     } catch (error) {
       return errorResponse(error);
     }

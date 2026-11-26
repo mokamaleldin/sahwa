@@ -207,7 +207,8 @@ JOIN (VALUES
   ('central-relations-member', 'central-relations-member', 'central', 'none'),
   ('review-member', 'review-member', 'central', 'none')
 ) AS m(legacy_id, role_id, scope, sector_rule) ON m.legacy_id = v.role_id
-WHERE v.is_test = false
+WHERE v.is_test = false AND v.archived_at IS NULL
+  AND NOT EXISTS (SELECT 1 FROM sahwa_role_assignments prior WHERE prior.volunteer_id=v.id)
   AND (m.sector_rule IN ('none', 'youth', 'women') OR v.gender IN ('شاب', 'بنت'))
   AND (m.scope = 'central' OR v.university <> '')
   -- A fixed-sector role must agree with the recorded gender, otherwise it goes to review.
