@@ -112,7 +112,8 @@ test("Next.js shell preserves the open Studio across team navigation and updates
       document.querySelectorAll('a[href="/team/accounts"]').length,
       0,
     );
-    assert.ok(document.querySelector('a[href="/team/files"]'));
+    assert.equal(document.querySelectorAll('a[href="/team/files"]').length, 0);
+    assert.ok(document.querySelector('a[href="/team/forms"]'));
     assert.ok(document.querySelector('a[href="/team/guide"]'));
     const header = document.querySelector("header");
     await React.act(async () => go("/studio"));

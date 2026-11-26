@@ -83,6 +83,12 @@ export function createAccountHandler(teamStore, platformStore) {
         return json({ changed: true }, 200, { "Set-Cookie": cookie });
       }
       if (actor.mustChangePassword) throw new TeamError("غيّر كلمة المرور المؤقتة أولًا.", 403, "PASSWORD_CHANGE_REQUIRED");
+      if (actor.kind === "owner") {
+        const displayName = clean(input.displayName, 120, "الاسم");
+        if (!displayName) throw new TeamError("أدخل اسمك.");
+        await platformStore.updateOwnerDisplayName(actor.accountId, displayName);
+        return json({ displayName });
+      }
       if (actor.kind !== "account") throw forbidden("حساب المسؤول العام لا يرتبط بملف متطوع.");
       if (!can(actor, "profile.edit", {})) throw forbidden();
       const profile = validateProfile(input.profile || {});

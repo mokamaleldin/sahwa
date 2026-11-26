@@ -9,9 +9,9 @@ const activityLead = [...campusLead, "inbox"];
 const relationsLead = ["volunteers", "create-relation", "relations", "inbox", "studio"];
 const expected = {
   "sahwa-lead": [...activityLead, "permissions", "forms", "relations", "create-relation"],
-  "women-sector-lead": campusLead, "university-youth-lead": campusLead, "university-women-lead": campusLead,
+  "women-sector-lead": activityLead, "university-youth-lead": activityLead, "university-women-lead": activityLead,
   "internal-activities-lead": activityLead, "central-activities-lead": activityLead,
-  "internal-activities-member": ["events"], "central-activities-member": ["events"],
+  "internal-activities-member": ["events", "create-event"], "central-activities-member": ["events", "create-event"],
   "university-relations-lead": relationsLead, "central-relations-lead": relationsLead,
   "university-relations-member": ["relations"], "central-relations-member": ["relations"],
   "media-lead": ["volunteers", "inbox", "studio"], "media-member": [],

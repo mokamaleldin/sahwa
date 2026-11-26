@@ -25,13 +25,14 @@ async function localClient() {
 // Platform migrations (004, 005) are additive and idempotent. When a
 // deployment reaches a database that does not have them yet, they run once
 // per server instance before the first query.
-const PLATFORM_MIGRATIONS = ["004-platform.sql", "005-owner-email-login.sql", "006-team-workspace.sql"];
+const PLATFORM_MIGRATIONS = ["004-platform.sql", "005-owner-email-login.sql", "006-platform-simplification.sql", "007-team-workspace.sql"];
 
 async function applied(client) {
   const [state] = await client.query(
     `SELECT to_regclass('public.sahwa_form_submissions') IS NOT NULL AS "m004",
        EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sahwa_accounts' AND column_name='is_owner') AS "m005",
-       to_regprocedure('sahwa_scope_allows(jsonb,text,text,text,text)') IS NOT NULL AS "m006"`,
+       EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='sahwa_events' AND column_name='created_by_volunteer') AS "m006",
+       to_regprocedure('sahwa_scope_allows(jsonb,text,text,text,text)') IS NOT NULL AS "m007"`,
   );
   return state || {};
 }

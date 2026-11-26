@@ -83,6 +83,9 @@ export function createPlatformStore(getClient = getSql) {
         ),
       ]);
     },
+    async updateOwnerDisplayName(accountId, displayName) {
+      await query(`UPDATE sahwa_accounts SET display_name=$2, updated_at=now() WHERE id=$1 AND is_owner=true`, [accountId, displayName]);
+    },
 
     // People and assignments
     async person(id) {
@@ -276,7 +279,7 @@ export function createPlatformStore(getClient = getSql) {
          WHERE s.is_test=$1 AND s.route_role = ANY($2) AND NOT s.direct_relation
          AND COALESCE((s.form_snapshot->>'confidential')::boolean,false)=false
          AND sahwa_scope_allows($3::jsonb,'forms.review',COALESCE(s.route_university,'*central*'),s.route_sector,
-           CASE s.route_role WHEN 'sahwa-lead' THEN 'leadership' WHEN 'media-lead' THEN 'media' ELSE replace(s.route_role,'-lead','') END)
+           CASE s.route_role WHEN 'sahwa-lead' THEN 'leadership' WHEN 'media-lead' THEN 'media' WHEN 'university-youth-lead' THEN 'university-team' WHEN 'university-women-lead' THEN 'university-team' ELSE replace(s.route_role,'-lead','') END)
          ORDER BY s.created_at DESC`,
         [isTest, roleIds, JSON.stringify(permissions)],
       );

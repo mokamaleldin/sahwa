@@ -47,7 +47,7 @@ export const PERMISSIONS = [
   { key: "events.publish", label: "تحديد جمهور الفعالية داخليًا" },
   { key: "posts.publish", label: "نشر في أهل صحوة" },
   { key: "studio.use", label: "استخدام استوديو صحوة" },
-  { key: "files.view", label: "الملفات الأساسية" },
+  { key: "files.view", label: "الملفات الأساسية", hidden: true },
   { key: "forms.review", label: "متابعة الطلبات الواردة" },
   { key: "forms.manage", label: "إدارة تعريفات النماذج" },
 ];
@@ -77,12 +77,12 @@ const relationsLead = (target) => [
 
 const ROLE_DEFAULTS = {
   "sahwa-lead": PERMISSIONS.filter((p) => !p.base && p.key !== "forms.review").map((p) => [p.key, scope()]).concat([["forms.review", scope(CENTRAL, null, "leadership")]]),
-  "women-sector-lead": [...rights([...managedTeam, ...activities], women), studio],
-  "university-youth-lead": [...rights([...managedTeam, ...activities], campus), studio],
+  "women-sector-lead": [...rights([...managedTeam, ...activities, "forms.review", "accounts.reset", "accounts.suspend"], women), studio],
+  "university-youth-lead": [...rights([...managedTeam, ...activities, "forms.review", "accounts.reset", "accounts.suspend"], campus), studio],
   "internal-activities-lead": [...rights([...managedTeam, ...activities, "forms.review"], internal), studio],
-  "internal-activities-member": [["events.view", internal]],
+  "internal-activities-member": rights(["events.view", "events.create"], internal),
   "central-activities-lead": [...rights([...managedTeam, ...activities, "forms.review"], central), studio],
-  "central-activities-member": [["events.view", central]],
+  "central-activities-member": rights(["events.view", "events.create"], central),
   "university-relations-lead": relationsLead(localRelations),
   "university-relations-member": [["relations.view", localRelations]],
   "central-relations-lead": relationsLead(centralRelations),

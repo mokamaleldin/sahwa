@@ -338,6 +338,15 @@ export default function TeamEvents({ openNew = false }: { openNew?: boolean } = 
                     </button>}
                   </div>
                   <h2 className="font-heading">{event.title}</h2>
+                  {(event.university || event.sector) && (
+                    <div className="platform-chips mt-2">
+                      <span className="platform-chip platform-chip-muted">
+                        {[event.university || "مركزي", event.sector === "youth" ? "الشباب" : event.sector === "women" ? "الطالبات" : ""]
+                          .filter(Boolean)
+                          .join(" — ")}
+                      </span>
+                    </div>
+                  )}
                   <div className="team-event-meta">
                     <p>
                       <UserRound size={16} />

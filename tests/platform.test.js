@@ -141,8 +141,26 @@ test("delegation only passes on permissions the delegator holds, within scope", 
   const helper = await member("مساعد", { account: false });
   assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "events.view", university: "استنيا", sector: "youth", reason: "تنسيق" }, lead.cookie))).status, 200);
   assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "events.view", university: "بيلجي", sector: "youth", reason: "x" }, lead.cookie))).status, 403);
-  assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "accounts.reset", university: "استنيا", sector: "youth", reason: "x" }, lead.cookie))).status, 403, "not held");
+  assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "volunteers.archive", university: "استنيا", sector: "youth", reason: "x" }, lead.cookie))).status, 403, "not held");
   assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "permissions.manage", reason: "x" }, lead.cookie))).status, 403);
+});
+
+test("university and sector leads manage accounts strictly in their scope and never touch sahwa-lead", async () => {
+  const { admin } = handlers();
+  const head = await member("مسؤول صحوة", { roles: [{ roleId: "sahwa-lead" }] });
+  const uniLead = await member("مسؤول استنيا", { roles: [{ roleId: "university-youth-lead", university: "استنيا", sector: "youth" }] });
+  const ownVol = await member("طالب استنيا", { university: "استنيا", gender: "شاب", account: false });
+  const otherVol = await member("طالب بيلجي", { university: "بيلجي", gender: "شاب", account: false });
+  const womanVol = await member("طالبة استنيا", { university: "استنيا", gender: "بنت", account: false });
+  const created = await admin(req("admin", "POST", { action: "create-account", volunteerId: ownVol.id, email: "own@sahwa.test", password: "Fixture-Pass-9x" }, uniLead.cookie));
+  assert.equal(created.status, 201, "university lead creates accounts in their own university & sector");
+  assert.equal((await admin(req("admin", "POST", { action: "create-account", volunteerId: otherVol.id, email: "other@sahwa.test", password: "Fixture-Pass-9x" }, uniLead.cookie))).status, 403, "cannot touch another university");
+  assert.equal((await admin(req("admin", "POST", { action: "create-account", volunteerId: womanVol.id, email: "woman@sahwa.test", password: "Fixture-Pass-9x" }, uniLead.cookie))).status, 403, "cannot touch another sector");
+  assert.equal((await admin(req("admin", "POST", { action: "reset-account", volunteerId: head.id }, uniLead.cookie))).status, 403, "cannot touch sahwa-lead");
+  const listed = await (await admin(new Request("https://sahwa.world/api/admin?view=accounts", { headers: { cookie: uniLead.cookie } }))).json();
+  assert.equal(listed.groups.length, 1);
+  assert.equal(listed.groups[0].title, "استنيا");
+  assert.ok(listed.groups[0].people.some((p) => p.fullName === "طالب استنيا"), "shows all volunteers in scope, not only officials");
 });
 
 test("account creation by the head of Sahwa reuses existing accounts and returns one-time credentials", async () => {
@@ -253,12 +271,17 @@ test("forms route by the submitter's real record; inactive and complaint forms a
   const volunteer = await member("متطوع", { roles: [{ roleId: "university-volunteer", university: "استنيا", sector: "youth" }] });
   const list = await (await forms(req("forms", "GET", undefined, volunteer.cookie))).json();
   const bank = list.forms.find((f) => f.slug === "activities-bank");
+  assert.equal(bank.title, "بنك الأفكار");
   assert.ok(!list.forms.some((f) => f.slug === "complaints"));
-  const submit = await forms(req("forms", "POST", { formId: bank.id, answers: { title: "رحلة", details: "تفاصيل", scope: "جامعي" }, routeUniversity: "بيلجي" }, volunteer.cookie));
+  const submit = await forms(req("forms", "POST", { formId: bank.id, answers: { title: "رحلة", details: "تفاصيل", scope: "جامعي", participate: "نعم، أرغب في المشاركة فقط" }, routeUniversity: "بيلجي" }, volunteer.cookie));
   assert.equal(submit.status, 201);
   const leadInbox = await (await forms(new Request("https://sahwa.world/api/forms?view=inbox", { headers: { cookie: activityLead.cookie } }))).json();
   assert.equal(leadInbox.submissions.length, 1);
   assert.equal(leadInbox.submissions[0].answers.title, "رحلة");
+  assert.ok(leadInbox.scopeLabel.includes("استنيا"));
+  const uniLead = await member("مسؤول استنيا", { roles: [{ roleId: "university-youth-lead", university: "استنيا", sector: "youth" }] });
+  const uniInbox = await (await forms(new Request("https://sahwa.world/api/forms?view=inbox", { headers: { cookie: uniLead.cookie } }))).json();
+  assert.equal(uniInbox.submissions.length, 1, "university lead receives their university's submissions");
   const otherInbox = await (await forms(new Request("https://sahwa.world/api/forms?view=inbox", { headers: { cookie: otherLead.cookie } }))).json();
   assert.equal(otherInbox.submissions.length, 0, "a client-supplied university does not reroute the request");
   const complaints = (await db.query("SELECT id FROM sahwa_form_definitions WHERE slug='complaints'")).rows[0].id;
@@ -327,6 +350,23 @@ test("events are scoped to the university and sector, and stay private unless sh
   assert.equal((await posts(req("posts", "POST", { kind: "news", title: "لاستنيا", audienceUniversity: "استنيا", audienceSector: "youth" }, lead.cookie))).status, 201);
   const seen = await (await posts(req("posts", "GET", undefined, other.cookie))).json();
   assert.equal(seen.posts.length, 0);
+});
+
+test("activities members can add events in their university and only edit events they created", async () => {
+  const { events } = handlers();
+  const lead = await member("مسؤول أنشطة", { roles: [{ roleId: "internal-activities-lead", university: "استنيا", sector: "youth" }] });
+  const memberA = await member("عضو أ", { roles: [{ roleId: "internal-activities-member", university: "استنيا", sector: "youth" }] });
+  const memberB = await member("عضو ب", { roles: [{ roleId: "internal-activities-member", university: "استنيا", sector: "youth" }] });
+  const leadEv = await (await events(req("events", "POST", { event: { title: "فعالية المسؤول", eventDate: "2099-02-01" }, scope: { university: "استنيا", sector: "youth" } }, lead.cookie))).json();
+  const aCreate = await events(req("events", "POST", { event: { title: "فعالية أ", eventDate: "2099-02-02" }, scope: { university: "استنيا", sector: "youth" } }, memberA.cookie));
+  assert.equal(aCreate.status, 201, "activities member can create an event in their university");
+  const aEv = (await aCreate.json()).event;
+  assert.equal((await events(req("events", "PUT", { id: aEv.id, revision: aEv.revision, event: { title: "فعالية أ المعدلة", eventDate: "2099-02-02" } }, memberA.cookie))).status, 200, "creator can edit their own event");
+  assert.equal((await events(req("events", "PUT", { id: leadEv.event.id, revision: leadEv.event.revision, event: { title: "تعديل غير مسموح" } }, memberA.cookie))).status, 403, "member cannot edit someone else's event");
+  const bList = await (await events(req("events", "GET", undefined, memberB.cookie))).json();
+  assert.equal(bList.events.length, 2, "member sees all university events");
+  assert.ok(bList.events.every((e) => e.canEdit === false), "member cannot edit events created by others");
+  assert.equal((await events(req("events", "POST", { event: { title: "فعالية بيلجي" }, scope: { university: "بيلجي", sector: "youth" } }, memberA.cookie))).status, 403, "cannot add in another university");
 });
 
 test("the migration maps clear legacy roles and leaves the rest for review", async () => {

@@ -40,12 +40,12 @@ export default function TeamNavigation() {
       <details className="internal-account" key={pathname}>
         <summary><UserRound size={17} /> حسابي <ChevronDown size={14} /></summary>
         <div onClick={(event) => { if ((event.target as HTMLElement).closest("a")) event.currentTarget.closest("details")?.removeAttribute("open"); }}>
-          <Link to="/team/account">إعدادات الحساب</Link>
+          <Link to="/team/account?tab=security">إعدادات الحساب</Link>
           {nav?.profile && !user?.mustChangePassword && <>
-            <Link to="/team/profile">الملف الشخصي</Link>
-            <Link to="/team/profile#public-page">صفحتي الشخصية</Link>
+            <Link to="/team/account?tab=profile">الملف الشخصي</Link>
+            <Link to="/team/account?tab=profile#public-page">صفحتي الشخصية</Link>
           </>}
-          {nav?.achievements && !user?.mustChangePassword && <Link to="/team/achievements">إنجازاتي</Link>}
+          {nav?.achievements && !user?.mustChangePassword && <Link to="/team/account?tab=achievements">إنجازاتي</Link>}
           <button onClick={logout} disabled={leaving}><LogOut size={15} />تسجيل الخروج</button>
           {error && <p role="alert">{error}</p>}
         </div>

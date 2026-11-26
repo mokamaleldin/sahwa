@@ -91,13 +91,6 @@ function reviewItems(realm, people) {
     });
 }
 
-const OFFICIAL_GROUPS = [
-  { id: "board", title: "مجلس الإدارة المركزي", roles: ["sahwa-lead", "women-sector-lead", "central-activities-lead", "media-lead", "central-relations-lead"] },
-  { id: "universities", title: "مسؤولو الجامعات", roles: ["university-youth-lead", "university-women-lead"] },
-  { id: "other-leads", title: "المسؤولون الآخرون", roles: ["internal-activities-lead", "university-relations-lead", "finance-lead", "archive-lead", "review-lead"] },
-  { id: "central-members", title: "أعضاء الفرق المركزية", roles: ["central-activities-member", "media-member", "central-relations-member", "review-member"] },
-];
-
 export function createAdminHandler(teamStore, platformStore) {
   const stores = { teamStore, platformStore };
   return async (request) => {
@@ -109,33 +102,38 @@ export function createAdminHandler(teamStore, platformStore) {
 
       if (request.method === "GET") {
         const view = new URL(request.url).searchParams.get("view") || "officials";
-        if (view === "officials") {
+        if (view === "officials" || view === "accounts") {
           if (!canAny(actor, "accounts.view")) throw forbidden();
           const realm = await loadRealm(platformStore, isTest);
-          const accounts = new Map((await platformStore.people(isTest)).map((p) => [p.id, p]));
-          const groups = OFFICIAL_GROUPS.map((group) => ({
-            id: group.id,
-            title: group.title,
-            people: realm.assignments
-              .filter((a) => group.roles.includes(a.roleId))
-              .filter((a) => can(actor, "accounts.view", volunteerTargets(realm.byId.get(a.volunteerId), realm.assignmentsByPerson.get(a.volunteerId))))
-              .map((a) => {
-                const p = accounts.get(a.volunteerId);
-                const own = realm.assignmentsByPerson.get(a.volunteerId) || [];
-                const targets = volunteerTargets(realm.byId.get(a.volunteerId), own);
-                const manage = a.volunteerId !== actor.volunteerId && mayManagePerson(actor, own);
-                return {
-                  volunteerId: a.volunteerId,
-                  fullName: p.fullName,
-                  university: p.university,
-                  role: describeAssignment(a),
-                  account: p.accountId ? { username: p.username, email: p.accountEmail, status: p.accountStatus, pending: p.mustChangePassword, lastResetAt: p.lastResetAt, lastLoginAt: p.lastLoginAt } : { status: "none" },
-                  canCreate: manage && can(actor, "accounts.create", targets),
-                  canReset: manage && can(actor, "accounts.reset", targets),
-                  canSuspend: manage && can(actor, "accounts.suspend", targets),
-                };
-              }),
-          }));
+          const byUniversity = new Map();
+          for (const p of realm.people) {
+            const own = realm.assignmentsByPerson.get(p.id) || [];
+            const targets = volunteerTargets(p, own);
+            if (!can(actor, "accounts.view", targets)) continue;
+            const mayChange = (permission) => p.id !== actor.volunteerId && mayManagePerson(actor, own, permission) && can(actor, permission, targets);
+            const described = own.map(describeAssignment);
+            const key = p.university || "مركزي / بدون جامعة";
+            if (!byUniversity.has(key)) byUniversity.set(key, []);
+            byUniversity.get(key).push({
+              volunteerId: p.id,
+              fullName: p.fullName,
+              university: p.university || "",
+              gender: p.gender || "",
+              role: described[0] || { title: p.responsibility || "متطوع", scope: p.university || "مركزي" },
+              roles: described.map((r) => ({ title: r.title, scope: r.scope })),
+              account: p.accountId ? { username: p.username, email: p.accountEmail, status: p.accountStatus, pending: p.mustChangePassword, lastResetAt: p.lastResetAt, lastLoginAt: p.lastLoginAt } : { status: "none" },
+              canCreate: mayChange("accounts.create"),
+              canReset: mayChange("accounts.reset"),
+              canSuspend: mayChange("accounts.suspend"),
+            });
+          }
+          const groups = [...byUniversity.entries()]
+            .sort(([a], [b]) => {
+              if (a === "مركزي / بدون جامعة") return 1;
+              if (b === "مركزي / بدون جامعة") return -1;
+              return a.localeCompare(b, "ar");
+            })
+            .map(([title, people]) => ({ id: title, title, people }));
           return json({ groups });
         }
         if (view === "review") {

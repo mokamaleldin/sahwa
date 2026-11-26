@@ -13,7 +13,17 @@ const EMPTY: Profile = { handle: "", displayName: "", bio: "", work: "", skills:
 const PUBLIC_OPTIONS = [["bio", "النبذة"], ["university", "الجامعة"], ["major", "التخصص"], ["work", "العمل أو المجال المهني"], ["skills", "المهارات والاهتمامات"], ["participation", "مشاركتي في صحوة"], ["links", "روابط التواصل"], ["roles", "الصفة التنظيمية"]] as const;
 const DIRECTORY_OPTIONS = [["major", "التخصص"], ["bio", "النبذة"], ["skills", "المهارات"], ["work", "العمل"]] as const;
 
-export default function ProfileEditor({ initial, person, roles }: { initial: Profile | null; person: { fullName: string; university: string; major: string }; roles: string[] }) {
+export default function ProfileEditor({
+  initial,
+  person,
+  roles,
+  embedded = false,
+}: {
+  initial: Profile | null;
+  person: { fullName: string; university: string; major: string };
+  roles: string[];
+  embedded?: boolean;
+}) {
   const [profile, setProfile] = useState<Profile>({ ...EMPTY, ...(initial || {}), handle: initial?.handle || "" });
   const [publishedHandle, setPublishedHandle] = useState(initial?.isPublic ? initial.handle : null);
   const [busy, setBusy] = useState(false);
@@ -41,7 +51,7 @@ export default function ProfileEditor({ initial, person, roles }: { initial: Pro
   const shown = (field: string) => profile.publicFields.includes(field);
   return (
     <>
-      <PageHeading title="ملفي الشخصي" description="ملف صغير يعرّف بك. أنت تتحكم فيما يظهر." />
+      {!embedded && <PageHeading title="ملفي الشخصي" description="ملف صغير يعرّف بك. أنت تتحكم فيما يظهر." />}
       <div className="platform-grid">
         <section className="platform-card platform-form" aria-label="تحرير الملف">
           <h2 className="font-heading">بياناتي</h2>

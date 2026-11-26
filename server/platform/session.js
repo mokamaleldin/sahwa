@@ -3,6 +3,7 @@ import { hashPassword, readSessionToken, sessionCookie, tokenHash } from "../aut
 import { TeamError } from "../team-data.js";
 import { sectorForGender } from "../../shared/platform-roles.js";
 import { buildPermissions, canAny, ADMIN_PERMISSIONS, isGlobalAdmin } from "./access.js";
+import { workspaceData } from "./service.js";
 
 const REMEMBER_SECONDS = 30 * 24 * 60 * 60;
 const SESSION_SECONDS = 24 * 60 * 60;
@@ -119,24 +120,29 @@ export function navFor(actor) {
     directory: has("directory.view"),
     guide: has("guide.view"),
     forms: has("forms.submit"),
+    inbox: has("inbox.open") && has("forms.review"),
+    manageForms: has("forms.manage"),
     profile: actor.kind === "account" && has("profile.edit"),
-    achievements: actor.kind === "account",
+    achievements: actor.kind === "account" || actor.kind === "owner",
     admin,
     globalAdmin: isGlobalAdmin(actor),
   };
 }
 
 export function sessionUser(actor) {
+  const nav = navFor(actor);
+  const ws = workspaceData(actor);
   return {
     id: actor.id,
     fullName: actor.fullName,
     email: actor.email || "",
     username: actor.username,
     kind: actor.kind,
-    accessRole: navFor(actor).admin ? "admin" : "volunteer",
+    accessRole: nav.admin ? "admin" : "volunteer",
     university: actor.university,
     isTest: actor.isTest,
     mustChangePassword: actor.mustChangePassword,
-    nav: navFor(actor),
+    nav,
+    workspaceTools: ws.map(({ id, title, href }) => ({ id, title, href })),
   };
 }
