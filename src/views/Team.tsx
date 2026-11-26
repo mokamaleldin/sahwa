@@ -5,7 +5,6 @@ import {
   BookOpenCheck,
   CalendarDays,
   ClipboardList,
-  FolderOpen,
   Palette,
   UsersRound,
 } from "lucide-react";
@@ -38,14 +37,6 @@ const cards = [
     icon: UsersRound,
     action: "فتح دليل المتطوعين",
     admin: true,
-  },
-  {
-    title: "الملفات",
-    description:
-      "مجلدات الإعلام، الاجتماعات، توثيق الفعاليات، وأدلة العمل في صحوة.",
-    to: "/team/files",
-    icon: FolderOpen,
-    action: "الوصول إلى الملفات",
   },
   {
     title: "النماذج المهمة",

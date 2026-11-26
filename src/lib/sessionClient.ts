@@ -1,6 +1,7 @@
 export type SessionStatus = 'loading' | 'authenticated' | 'anonymous' | 'error';
-export interface SessionNav { dashboard: boolean; community: boolean; workspace: boolean; directory: boolean; guide: boolean; forms: boolean; profile: boolean; achievements: boolean; admin: boolean; globalAdmin: boolean }
-export interface SessionUser { id: string; fullName: string; email: string; accessRole: 'admin' | 'volunteer'; university: string; username?: string | null; kind?: 'shared' | 'account'; isTest?: boolean; mustChangePassword?: boolean; nav?: SessionNav }
+export interface SessionNav { dashboard: boolean; community: boolean; workspace: boolean; directory: boolean; guide: boolean; forms: boolean; manageForms?: boolean; inbox?: boolean; profile: boolean; achievements: boolean; admin: boolean; globalAdmin: boolean }
+export interface WorkspaceToolSummary { id: string; title: string; href: string }
+export interface SessionUser { id: string; fullName: string; email: string; accessRole: 'admin' | 'volunteer'; university: string; username?: string | null; kind?: 'owner' | 'shared' | 'account'; isTest?: boolean; mustChangePassword?: boolean; nav?: SessionNav; workspaceTools?: WorkspaceToolSummary[] }
 export interface SessionSnapshot { status: SessionStatus; error: string; user: SessionUser | null }
 const INITIAL: SessionSnapshot = { status: 'loading', error: '', user: null };
 const RECHECK_MS = 30_000;

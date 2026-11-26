@@ -129,8 +129,8 @@ export default function TeamVolunteers() {
         <title>المتطوعون | صحوة</title>
       </Helmet>
       <PageHeading
-        title="أهل صحوة"
-        description="سجل المتطوعين وبياناتهم وأدوارهم في صحوة."
+        title="إدارة المتطوعين"
+        description="سجل المتطوعين وبياناتهم وأدوارهم وحساباتهم في صحوة."
       />
       <section aria-label="دليل المتطوعين">
         <div className="team-directory-toolbar">

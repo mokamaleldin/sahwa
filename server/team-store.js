@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { getSql } from "./db.js";
 import { TeamError } from "./team-data.js";
 const VOLUNTEER_FIELDS = `id, full_name AS "fullName", university, major, study_year AS "studyYear", COALESCE(birth_date::text,'') AS "birthDate", gender, team, responsibility, role_id AS "roleId", phone, status, revision, membership_level AS "membershipLevel"`;
-const EVENT_FIELDS = `e.id, e.title, COALESCE(e.event_date::text,'') AS "eventDate", e.responsible_id AS "responsibleId", COALESCE(v.full_name,e.responsible,'') AS responsible, e.attendance, e.notes, e.revision, e.university, e.sector, e.audience, e.is_test AS "isTest"`;
+const EVENT_FIELDS = `e.id, e.title, COALESCE(e.event_date::text,'') AS "eventDate", e.responsible_id AS "responsibleId", COALESCE(v.full_name,e.responsible,'') AS responsible, e.attendance, e.notes, e.revision, e.university, e.sector, e.audience, e.is_test AS "isTest", e.created_by_volunteer AS "createdByVolunteer"`;
 const conflict = () =>
   new TeamError(
     "تم تعديل السجل من جهاز آخر، أو لم يعد موجودًا. حدّث القائمة وافتحه من جديد.",
@@ -99,7 +99,7 @@ export function createTeamStore(getClient = getSql) {
     async createEvent(event, scope = {}) {
       const id = randomUUID();
       await query(
-        `INSERT INTO sahwa_events(id,title,event_date,responsible_id,responsible,attendance,notes,university,sector,audience,is_test) VALUES ($1,$2,$3,$4,'',$5,$6,$7,$8,$9,$10)`,
+        `INSERT INTO sahwa_events(id,title,event_date,responsible_id,responsible,attendance,notes,university,sector,audience,is_test,created_by_volunteer) VALUES ($1,$2,$3,$4,'',$5,$6,$7,$8,$9,$10,$11)`,
         [
           id,
           event.title,
@@ -111,6 +111,7 @@ export function createTeamStore(getClient = getSql) {
           scope.sector ?? null,
           scope.audience ?? "private",
           Boolean(scope.isTest),
+          scope.createdByVolunteer ?? null,
         ],
       );
       return eventById(id);

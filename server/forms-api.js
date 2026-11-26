@@ -6,7 +6,29 @@ import { roleById, roleTitle } from "../shared/platform-roles.js";
 
 const FIELD_TYPES = ["short_text", "long_text", "select", "url"];
 const STATUSES = { new: "جديد", reviewing: "قيد المراجعة", accepted: "مقبول", postponed: "مؤجل", rejected: "مرفوض", closed: "مغلق" };
-const ROUTE_ROLES = ["internal-activities-lead", "central-activities-lead", "university-relations-lead", "central-relations-lead", "media-lead"];
+const ROUTE_ROLES = [
+  "internal-activities-lead",
+  "central-activities-lead",
+  "university-relations-lead",
+  "central-relations-lead",
+  "media-lead",
+  "university-youth-lead",
+  "university-women-lead",
+  "women-sector-lead",
+  "sahwa-lead",
+];
+
+function inboxScopeLabel(actor) {
+  if (isGlobalAdmin(actor)) return "جميع الطلبات والأفكار الواردة في صحوة";
+  const parts = actor.assignments
+    .filter((a) => ROUTE_ROLES.includes(a.roleId) || a.roleId === "review-lead")
+    .map((a) => {
+      const title = roleTitle(a.roleId, a.sector);
+      return a.university ? `${title} — ${a.university}` : title;
+    });
+  if (parts.length) return `صندوق: ${[...new Set(parts)].join(" · ")}`;
+  return "الطلبات الموجهة إلى نطاق صلاحياتك";
+}
 
 // Where a submission goes is computed on the server from the submitter's
 // own record and assignments; the browser never chooses the receiving person.
@@ -112,13 +134,16 @@ export function createFormsHandler(teamStore, platformStore) {
           return json({
             submissions: submissions.map((s) => ({ ...s, routeTitle: roleTitle(s.routeRole, s.routeSector), statusLabel: STATUSES[s.status] })),
             statuses: STATUSES,
+            scopeLabel: inboxScopeLabel(actor),
           });
         }
-        if (actor.kind !== "account") return json({ forms: [], submissions: [], statuses: STATUSES });
+        const visibleForms = forms.filter((f) => f.active && !f.confidential && formVisibleTo(f, actor)).map(({ routing: _r, ...f }) => f);
+        const pendingForms = forms.filter((f) => f.confidential || !f.active).map((f) => ({ id: f.id, title: f.title, description: f.description, confidential: f.confidential }));
+        if (actor.kind !== "account") return json({ forms: visibleForms, pending: pendingForms, submissions: [], statuses: STATUSES });
         const mine = await platformStore.submissionsBy(actor.volunteerId);
         return json({
-          forms: forms.filter((f) => f.active && !f.confidential && formVisibleTo(f, actor)).map(({ routing: _r, ...f }) => f),
-          pending: forms.filter((f) => f.confidential || !f.active).map((f) => ({ id: f.id, title: f.title, description: f.description, confidential: f.confidential })),
+          forms: visibleForms,
+          pending: pendingForms,
           submissions: mine.map((s) => ({ id: s.id, title: s.form?.title, status: s.status, statusLabel: STATUSES[s.status], response: s.response, respondedBy: s.respondedBy, routeTitle: roleTitle(s.routeRole, s.routeSector), createdAt: s.createdAt })),
           statuses: STATUSES,
         });
@@ -163,7 +188,8 @@ export function createFormsHandler(teamStore, platformStore) {
           const existing = await platformStore.form(String(input.id));
           if (!existing) throw new TeamError("النموذج غير موجود.", 404);
           if (existing.confidential && definition.active) throw new TeamError("لا يُفعّل نموذج الشكاوى قبل اعتماد جهة استقبال مستقلة ومسار وصول آمن.", 409, "CONFIDENTIAL_LOCKED");
-          await platformStore.updateForm(existing.id, Number(input.revision), definition, label);
+          const routing = !existing.confidential && input.form?.routing ? validateRouting(input.form.routing, definition.fields) : null;
+          await platformStore.updateForm(existing.id, Number(input.revision), { ...definition, routing }, label);
         } else {
           const slug = `form-${Date.now().toString(36)}`;
           await platformStore.createForm({ ...definition, slug, routing: validateRouting(input.form?.routing, definition.fields) }, label);

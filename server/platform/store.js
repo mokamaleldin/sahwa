@@ -83,6 +83,9 @@ export function createPlatformStore(getClient = getSql) {
         ),
       ]);
     },
+    async updateOwnerDisplayName(accountId, displayName) {
+      await query(`UPDATE sahwa_accounts SET display_name=$2, updated_at=now() WHERE id=$1 AND is_owner=true`, [accountId, displayName]);
+    },
 
     // People and assignments
     async person(id) {
@@ -238,8 +241,8 @@ export function createPlatformStore(getClient = getSql) {
     },
     async updateForm(id, revision, f, updatedBy) {
       const rows = await query(
-        `UPDATE sahwa_form_definitions SET title=$3, description=$4, fields=$5, audience=$6, active=$7, sort_order=$8, revision=revision+1, updated_by=$9, updated_at=now() WHERE id=$1 AND revision=$2 RETURNING id`,
-        [id, revision, f.title, f.description, JSON.stringify(f.fields), JSON.stringify(f.audience), f.active, f.sortOrder, updatedBy],
+        `UPDATE sahwa_form_definitions SET title=$3, description=$4, fields=$5, audience=$6, active=$7, sort_order=$8, routing=COALESCE($10::jsonb, routing), revision=revision+1, updated_by=$9, updated_at=now() WHERE id=$1 AND revision=$2 RETURNING id`,
+        [id, revision, f.title, f.description, JSON.stringify(f.fields), JSON.stringify(f.audience), f.active, f.sortOrder, updatedBy, f.routing ? JSON.stringify(f.routing) : null],
       );
       if (!rows.length) throw conflict();
     },

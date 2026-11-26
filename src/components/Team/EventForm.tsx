@@ -218,7 +218,7 @@ export default function EventForm({
           >
             إلغاء
           </button>
-          {event && (
+          {event && event.canDelete !== false && (
             <button
               type="button"
               className="team-text-button team-delete-action"

@@ -1,6 +1,7 @@
-import TeamFiles from "../../../views/TeamFiles";
+import { redirect } from "next/navigation";
 import { requirePageActor } from "../../../../server/page-auth";
+
 export default async function Page() {
-  await requirePageActor({ permission: "files.view" });
-  return <TeamFiles />;
+  await requirePageActor();
+  redirect("/team/workspace");
 }
