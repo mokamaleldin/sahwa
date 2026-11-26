@@ -32,7 +32,7 @@ export default async function PublicProfile({ params }: Props) {
               <p className="platform-muted">من أهل صحوة</p>
             </div>
           </div>
-          {profile.bio && <p className="mb-3">{profile.bio}</p>}
+          {fields.has("bio") && profile.bio && <p className="mb-3">{profile.bio}</p>}
           <dl className="platform-list">
             {fields.has("university") && profile.university && <div><dt className="platform-muted">الجامعة</dt><dd>{profile.university}</dd></div>}
             {fields.has("major") && profile.major && <div><dt className="platform-muted">التخصص</dt><dd>{profile.major}</dd></div>}

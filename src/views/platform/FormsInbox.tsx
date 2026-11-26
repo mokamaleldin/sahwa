@@ -20,6 +20,7 @@ interface Submission {
   createdAt: string;
   submitterName: string | null;
   submitterUniversity: string | null;
+  routeSector: string | null;
   routeTitle: string;
   routeUniversity: string | null;
 }
@@ -157,6 +158,15 @@ export default function FormsInbox() {
     });
   }, [data, formFilter, uniFilter, onlyOpen]);
 
+  const groups = new Map<string, Submission[]>();
+  for (const item of filtered) {
+    const sector = item.routeSector === "women" ? "الطالبات" : item.routeSector === "youth" ? "الشباب" : "";
+    const label = [item.routeTitle, item.routeUniversity || "مركزي", sector].filter(Boolean).join(" · ");
+    const group = groups.get(label) || [];
+    group.push(item);
+    groups.set(label, group);
+  }
+
   return (
     <>
       <PageHeading
@@ -215,11 +225,12 @@ export default function FormsInbox() {
           )}
 
           {filtered.length ? (
-            <div className="platform-list">
-              {filtered.map((s) => (
+            [...groups].map(([label, items]) => <section key={label}>
+              <h2 className="platform-section-title font-heading">{label}</h2>
+              <div className="platform-list">{items.map((s) => (
                 <Item key={s.id + s.revision} s={s} statuses={data.statuses} onSaved={() => void load()} />
-              ))}
-            </div>
+              ))}</div>
+            </section>)
           ) : (
             <p className="platform-empty">لا توجد طلبات مطابقة للتصفية الحالية.</p>
           )}

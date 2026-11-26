@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Search, UserRound, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import PageHeading from "../../components/shared/PageIdentity";
 import { normalizeSearch } from "../../../shared/team-options.js";
 
@@ -9,16 +10,35 @@ interface Card {
   id: string; name: string; university: string; major: string; bio: string; skills: string; work: string;
   roles: { title: string; scope: string; team: string }[]; profileUrl: string;
 }
-interface Data { all: Card[]; university: Card[]; team: Card[] }
+interface Group { id: string; title: string; teamTitle: string; scope: string; people: Card[]; managerIds: string[]; canManage: boolean }
+interface Data { all: Card[]; university: Card[]; team: Card[]; groups: Group[] }
 
 const TABS = [
-  { id: "all", label: "أهل صحوة" },
-  { id: "university", label: "جامعتي" },
   { id: "team", label: "فريقي" },
+  { id: "university", label: "جامعتي" },
+  { id: "all", label: "أهل صحوة" },
 ] as const;
 
+function PersonCard({ c, manager = false }: { c: Card; manager?: boolean }) {
+  return (<article  className="platform-card">
+              <div className="flex items-start gap-3">
+                <span className="team-avatar"><UserRound size={22} aria-hidden="true" /></span>
+                <div className="min-w-0">
+                  <h3 className="font-heading">{c.name}</h3>{manager && <span className="platform-chip">المسؤول المباشر</span>}
+                  <p className="platform-muted">{[c.university, c.major, c.work].filter(Boolean).join(" — ")}</p>
+                </div>
+              </div>
+              {c.roles.length > 0 && (
+                <div className="platform-chips mt-3">{c.roles.map((r, i) => <span key={i} className="platform-chip" title={r.scope}>{r.title}</span>)}</div>
+              )}
+              {c.bio && <p className="mt-3">{c.bio}</p>}
+              {c.skills && <p className="platform-muted mt-1">المهارات: {c.skills}</p>}
+              {c.profileUrl && <a className="team-text-button mt-2" href={c.profileUrl} target="_blank" rel="noopener noreferrer">الصفحة الشخصية <ExternalLink size={14} aria-hidden="true" /></a>}
+            </article>);
+}
+
 export default function PeopleDirectory({ data, policy }: { data: Data; policy: string }) {
-  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("all");
+  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>(data.groups.length ? "team" : data.university.length ? "university" : "all");
   const [query, setQuery] = useState("");
   const list = useMemo(() => {
     const q = normalizeSearch(query);
@@ -46,24 +66,18 @@ export default function PeopleDirectory({ data, policy }: { data: Data; policy: 
         {policy === "leads" && " يظهر من القطاع الآخر شاغلو المناصب الرسمية اللازمة للتنسيق فقط."}
         {policy === "none" && " لا يظهر القطاع الآخر إلا لزملاء الفرق المشتركة."}
       </p>
-      {list.length ? (
+      {tab === "team" && data.groups.length ? data.groups.map((g) => {
+        const members = g.people.filter((p) => list.some((c) => c.id === p.id));
+        return <section key={g.id} className="mb-5"><div className="platform-row">
+          <h2 className="platform-section-title font-heading">{g.teamTitle} · {g.scope} <small>{g.title}</small></h2>
+          {g.canManage && <Link className="team-text-button" href={`/team/volunteers?assignment=${g.id}`}>إدارة الفريق</Link>}
+        </div>
+        {members.length ? <div className="team-people-grid">{members.map((c) => <PersonCard key={c.id} c={c} manager={g.managerIds.includes(c.id)} />)}</div> : <p className="platform-muted">لا يوجد أعضاء مطابقون.</p>}
+        </section>;
+      }) : list.length ? (
         <div className="team-people-grid">
           {list.map((c) => (
-            <article key={c.id} className="platform-card">
-              <div className="flex items-start gap-3">
-                <span className="team-avatar"><UserRound size={22} aria-hidden="true" /></span>
-                <div className="min-w-0">
-                  <h3 className="font-heading">{c.name}</h3>
-                  <p className="platform-muted">{[c.university, c.major, c.work].filter(Boolean).join(" — ")}</p>
-                </div>
-              </div>
-              {c.roles.length > 0 && (
-                <div className="platform-chips mt-3">{c.roles.map((r, i) => <span key={i} className="platform-chip" title={r.scope}>{r.title}</span>)}</div>
-              )}
-              {c.bio && <p className="mt-3">{c.bio}</p>}
-              {c.skills && <p className="platform-muted mt-1">المهارات: {c.skills}</p>}
-              {c.profileUrl && <a className="team-text-button mt-2" href={c.profileUrl} target="_blank" rel="noopener noreferrer">الصفحة الشخصية <ExternalLink size={14} aria-hidden="true" /></a>}
-            </article>
+            <PersonCard key={c.id} c={c} />
           ))}
         </div>
       ) : (

@@ -1,56 +1,26 @@
 import { requirePageActor } from "../../../server/page-auth";
 import { platformStore } from "../../../server/platform/store.js";
+import { canAny } from "../../../server/platform/access.js";
 import { loadRealm, dashboardData, communityData, workspaceData } from "../../../server/platform/service.js";
 import { todayInIstanbul } from "../../../shared/team-options.js";
+import { roleById } from "../../../shared/platform-roles.js";
 import { roleText } from "../../lib/roleTexts";
 import Dashboard from "../../views/platform/Dashboard";
-import type { CommunityData } from "../../views/platform/Community";
+import Community from "../../views/platform/Community";
 
 export const metadata = { title: "لوحتي" };
 
-export default async function Page() {
+export default async function Page({ searchParams }: { searchParams: Promise<{ publish?: string }> }) {
   const actor = await requirePageActor();
-  const [posts, internalEvents] = await Promise.all([
-    platformStore.posts(actor.isTest),
-    platformStore.internalEvents(actor.isTest),
+  const feed = canAny(actor, "community.view");
+  const [realm, posts, events, params] = await Promise.all([
+    actor.kind === "owner" ? null : loadRealm(platformStore, actor.isTest),
+    feed ? platformStore.posts(actor.isTest) : [], feed ? platformStore.internalEvents(actor.isTest) : [], searchParams,
   ]);
-  const community = communityData(actor, posts, internalEvents, todayInIstanbul()) as CommunityData;
-  const ws = workspaceData(actor);
-  const hasWorkspace = ws.tools.length > 0 || ws.later.length > 0;
-
-  if (actor.kind === "owner") {
-    return (
-      <Dashboard
-        isOwner
-        hasWorkspace={hasWorkspace}
-        person={{
-          fullName: actor.fullName,
-          university: "",
-          major: "",
-          membershipLevel: "مسؤول عام",
-          status: "نشط",
-          teams: [],
-          username: actor.username,
-        }}
-        roles={[]}
-        community={community}
-      />
-    );
-  }
-
-  const realm = await loadRealm(platformStore, actor.isTest);
-  const data = dashboardData(actor, realm);
-  const roles = data.roles.map((role: { roleId: string; sector: string | null }) => ({
-    ...role,
-    text: roleText(role.roleId, role.sector),
-  }));
-
-  return (
-    <Dashboard
-      hasWorkspace={hasWorkspace}
-      person={data.person}
-      roles={roles}
-      community={community}
-    />
-  );
+  const roles = realm ? dashboardData(actor, realm).roles.map((r: { roleId: string; sector: string | null }) => ({ ...r, text: roleText(r.roleId, r.sector) })) : [];
+  const community = communityData(actor, posts, events, todayInIstanbul());
+  return <Dashboard name={actor.fullName} roles={roles} owner={actor.kind === "owner"} tools={workspaceData(actor)}
+    reviewActivity={actor.kind === "account" && actor.status !== "نشط" && actor.assignments.some((a: {roleId: string}) => roleById(a.roleId)?.level === "lead")}>
+    {(feed || community.canPublish) && <Community key={params.publish || "read"} data={community} showFeed={feed} publish={params.publish === "1"} />}
+  </Dashboard>;
 }

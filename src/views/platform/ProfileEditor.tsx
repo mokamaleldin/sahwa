@@ -10,7 +10,7 @@ interface Profile {
   links: { label: string; url: string }[]; directoryFields: string[]; publicFields: string[]; isPublic: boolean;
 }
 const EMPTY: Profile = { handle: "", displayName: "", bio: "", work: "", skills: "", participation: "", links: [], directoryFields: ["major", "bio", "skills"], publicFields: [], isPublic: false };
-const PUBLIC_OPTIONS = [["university", "الجامعة"], ["major", "التخصص"], ["work", "العمل أو المجال المهني"], ["skills", "المهارات والاهتمامات"], ["participation", "مشاركتي في صحوة"], ["links", "روابط التواصل"], ["roles", "الصفة التنظيمية"]] as const;
+const PUBLIC_OPTIONS = [["bio", "النبذة"], ["university", "الجامعة"], ["major", "التخصص"], ["work", "العمل أو المجال المهني"], ["skills", "المهارات والاهتمامات"], ["participation", "مشاركتي في صحوة"], ["links", "روابط التواصل"], ["roles", "الصفة التنظيمية"]] as const;
 const DIRECTORY_OPTIONS = [["major", "التخصص"], ["bio", "النبذة"], ["skills", "المهارات"], ["work", "العمل"]] as const;
 
 export default function ProfileEditor({
@@ -25,6 +25,7 @@ export default function ProfileEditor({
   embedded?: boolean;
 }) {
   const [profile, setProfile] = useState<Profile>({ ...EMPTY, ...(initial || {}), handle: initial?.handle || "" });
+  const [publishedHandle, setPublishedHandle] = useState(initial?.isPublic ? initial.handle : null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -39,6 +40,7 @@ export default function ProfileEditor({
     try {
       const result = await teamRequest<{ profile: Profile }>({ method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ profile }) }, "/api/account");
       setProfile({ ...EMPTY, ...result.profile, handle: result.profile.handle || "" });
+      setPublishedHandle(result.profile.isPublic ? result.profile.handle : null);
       setNotice(result.profile.isPublic ? "تم الحفظ. صفحتك العامة منشورة." : "تم الحفظ. صفحتك العامة خاصة (غير منشورة).");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "تعذر الحفظ.");
@@ -77,11 +79,11 @@ export default function ProfileEditor({
             ))}
           </fieldset>
         </section>
-        <section className="platform-card platform-form" aria-label="الصفحة العامة">
+        <section className="platform-card platform-form" id="public-page" aria-label="الصفحة العامة">
           <h2 className="font-heading">الصفحة العامة</h2>
           <p className="platform-muted">خاصة افتراضيًا. لا تظهر فيها أرقام الهواتف أو البيانات الإدارية أبدًا، ولا تُفهرس في محركات البحث.</p>
           <label className="team-field"><span>اسم المستخدم للصفحة <small>حروف لاتينية وأرقام و . _ -</small></span><input dir="ltr" value={profile.handle || ""} onChange={(e) => set("handle", e.target.value.toLowerCase())} maxLength={30} placeholder="ahmed.mohamed" /></label>
-          {url && <p className="platform-muted">الرابط: <span className="platform-secret">{url}</span> <button type="button" className="team-text-button" onClick={() => void navigator.clipboard?.writeText(url)}><Copy size={14} />نسخ</button></p>}
+          {url && <p className="platform-muted">الرابط: <span className="platform-secret">{url}</span> {publishedHandle && publishedHandle === profile.handle && <a className="team-text-button" href={`/u/${profile.handle}`} target="_blank" rel="noreferrer">فتح الصفحة</a>} <button type="button" className="team-text-button" onClick={() => void navigator.clipboard?.writeText(url)}><Copy size={14} />نسخ</button></p>}
           <fieldset className="team-field">
             <span>الحقول الاختيارية الظاهرة للزوار</span>
             {PUBLIC_OPTIONS.map(([id, label]) => <label key={id} className="platform-check"><input type="checkbox" checked={shown(id)} onChange={() => toggle("publicFields", id)} />{label}</label>)}
@@ -91,7 +93,7 @@ export default function ProfileEditor({
           {preview && (
             <div className="platform-item" aria-label="معاينة">
               <h4 className="font-heading text-[#752026]">{profile.displayName || person.fullName}</h4>
-              {profile.bio && <p>{profile.bio}</p>}
+              {shown("bio") && profile.bio && <p>{profile.bio}</p>}
               {shown("university") && person.university && <p>الجامعة: {person.university}</p>}
               {shown("major") && person.major && <p>التخصص: {person.major}</p>}
               {shown("work") && profile.work && <p>العمل: {profile.work}</p>}

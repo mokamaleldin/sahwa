@@ -29,10 +29,10 @@ import {
 import { normalizeSearch } from "../../shared/team-options.js";
 
 const PAGE_SIZE = 12;
-export default function TeamEvents() {
+export default function TeamEvents({ openNew = false }: { openNew?: boolean } = {}) {
   const [volunteers, setVolunteers] = useState<ResponsibleVolunteer[]>([]);
   const [scopes, setScopes] = useState<EventScope[]>([]);
-  const [canCreate, setCanCreate] = useState(true);
+  const [canCreate, setCanCreate] = useState(false);
   const [events, setEvents] = useState<SahwaEvent[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
@@ -56,7 +56,8 @@ export default function TeamEvents() {
         setEvents(data.events);
         setVolunteers(data.volunteers);
         setScopes(data.scopes || []);
-        setCanCreate(data.canCreate !== false);
+        setCanCreate(data.canCreate === true);
+        if (openNew && data.canCreate) setEditing(null);
       }
     } catch (e) {
       if (!signal?.aborted)
@@ -64,7 +65,7 @@ export default function TeamEvents() {
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
-  }, []);
+  }, [openNew]);
   useEffect(() => {
     const c = new AbortController();
     void load(c.signal);

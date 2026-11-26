@@ -113,16 +113,15 @@ export function validateNewPassword(password, username = "") {
 export function navFor(actor) {
   const has = (permission) => canAny(actor, permission);
   const admin = ADMIN_PERMISSIONS.some(has);
-  const ws = workspaceData(actor);
   return {
     dashboard: true,
     community: has("community.view"),
-    workspace: ws.tools.length > 0 || ws.later.length > 0,
-    directory: has("directory.view") && actor.kind === "account",
+    workspace: true,
+    directory: has("directory.view"),
     guide: has("guide.view"),
-    forms: has("forms.submit") || has("forms.review") || has("forms.manage"),
-    manageForms: has("forms.manage") && isGlobalAdmin(actor),
-    inbox: ws.tools.some((t) => t.id === "inbox"),
+    forms: has("forms.submit"),
+    inbox: has("inbox.open") && has("forms.review"),
+    manageForms: has("forms.manage"),
     profile: actor.kind === "account" && has("profile.edit"),
     achievements: actor.kind === "account" || actor.kind === "owner",
     admin,
@@ -144,6 +143,6 @@ export function sessionUser(actor) {
     isTest: actor.isTest,
     mustChangePassword: actor.mustChangePassword,
     nav,
-    workspaceTools: ws.tools.map(({ id, title, href }) => ({ id, title, href })),
+    workspaceTools: ws.map(({ id, title, href }) => ({ id, title, href })),
   };
 }

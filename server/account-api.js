@@ -6,10 +6,10 @@ import { RESERVED } from "./platform/usernames.js";
 import { ageFromBirthDate } from "../shared/team-options.js";
 import { can, canAny } from "./platform/access.js";
 import { audienceVisible } from "./platform/service.js";
-import { CENTRAL } from "../shared/platform-roles.js";
+import { TEAM_TITLES } from "../shared/platform-roles.js";
 
 const HANDLE = /^[a-z0-9][a-z0-9._-]{2,29}$/;
-const OPTIONAL_PUBLIC = ["university", "major", "work", "skills", "participation", "links", "roles"];
+const OPTIONAL_PUBLIC = ["bio", "university", "major", "work", "skills", "participation", "links", "roles"];
 const DIRECTORY = ["major", "bio", "skills", "work"];
 
 function clean(value, max, label) {
@@ -112,7 +112,7 @@ export function createAccountHandler(teamStore, platformStore) {
   };
 }
 
-const KINDS = ["news", "current", "project", "achievement", "opportunity"];
+const KINDS = ["news", "current", "project", "achievement"];
 
 export function createPostsHandler(teamStore, platformStore) {
   const stores = { teamStore, platformStore };
@@ -121,7 +121,7 @@ export function createPostsHandler(teamStore, platformStore) {
       const actor = await requireActor(request, stores);
       if (request.method === "GET") {
         if (!canAny(actor, "community.view")) throw forbidden();
-        const posts = (await platformStore.posts(actor.isTest)).filter((p) => audienceVisible(actor, p.audienceUniversity, p.audienceSector));
+        const posts = (await platformStore.posts(actor.isTest)).filter((p) => audienceVisible(actor, p.audienceUniversity, p.audienceSector, p.audienceTeam) && KINDS.includes(p.kind));
         return json({ posts });
       }
       const input = await readInput(request, 8 * 1024);
@@ -130,10 +130,10 @@ export function createPostsHandler(teamStore, platformStore) {
         if (!kind) throw new TeamError("اختر نوع المنشور.");
         const audienceUniversity = typeof input.audienceUniversity === "string" && input.audienceUniversity.trim() ? input.audienceUniversity.trim().slice(0, 120) : null;
         const audienceSector = input.audienceSector === "youth" || input.audienceSector === "women" ? input.audienceSector : null;
-        // The audience must lie inside the publisher's own scope.
-        if (!can(actor, "posts.publish", { university: audienceUniversity || CENTRAL, sector: audienceSector, team: null })
-          && !can(actor, "posts.publish", { university: audienceUniversity, sector: audienceSector, team: null }))
-          throw new TeamError("حدد جمهورًا داخل نطاق صلاحيتك للنشر.", 403, "FORBIDDEN");
+        const audienceTeam = input.audienceTeam || null;
+        if (audienceTeam && !Object.hasOwn(TEAM_TITLES, audienceTeam)) throw new TeamError("اختر فريقًا صحيحًا.");
+        if (!can(actor, "posts.publish", { university: audienceUniversity, sector: audienceSector, team: audienceTeam }))
+          throw forbidden("حدد جمهورًا داخل نطاق صلاحيتك للنشر.");
         const title = clean(input.title, 160, "العنوان");
         if (!title) throw new TeamError("أدخل العنوان.");
         const link = input.link ? safeLink(String(input.link).trim()) : "";
@@ -146,7 +146,7 @@ export function createPostsHandler(teamStore, platformStore) {
           link: link || "",
           happensOn: input.happensOn ? date(String(input.happensOn), "تاريخ") : "",
           audienceUniversity,
-          audienceSector,
+          audienceSector, audienceTeam,
           authorLabel: actor.fullName,
           authorVolunteer: actor.volunteerId,
           isTest: actor.isTest,
@@ -157,8 +157,7 @@ export function createPostsHandler(teamStore, platformStore) {
       if (request.method === "DELETE") {
         const post = await platformStore.post(String(input.id || ""));
         if (!post || post.isTest !== actor.isTest) throw new TeamError("المنشور غير موجود.", 404);
-        if (!can(actor, "posts.publish", { university: post.audienceUniversity || CENTRAL, sector: post.audienceSector, team: null })
-          && !can(actor, "posts.publish", { university: post.audienceUniversity, sector: post.audienceSector, team: null }))
+        if (!can(actor, "posts.publish", { university: post.audienceUniversity, sector: post.audienceSector, team: post.audienceTeam }))
           throw forbidden();
         await platformStore.archivePost(post.id, Number(input.revision));
         return json({ archived: true });

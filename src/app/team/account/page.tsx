@@ -12,7 +12,7 @@ export default async function Page({ searchParams }: { searchParams?: Promise<{ 
 
   if (actor.kind !== "account") {
     return (
-      <AccountHub
+      <AccountHub key={initialTab || "default"}
         kind="owner"
         fullName={actor.fullName}
         email={actor.email || ""}
@@ -32,7 +32,7 @@ export default async function Page({ searchParams }: { searchParams?: Promise<{ 
     .map((r: { title: string; scope: string }) => `${r.title} — ${r.scope}`);
 
   return (
-    <AccountHub
+    <AccountHub key={initialTab || "default"}
       kind="account"
       fullName={actor.fullName}
       email={actor.email || ""}

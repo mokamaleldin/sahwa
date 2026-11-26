@@ -5,7 +5,7 @@ import { TeamError } from "../team-data.js";
 const PERSON = `v.id, v.full_name AS "fullName", v.university, v.major, v.study_year AS "studyYear", COALESCE(v.birth_date::text,'') AS "birthDate", v.gender, v.team, v.responsibility, v.role_id AS "roleId", v.phone, v.status, v.revision, v.membership_level AS "membershipLevel", v.is_test AS "isTest", v.archived_at AS "archivedAt"`;
 const ASSIGNMENT = `a.id, a.volunteer_id AS "volunteerId", a.role_id AS "roleId", a.university, a.sector, COALESCE(a.starts_on::text,'') AS "startsOn", COALESCE(a.ends_on::text,'') AS "endsOn", a.status, a.source, a.assigned_by AS "assignedBy", a.created_at AS "createdAt"`;
 const ACCOUNT = `c.id AS "accountId", c.username, c.email AS "accountEmail", c.status AS "accountStatus", c.must_change_password AS "mustChangePassword", c.temporary_expires_at AS "temporaryExpiresAt", c.last_login_at AS "lastLoginAt", c.last_reset_at AS "lastResetAt", c.created_at AS "accountCreatedAt"`;
-const POST = `p.id, p.kind, p.title, p.body, p.skills, p.link, COALESCE(p.happens_on::text,'') AS "happensOn", p.audience_university AS "audienceUniversity", p.audience_sector AS "audienceSector", p.author_label AS "authorLabel", p.revision, p.created_at AS "createdAt"`;
+const POST = `p.id, p.kind, p.title, p.body, p.skills, p.link, COALESCE(p.happens_on::text,'') AS "happensOn", p.audience_university AS "audienceUniversity", p.audience_sector AS "audienceSector", p.audience_team AS "audienceTeam", p.author_label AS "authorLabel", p.revision, p.created_at AS "createdAt"`;
 const FORM = `f.id, f.slug, f.title, f.description, f.fields, f.routing, f.audience, f.active, f.confidential, f.sort_order AS "sortOrder", f.revision`;
 const SUBMISSION = `s.id, s.form_id AS "formId", s.form_snapshot AS "form", s.answers, s.route_role AS "routeRole", s.route_university AS "routeUniversity", s.route_sector AS "routeSector", s.status, s.response, s.responded_by AS "respondedBy", s.revision, s.created_at AS "createdAt", s.submitter_volunteer AS "submitterId"`;
 const PROFILE = `pr.volunteer_id AS "volunteerId", pr.handle, pr.display_name AS "displayName", pr.bio, pr.work, pr.skills, pr.participation, pr.links, pr.directory_fields AS "directoryFields", pr.public_fields AS "publicFields", pr.is_public AS "isPublic"`;
@@ -61,7 +61,7 @@ export function createPlatformStore(getClient = getSql) {
     async createAccount({ volunteerId, username, email = null, passwordHash, mustChange, expiresAt, createdBy }) {
       return one(
         `INSERT INTO sahwa_accounts(id,volunteer_id,username,email,password_hash,must_change_password,temporary_expires_at,created_by,last_reset_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now()) RETURNING id`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,now()) ON CONFLICT DO NOTHING RETURNING id`,
         [randomUUID(), volunteerId, username, email, passwordHash, mustChange, expiresAt, createdBy],
       );
     },
@@ -101,14 +101,14 @@ export function createPlatformStore(getClient = getSql) {
     async assignments(isTest, { includeEnded = false } = {}) {
       return query(
         `SELECT ${ASSIGNMENT} FROM sahwa_role_assignments a JOIN sahwa_volunteers v ON v.id=a.volunteer_id
-         WHERE v.is_test=$1 AND v.archived_at IS NULL ${includeEnded ? "" : "AND a.status='active'"} ORDER BY a.created_at`,
+         WHERE v.is_test=$1 AND v.archived_at IS NULL ${includeEnded ? "" : "AND a.status='active' AND (a.starts_on IS NULL OR a.starts_on<=CURRENT_DATE) AND (a.ends_on IS NULL OR a.ends_on>=CURRENT_DATE)"} ORDER BY a.created_at`,
         [isTest],
       );
     },
-    async assignmentsOf(volunteerId, { includeEnded = false } = {}) {
+    async assignmentsOf(volunteerId, { includeEnded = false, includeScheduled = false } = {}) {
       return query(
-        `SELECT ${ASSIGNMENT} FROM sahwa_role_assignments a WHERE a.volunteer_id=$1 ${includeEnded ? "" : "AND a.status='active'"} ORDER BY a.status, a.created_at`,
-        [volunteerId],
+        `SELECT ${ASSIGNMENT} FROM sahwa_role_assignments a WHERE a.volunteer_id=$1 ${includeEnded ? "" : "AND a.status='active' AND ($2::boolean OR a.starts_on IS NULL OR a.starts_on<=CURRENT_DATE) AND (a.ends_on IS NULL OR a.ends_on>=CURRENT_DATE)"} ORDER BY a.status, a.created_at`,
+        includeEnded ? [volunteerId] : [volunteerId, includeScheduled],
       );
     },
     async assignment(id) {
@@ -121,6 +121,17 @@ export function createPlatformStore(getClient = getSql) {
       );
       if (!rows.length) throw new TeamError("هذا الدور مسند بالفعل لهذا الشخص في النطاق نفسه.", 409, "DUPLICATE_ASSIGNMENT");
       return rows[0].id;
+    },
+    async replaceAssignment(oldId, next) {
+      const id = randomUUID();
+      const rows = await query(`WITH ended AS (
+        UPDATE sahwa_role_assignments SET status='ended',ends_on=CURRENT_DATE,ended_at=now(),ended_by=$7
+        WHERE id=$1 AND volunteer_id=$3 AND status='active' RETURNING volunteer_id)
+        INSERT INTO sahwa_role_assignments(id,volunteer_id,role_id,university,sector,assigned_by,starts_on,source)
+        SELECT $2,volunteer_id,$4,$5,$6,$7,$8,$9 FROM ended RETURNING id`,
+        [oldId,id,next.volunteerId,next.roleId,next.university,next.sector,next.assignedBy,next.startsOn || null,next.source]);
+      if (!rows.length) throw conflict();
+      return id;
     },
     async endAssignment(id, endedBy) {
       const rows = await query(
@@ -202,15 +213,15 @@ export function createPlatformStore(getClient = getSql) {
 
     // Community
     async posts(isTest) {
-      return query(`SELECT ${POST} FROM sahwa_posts p WHERE p.is_test=$1 AND p.archived_at IS NULL ORDER BY p.created_at DESC LIMIT 200`, [isTest]);
+      return query(`SELECT ${POST} FROM sahwa_posts p WHERE p.is_test=$1 AND p.archived_at IS NULL ORDER BY p.created_at DESC`, [isTest]);
     },
     async post(id) {
       return one(`SELECT ${POST}, p.is_test AS "isTest" FROM sahwa_posts p WHERE p.id=$1 AND p.archived_at IS NULL`, [id]);
     },
     async createPost(p) {
       return (await one(
-        `INSERT INTO sahwa_posts(id,kind,title,body,skills,link,happens_on,audience_university,audience_sector,author_label,author_volunteer,is_test) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
-        [randomUUID(), p.kind, p.title, p.body, p.skills, p.link, p.happensOn || null, p.audienceUniversity, p.audienceSector, p.authorLabel, p.authorVolunteer, p.isTest],
+        `INSERT INTO sahwa_posts(id,kind,title,body,skills,link,happens_on,audience_university,audience_sector,author_label,author_volunteer,is_test,audience_team) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+        [randomUUID(), p.kind, p.title, p.body, p.skills, p.link, p.happensOn || null, p.audienceUniversity, p.audienceSector, p.authorLabel, p.authorVolunteer, p.isTest, p.audienceTeam || null],
       )).id;
     },
     async archivePost(id, revision) {
@@ -219,9 +230,9 @@ export function createPlatformStore(getClient = getSql) {
     },
     async internalEvents(isTest) {
       return query(
-        `SELECT e.id, e.title, COALESCE(e.event_date::text,'') AS "eventDate", e.university, e.sector, COALESCE(v.full_name,'') AS responsible
+        `SELECT e.id, e.title, COALESCE(e.event_date::text,'') AS "eventDate", e.university, e.sector, e.team, e.progress, COALESCE(v.full_name,'') AS responsible
          FROM sahwa_events e LEFT JOIN sahwa_volunteers v ON v.id=e.responsible_id
-         WHERE e.is_test=$1 AND e.audience='internal' ORDER BY e.event_date DESC NULLS LAST LIMIT 200`,
+         WHERE e.is_test=$1 AND e.audience='internal' ORDER BY e.event_date DESC NULLS LAST`,
         [isTest],
       );
     },
@@ -241,7 +252,7 @@ export function createPlatformStore(getClient = getSql) {
     },
     async updateForm(id, revision, f, updatedBy) {
       const rows = await query(
-        `UPDATE sahwa_form_definitions SET title=$3, description=$4, fields=$5, audience=$6, active=$7, sort_order=$8, routing=COALESCE($10::jsonb, routing), revision=revision+1, updated_by=$9, updated_at=now() WHERE id=$1 AND revision=$2 RETURNING id`,
+        `UPDATE sahwa_form_definitions SET title=$3, description=$4, fields=$5, audience=$6, active=$7, sort_order=$8, routing=COALESCE($10::jsonb,routing), revision=revision+1, updated_by=$9, updated_at=now() WHERE id=$1 AND revision=$2 RETURNING id`,
         [id, revision, f.title, f.description, JSON.stringify(f.fields), JSON.stringify(f.audience), f.active, f.sortOrder, updatedBy, f.routing ? JSON.stringify(f.routing) : null],
       );
       if (!rows.length) throw conflict();
@@ -259,14 +270,18 @@ export function createPlatformStore(getClient = getSql) {
       )).id;
     },
     async submissionsBy(volunteerId) {
-      return query(`SELECT ${SUBMISSION} FROM sahwa_form_submissions s WHERE s.submitter_volunteer=$1 ORDER BY s.created_at DESC`, [volunteerId]);
+      return query(`SELECT ${SUBMISSION} FROM sahwa_form_submissions s WHERE s.submitter_volunteer=$1 AND NOT s.direct_relation ORDER BY s.created_at DESC`, [volunteerId]);
     },
-    async submissionsForRoles(isTest, roleIds) {
+    async submissionsForRoles(isTest, roleIds, permissions) {
       if (!roleIds.length) return [];
       return query(
         `SELECT ${SUBMISSION}, v.full_name AS "submitterName", v.university AS "submitterUniversity" FROM sahwa_form_submissions s LEFT JOIN sahwa_volunteers v ON v.id=s.submitter_volunteer
-         WHERE s.is_test=$1 AND s.route_role = ANY($2) ORDER BY s.created_at DESC LIMIT 300`,
-        [isTest, roleIds],
+         WHERE s.is_test=$1 AND s.route_role = ANY($2) AND NOT s.direct_relation
+         AND COALESCE((s.form_snapshot->>'confidential')::boolean,false)=false
+         AND sahwa_scope_allows($3::jsonb,'forms.review',COALESCE(s.route_university,'*central*'),s.route_sector,
+           CASE s.route_role WHEN 'sahwa-lead' THEN 'leadership' WHEN 'media-lead' THEN 'media' WHEN 'university-youth-lead' THEN 'university-team' WHEN 'university-women-lead' THEN 'university-team' ELSE replace(s.route_role,'-lead','') END)
+         ORDER BY s.created_at DESC`,
+        [isTest, roleIds, JSON.stringify(permissions)],
       );
     },
     async submission(id) {
@@ -277,6 +292,46 @@ export function createPlatformStore(getClient = getSql) {
         "UPDATE sahwa_form_submissions SET status=$3, response=$4, responded_by=$5, revision=revision+1, updated_at=now() WHERE id=$1 AND revision=$2 RETURNING id",
         [id, revision, status, response, by],
       );
+      if (!rows.length) throw conflict();
+    },
+
+    // Approved proposals keep their original answers and submission history.
+    // Direct entries use the same bank and are excluded from the forms inbox.
+    async relations(isTest, permissions) {
+      return query(`SELECT s.id, COALESCE(s.relation_record,s.answers) AS details, s.route_university AS university,
+        s.relation_owner AS "ownerId", v.full_name AS "ownerName", s.revision
+        FROM sahwa_form_submissions s JOIN sahwa_form_definitions f ON f.id=s.form_id
+        LEFT JOIN sahwa_volunteers v ON v.id=s.relation_owner
+        WHERE s.is_test=$1 AND f.slug='relations-bank' AND NOT f.confidential
+          AND s.status='accepted' AND COALESCE((s.form_snapshot->>'confidential')::boolean,false)=false
+          AND sahwa_scope_allows($2::jsonb,'relations.view',COALESCE(s.route_university,'*central*'),NULL,
+            CASE WHEN s.route_university IS NULL THEN 'central-relations' ELSE 'university-relations' END)
+        ORDER BY s.updated_at DESC`, [isTest, JSON.stringify(permissions)]);
+    },
+    async registerRelation(actor, university, details, ownerId) {
+      const id = randomUUID();
+      const rows = await query(`INSERT INTO sahwa_form_submissions
+          (id,form_id,form_snapshot,answers,relation_record,route_role,route_university,relation_owner,direct_relation,status,is_test)
+        SELECT $1,f.id,jsonb_build_object('id',f.id,'title',f.title,'confidential',false),'{}'::jsonb,$2::jsonb,
+          CASE WHEN $3::text IS NULL THEN 'central-relations-lead' ELSE 'university-relations-lead' END,$3,$4,true,'accepted',$5
+        FROM sahwa_form_definitions f WHERE f.slug='relations-bank' AND NOT f.confidential
+          AND sahwa_scope_allows($6::jsonb,'relations.create',COALESCE($3,'*central*'),NULL,
+            CASE WHEN $3::text IS NULL THEN 'central-relations' ELSE 'university-relations' END)
+        RETURNING id`, [id, JSON.stringify(details), university, ownerId, actor.isTest, JSON.stringify(actor.permissions)]);
+      if (!rows.length) throw conflict();
+      return id;
+    },
+    async updateRelation(actor, id, revision, details, ownerId) {
+      const rows = await query(`UPDATE sahwa_form_submissions s SET relation_record=$3, relation_owner=$4,
+        revision=s.revision+1,updated_at=now() FROM sahwa_form_definitions f
+        WHERE s.form_id=f.id AND f.slug='relations-bank' AND NOT f.confidential AND s.status='accepted'
+          AND COALESCE((s.form_snapshot->>'confidential')::boolean,false)=false
+          AND s.id=$1 AND s.revision=$2 AND s.is_test=$5
+          AND sahwa_scope_allows($6::jsonb, 'relations.edit',COALESCE(s.route_university,'*central*'),NULL,
+            CASE WHEN s.route_university IS NULL THEN 'central-relations' ELSE 'university-relations' END)
+          AND (s.relation_owner=$7 OR sahwa_scope_allows($6::jsonb,'relations.manage',COALESCE(s.route_university,'*central*'),NULL,
+            CASE WHEN s.route_university IS NULL THEN 'central-relations' ELSE 'university-relations' END))
+        RETURNING s.id`, [id, revision, JSON.stringify(details), ownerId, actor.isTest, JSON.stringify(actor.permissions), actor.volunteerId]);
       if (!rows.length) throw conflict();
     },
 

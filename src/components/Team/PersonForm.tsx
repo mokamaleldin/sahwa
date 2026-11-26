@@ -7,7 +7,7 @@ import { roleForTitle, roleForVolunteer, volunteerRoleLabel } from "../../../sha
 import {
   EMPTY_PERSON,
   type Volunteer,
-  type VolunteerInput,
+  type VolunteerInput, type RoleOptionMeta,
 } from "../../lib/team";
 import {
   GENDERS,
@@ -50,11 +50,13 @@ function exactMajor(raw: string): ComboOption | undefined {
 export default function PersonForm({
   person,
   volunteers = [],
+  roles,
   onSave,
   onClose,
 }: {
   person: Volunteer | null;
   volunteers?: Volunteer[];
+  roles?: RoleOptionMeta[];
   onSave: (input: VolunteerInput) => Promise<void>;
   onClose: () => void;
 }) {
@@ -65,6 +67,7 @@ export default function PersonForm({
     birthDate: person?.birthDate || "",
     phone: person?.phone || "",
   });
+  const [assignmentRoleId, setAssignmentRoleId] = useState("");
   const previousRole = person && roleForVolunteer(person);
   const originalTitle = previousRole?.title || (person ? volunteerRoleLabel(person) : "");
   const originalDetail = previousRole?.detailLabel && person ? person.team : "";
@@ -95,7 +98,7 @@ export default function PersonForm({
       await onSave({
         ...input,
         major: normalizeMajor(input.major),
-        ...(!person || roleChanged ? { roleTitle, roleDetail } : {}),
+        ...(roles ? (!person ? { assignmentRoleId } : {}) : (!person || roleChanged ? { roleTitle, roleDetail } : {})),
       });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "تعذر حفظ البيانات.");
@@ -185,15 +188,19 @@ export default function PersonForm({
                   ))}
                 </select>
               </div>
-              <VolunteerRoleField
+              {roles ? (!person && <label className="team-field"><span>الدور التنظيمي *</span>
+                <select required value={assignmentRoleId} onChange={(e) => setAssignmentRoleId(e.target.value)}>
+                  <option value="">اختر الدور</option>{roles.filter((r) => (r.sector !== "women" || input.gender === "بنت") && (r.sector !== "youth" || input.gender === "شاب"))
+                    .map((r) => <option key={r.id} value={r.id}>{input.gender === "بنت" && r.titleWomen ? r.titleWomen : r.title}</option>)}
+                </select></label>) : <VolunteerRoleField
                 value={roleTitle}
                 onChange={(title) => {
                   setEditedRole(true);
                   if (roleForTitle(title)?.detailLabel !== selectedRole?.detailLabel) setRoleDetail("");
                   setRoleTitle(title);
                 }}
-              />
-              {selectedRole?.detailLabel && (
+              />}
+              {!roles && selectedRole?.detailLabel && (
                 detailSuggestions.length > 0 ? (
                   <TeamComboField
                     label={selectedRole.detailLabel}

@@ -23,7 +23,9 @@ import PersonDetails from "../components/Team/PersonDetails";
 import VolunteerCard from "../components/Team/VolunteerCard";
 import { teamRequest, type Volunteer, type VolunteerInput, type VolunteerMeta } from "../lib/team";
 const PAGE_SIZE = 12;
-export default function TeamVolunteers() {
+interface Candidate { id: string; name: string; university: string; roleIds: string[]; groups: string[] }
+
+export default function TeamVolunteers({ assignment = "" }: { assignment?: string } = {}) {
   const [people, setPeople] = useState<Volunteer[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
@@ -36,6 +38,12 @@ export default function TeamVolunteers() {
       studyYear: "",
     }),
     [page, setPage] = useState(1);
+  const [group, setGroup] = useState("");
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [recruiting, setRecruiting] = useState(false);
+  const [candidateId, setCandidateId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const candidate = candidates.find((p) => p.id === candidateId);
   const [meta, setMeta] = useState<VolunteerMeta | undefined>(undefined);
   const [selected, setSelected] = useState<Volunteer | null>(null),
     [editing, setEditing] = useState<Volunteer | null | undefined>(undefined);
@@ -43,10 +51,11 @@ export default function TeamVolunteers() {
     setLoading(true);
     setError("");
     try {
-      const result = await teamRequest<{ volunteers: Volunteer[]; meta?: VolunteerMeta }>({ signal });
+      const result = await teamRequest<{ volunteers: Volunteer[]; meta?: VolunteerMeta; candidates?: Candidate[] }>({ signal }, assignment ? `/api/team?assignment=${encodeURIComponent(assignment)}` : "/api/team");
       if (!signal?.aborted) {
         setPeople(result.volunteers);
         setMeta(result.meta);
+        setCandidates(result.candidates || []);
         setSelected((current) => (current ? result.volunteers.find((v) => v.id === current.id) || null : null));
       }
     } catch (reason) {
@@ -57,15 +66,15 @@ export default function TeamVolunteers() {
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
-  }, []);
+  }, [assignment]);
   useEffect(() => {
     const controller = new AbortController();
     void load(controller.signal);
     return () => controller.abort();
   }, [load]);
   const results = useMemo(
-    () => filterVolunteers(people, filters),
-    [people, filters],
+    () => filterVolunteers(people.filter((p) => !group || p.groups?.includes(group)), filters),
+    [people, filters, group],
   );
   const statuses = useMemo(
     () => [
@@ -105,7 +114,7 @@ export default function TeamVolunteers() {
       method: editing ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        person,
+        person, ...(person.assignmentRoleId ? { assignment: { roleId: person.assignmentRoleId } } : {}),
         ...(editing ? { id: editing.id, revision: editing.revision } : {}),
       }),
     });
@@ -117,6 +126,7 @@ export default function TeamVolunteers() {
         : [...previous, { ...result.person, assignments: result.person.assignments ?? [] }],
     );
     setEditing(undefined);
+    if (meta) await load();
     setNotice(editing ? "تم حفظ البيانات." : "تمت إضافة المتطوع إلى سجل صحوة.");
     if (!editing) {
       setFilters({ query: "", university: "", status: "", gender: "", studyYear: "" });
@@ -129,8 +139,8 @@ export default function TeamVolunteers() {
         <title>المتطوعون | صحوة</title>
       </Helmet>
       <PageHeading
-        title="إدارة المتطوعين"
-        description="سجل المتطوعين وبياناتهم وأدوارهم وحساباتهم في صحوة."
+        title={meta?.globalAdmin ? "إدارة المتطوعين والحسابات" : "إدارة فريقي"}
+        description="سجل المتطوعين وبياناتهم وأدوارهم في صحوة."
       />
       <section aria-label="دليل المتطوعين">
         <div className="team-directory-toolbar">
@@ -151,6 +161,7 @@ export default function TeamVolunteers() {
               <RefreshCw size={16} aria-hidden="true" />
               تحديث
             </button>
+            {meta?.canAssign && <button className="team-button team-button-secondary" disabled={loading} onClick={() => {setRecruiting(!recruiting); setCandidateId("");}}>ضم متطوع مسجل</button>}
             {meta?.canCreate !== false && <button
               className="team-button"
               disabled={loading || Boolean(error)}
@@ -164,6 +175,23 @@ export default function TeamVolunteers() {
             </button>}
           </div>
         </div>
+        {recruiting && <form className="platform-card platform-form mb-3" onSubmit={async (e) => {
+          e.preventDefault();
+          const roleId = new FormData(e.currentTarget).get("roleId");
+          if (!candidate || saving) return;
+          setSaving(true); setError("");
+          try {
+            await teamRequest({method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"assign-role",volunteerId:candidate.id,roleId})}, "/api/admin");
+            setNotice("أُضيف التكليف إلى سجل المتطوع."); setRecruiting(false); await load();
+          } catch (reason) { setError(reason instanceof Error ? reason.message : "تعذر ضم المتطوع."); }
+          finally { setSaving(false); }
+        }}>
+          <label className="team-field">المتطوع<select required value={candidateId} onChange={(e) => setCandidateId(e.target.value)}><option value="">اختر متطوعًا</option>
+            {candidates.map((p) => <option key={p.id} value={p.id}>{p.name} · {p.university}</option>)}</select></label>
+          {candidate && <label className="team-field">التكليف<select key={candidate.id} name="roleId" required defaultValue=""><option value="">اختر دورًا</option>
+            {meta?.assignableRoles.filter((r) => candidate.roleIds.includes(r.id)).map((r) => <option key={r.id} value={r.id}>{r.title}</option>)}</select></label>}
+          <button className="team-button" disabled={!candidate || saving}>إضافة إلى الفريق</button>
+        </form>}
         {notice && (
           <p className="team-success" role="status">
             {notice}
@@ -178,6 +206,9 @@ export default function TeamVolunteers() {
           </p>
         )}
         <div className="team-filter-panel team-simple-filters team-volunteer-filters">
+          {meta && <label className="team-field"><span>المركزي والجامعات والفرق</span><select value={group} onChange={(e) => {setGroup(e.target.value); setPage(1);}}>
+            <option value="">الكل</option>{[...new Set(people.flatMap((p) => p.groups || []))].sort().map((g) => <option key={g}>{g}</option>)}
+          </select></label>}
           <label className="team-search">
             <span className="sr-only">البحث في المتطوعين</span>
             <Search size={20} aria-hidden="true" />
@@ -306,6 +337,7 @@ export default function TeamVolunteers() {
       {editing !== undefined && (
         <PersonForm
           person={editing}
+          roles={meta?.assignableRoles}
           volunteers={people}
           onSave={save}
           onClose={() => setEditing(undefined)}

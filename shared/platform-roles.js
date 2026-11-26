@@ -103,7 +103,7 @@ export const ASSIGNABLE_BY = {
   "university-youth-lead": ["internal-activities-lead", "internal-activities-member", "university-volunteer"],
   "university-women-lead": ["internal-activities-lead", "internal-activities-member", "university-volunteer"],
   "internal-activities-lead": ["internal-activities-member"],
-  "central-activities-lead": ["central-activities-member", "central-volunteer"],
+  "central-activities-lead": ["central-activities-member"],
   "university-relations-lead": ["university-relations-member"],
   "central-relations-lead": ["central-relations-member"],
   "media-lead": ["media-member"],

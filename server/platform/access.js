@@ -5,12 +5,23 @@
 // matching deny override wins over every allow.
 import { ASSIGNABLE_BY, CENTRAL, roleById } from "../../shared/platform-roles.js";
 
+const PAGE_ACTIONS = {
+  "volunteers.open": ["volunteers.view", "volunteers.create", "accounts.view"],
+  "events.open": ["events.view", "events.create"],
+  "relations.open": ["relations.view", "relations.create"],
+  "inbox.open": ["forms.review"],
+};
+
 export const PERMISSIONS = [
   { key: "community.view", label: "عرض صفحة أهل صحوة", base: true },
   { key: "directory.view", label: "عرض دليل التعارف (فريق صحوة)", base: true },
   { key: "guide.view", label: "عرض دليل صحوة", base: true },
   { key: "forms.submit", label: "تقديم النماذج والاقتراحات", base: true },
   { key: "profile.edit", label: "تعديل الملف الشخصي", base: true },
+  { key: "volunteers.open", label: "فتح صفحة إدارة الفريق" },
+  { key: "events.open", label: "فتح صفحة الفعاليات" },
+  { key: "relations.open", label: "فتح صفحة العلاقات" },
+  { key: "inbox.open", label: "فتح صفحة الوارد" },
   { key: "volunteers.view", label: "عرض سجل المتطوعين (إدارة)" },
   { key: "volunteers.create", label: "إضافة سجل متطوع" },
   { key: "volunteers.edit", label: "تعديل بيانات متطوع" },
@@ -27,6 +38,11 @@ export const PERMISSIONS = [
   { key: "events.view", label: "عرض سجل الفعاليات" },
   { key: "events.create", label: "إضافة فعالية" },
   { key: "events.edit", label: "تعديل فعالية" },
+  { key: "events.manage", label: "تعديل جميع الفعاليات في النطاق" },
+  { key: "relations.view", label: "قراءة سجل العلاقات" },
+  { key: "relations.create", label: "إضافة علاقة" },
+  { key: "relations.edit", label: "تعديل العلاقات المكلف بها" },
+  { key: "relations.manage", label: "تعديل جميع العلاقات في النطاق" },
   { key: "events.delete", label: "حذف فعالية" },
   { key: "events.publish", label: "تحديد جمهور الفعالية داخليًا" },
   { key: "posts.publish", label: "نشر في أهل صحوة" },
@@ -44,78 +60,34 @@ const U = "@university";
 const S = "@sector";
 const scope = (university = null, sector = null, team = null) => ({ university, sector, team });
 
-// Default permissions per role. Global admin (مسؤول صحوة) holds full control;
-// sector and university leads manage volunteers, accounts, events, and requests
-// strictly within their own scope; activities members can view and add events
-// in their scope (and only edit events they created themselves).
+const managedTeam = ["volunteers.view", "volunteers.create", "volunteers.edit", "roles.assign", "accounts.view", "accounts.create"];
+const activities = ["events.view", "events.create", "events.edit", "events.publish", "posts.publish"];
+const rights = (keys, target) => keys.map((key) => [key, target]);
+const studio = ["studio.use", scope()];
+const central = scope(CENTRAL, S, "central-activities");
+const internal = scope(U, S, "internal-activities");
+const campus = scope(U, S);
+const women = scope(null, "women");
+const media = scope(CENTRAL, null, "media");
+const localRelations = scope(U, null, "university-relations");
+const centralRelations = scope(CENTRAL, null, "central-relations");
+const relationsLead = (target) => [
+  ...rights([...managedTeam, "relations.view", "relations.create", "relations.edit", "relations.manage", "forms.review"], target), studio,
+];
+
 const ROLE_DEFAULTS = {
-  "sahwa-lead": PERMISSIONS.filter((p) => !p.base && !p.hidden).map((p) => [p.key, scope()]),
-  "women-sector-lead": [
-    ["volunteers.view", scope(null, "women")],
-    ["volunteers.create", scope(null, "women")],
-    ["volunteers.edit", scope(null, "women")],
-    ["roles.assign", scope(null, "women")],
-    ["accounts.view", scope(null, "women")],
-    ["accounts.create", scope(null, "women")],
-    ["accounts.reset", scope(null, "women")],
-    ["accounts.suspend", scope(null, "women")],
-    ["events.view", scope(null, "women")],
-    ["events.create", scope(null, "women")],
-    ["events.edit", scope(null, "women")],
-    ["forms.review", scope(null, "women")],
-    ["posts.publish", scope(null, "women")],
-    ["studio.use", scope()],
-  ],
-  "university-youth-lead": [
-    ["volunteers.view", scope(U, S)],
-    ["volunteers.create", scope(U, S)],
-    ["volunteers.edit", scope(U, S)],
-    ["roles.assign", scope(U, S)],
-    ["accounts.view", scope(U, S)],
-    ["accounts.create", scope(U, S)],
-    ["accounts.reset", scope(U, S)],
-    ["accounts.suspend", scope(U, S)],
-    ["events.view", scope(U, S)],
-    ["events.create", scope(U, S)],
-    ["events.edit", scope(U, S)],
-    ["forms.review", scope(U, S)],
-    ["posts.publish", scope(U, S)],
-    ["studio.use", scope()],
-  ],
-  "internal-activities-lead": [
-    ["volunteers.view", scope(U, S, "internal-activities")],
-    ["events.view", scope(U, S)],
-    ["events.create", scope(U, S)],
-    ["events.edit", scope(U, S)],
-    ["studio.use", scope()],
-  ],
-  "internal-activities-member": [
-    ["events.view", scope(U, S)],
-    ["events.create", scope(U, S)],
-  ],
-  "central-activities-lead": [
-    ["volunteers.view", scope(null, S, "central-activities")],
-    ["events.view", scope(CENTRAL, S)],
-    ["events.create", scope(CENTRAL, S)],
-    ["events.edit", scope(CENTRAL, S)],
-    ["studio.use", scope()],
-  ],
-  "central-activities-member": [
-    ["events.view", scope(CENTRAL, S)],
-    ["events.create", scope(CENTRAL, S)],
-  ],
-  "university-relations-lead": [
-    ["volunteers.view", scope(U, null, "university-relations")],
-    ["studio.use", scope()],
-  ],
-  "central-relations-lead": [
-    ["volunteers.view", scope(null, null, "central-relations")],
-    ["studio.use", scope()],
-  ],
-  "media-lead": [
-    ["volunteers.view", scope(null, null, "media")],
-    ["studio.use", scope()],
-  ],
+  "sahwa-lead": PERMISSIONS.filter((p) => !p.base && p.key !== "forms.review").map((p) => [p.key, scope()]).concat([["forms.review", scope(CENTRAL, null, "leadership")]]),
+  "women-sector-lead": [...rights([...managedTeam, ...activities, "forms.review", "accounts.reset", "accounts.suspend"], women), studio],
+  "university-youth-lead": [...rights([...managedTeam, ...activities, "forms.review", "accounts.reset", "accounts.suspend"], campus), studio],
+  "internal-activities-lead": [...rights([...managedTeam, ...activities, "forms.review"], internal), studio],
+  "internal-activities-member": rights(["events.view", "events.create"], internal),
+  "central-activities-lead": [...rights([...managedTeam, ...activities, "forms.review"], central), studio],
+  "central-activities-member": rights(["events.view", "events.create"], central),
+  "university-relations-lead": relationsLead(localRelations),
+  "university-relations-member": [["relations.view", localRelations]],
+  "central-relations-lead": relationsLead(centralRelations),
+  "central-relations-member": [["relations.view", centralRelations]],
+  "media-lead": [...rights([...managedTeam, "forms.review"], media), studio],
 };
 ROLE_DEFAULTS["university-women-lead"] = ROLE_DEFAULTS["university-youth-lead"];
 
@@ -137,17 +109,29 @@ export function buildPermissions(actor) {
   const allow = [];
   const deny = [];
   if (actor.kind === "owner") {
-    for (const p of PERMISSIONS) allow.push({ permission: p.key, ...scope(), source: "owner" });
+    for (const p of PERMISSIONS) allow.push({ permission: p.key, ...(p.key === "forms.review" ? scope(CENTRAL, null, "leadership") : scope()), source: "owner" });
     return { allow, deny };
   }
   for (const key of BASE) allow.push({ permission: key, ...scope(), source: "base" });
-  for (const assignment of actor.assignments || []) {
+  const active = actor.status === "نشط";
+  for (const assignment of active ? actor.assignments || [] : []) {
+    const role = roleById(assignment.roleId);
+    if (!role || (role.scope === "university" && !assignment.university)
+      || (role.sector === "required" && !["youth", "women"].includes(assignment.sector))
+      || (["youth","women"].includes(role.sector) && assignment.sector !== role.sector)) continue;
     for (const [permission, template] of roleDefaults(assignment.roleId))
       allow.push({ permission, ...fill(template, assignment), source: `role:${assignment.roleId}` });
   }
   for (const grant of actor.grants || []) {
+    if (!PERMISSION_KEYS.has(grant.permission) || (!active && !BASE.includes(grant.permission))) continue;
     const entry = { permission: grant.permission, university: grant.university ?? null, sector: grant.sector ?? null, team: grant.team ?? null, source: `grant:${grant.id}` };
     (grant.effect === "deny" ? deny : allow).push(entry);
+  }
+  for (const [permission, actions] of Object.entries(PAGE_ACTIONS)) {
+    for (const entry of allow.filter((a) => actions.includes(a.permission) &&
+      !deny.some((d) => d.permission === a.permission && covers(d, a)))) {
+      allow.push({ ...entry, permission });
+    }
   }
   return { allow, deny };
 }
@@ -186,50 +170,65 @@ export function scopesFor(actor, permission) {
   return actor.permissions.allow.filter((a) => a.permission === permission && !actor.permissions.deny.some((d) => d.permission === permission && covers(d, a)));
 }
 
-export function isGlobalAdmin(actor) {
-  return actor.kind === "owner" || actor.permissions.allow.some((a) => a.permission === "permissions.manage" && a.university === null && a.sector === null && a.team === null)
-    && !actor.permissions.deny.some((d) => d.permission === "permissions.manage");
-}
-
-export function assignableRoles(actor) {
-  if (isGlobalAdmin(actor)) return null; // every role
-  const set = new Set();
-  for (const assignment of actor.assignments || []) for (const roleId of ASSIGNABLE_BY[assignment.roleId] || []) set.add(roleId);
-  return set;
-}
-
-export function mayAssignRole(actor, roleId) {
-  const allowed = assignableRoles(actor);
-  return allowed === null || allowed.has(roleId);
-}
-
-// A non-global actor may only act on accounts of people whose every active
-// role is one the actor may assign, so nobody resets a higher official.
-// Nobody except the platform owner may manage مسؤول صحوة (sahwa-lead).
-export function mayManagePerson(actor, targetAssignments) {
-  if (targetAssignments.some((a) => a.roleId === "sahwa-lead")) {
-    return actor.kind === "owner";
+// Keep creation tied to one actual appointment or grant, including for
+// people who hold several roles. Identical destinations appear only once.
+export function operationScopes(actor, permission) {
+  const scopes = [];
+  for (const a of scopesFor(actor, permission)) {
+    const team = a.team || (a.source.startsWith("role:") ? roleById(a.source.slice(5))?.team : null) || null;
+    const target = { university: a.university, sector: a.sector, team };
+    if (can(actor, permission, target) && !scopes.some((s) => s.university === target.university && s.sector === target.sector && s.team === team)) scopes.push(target);
   }
+  return scopes;
+}
+
+export function denied(actor, permission, target) {
+  return actor.permissions.deny.some((d) => d.permission === permission && scopeMatches(d, target));
+}
+
+export function isGlobalAdmin(actor) {
+  return actor.kind === "owner" || (actor.assignments.some((a) => a.roleId === "sahwa-lead") && can(actor, "permissions.manage"));
+}
+
+export function assignmentTarget(a) {
+  return { university: a.university || CENTRAL, sector: a.sector || null, team: roleById(a.roleId)?.team || null };
+}
+
+export function mayAssignRole(actor, roleId, target) {
+  if (isGlobalAdmin(actor)) return !target || can(actor, "roles.assign", target);
+  return actor.assignments.some((a) => {
+    if (!ASSIGNABLE_BY[a.roleId]?.includes(roleId)) return false;
+    if (!target) return canAny(actor, "roles.assign");
+    const own = roleById(a.roleId);
+    return (own.scope !== "university" || a.university === target.university)
+      && (!a.sector || a.sector === target.sector)
+      && can(actor, "roles.assign", target);
+  });
+}
+
+export function isProtectedLead(assignments) {
+  return assignments.some((a) => a.roleId === "sahwa-lead");
+}
+
+export function mayManagePerson(actor, assignments, permission) {
+  if (isProtectedLead(assignments)) return false;
   if (isGlobalAdmin(actor)) return true;
-  const allowed = assignableRoles(actor);
-  return targetAssignments.every((a) => allowed.has(a.roleId));
+  return assignments.every((a) => {
+    const target = assignmentTarget(a);
+    return mayAssignRole(actor, a.roleId, target) && (!permission || can(actor, permission, target));
+  });
 }
 
 // Scope targets of a volunteer: the base record and each active assignment.
 export function volunteerTargets(volunteer, assignments = []) {
   const base = { university: volunteer.university || null, sector: volunteer.sector || null, team: null };
-  return [
-    base,
-    ...assignments.map((a) => ({
-      university: a.university || (roleById(a.roleId)?.scope === "central" ? CENTRAL : null),
-      sector: a.sector || volunteer.sector || null,
-      team: roleById(a.roleId)?.team || null,
-    })),
-  ];
+  if (!assignments.length) return [base];
+  return assignments.map((a) => ({ ...assignmentTarget(a), sector: a.sector || null }));
+
 }
 
 export function eventTarget(event) {
-  return { university: event.university || CENTRAL, sector: event.sector || null, team: null };
+  return { university: event.university || CENTRAL, sector: event.sector || null, team: event.team || null };
 }
 
 export const ADMIN_PERMISSIONS = ["accounts.view", "permissions.manage", "permissions.delegate", "audit.view", "settings.manage", "forms.manage"];

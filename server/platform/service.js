@@ -10,7 +10,7 @@ import {
   sectorForGender,
   teamKeys,
 } from "../../shared/platform-roles.js";
-import { can, canAny, scopesFor, volunteerTargets } from "./access.js";
+import { can, canAny, scopesFor, volunteerTargets, assignmentTarget, mayAssignRole } from "./access.js";
 
 export function scopeLabel(assignment) {
   const role = roleById(assignment.roleId);
@@ -57,6 +57,14 @@ export async function loadRealm(store, isTest) {
     assignmentsByPerson,
     profiles: new Map(profiles.map((p) => [p.volunteerId, p])),
   };
+}
+
+export function directoryGroups(person, assignments) {
+  if (!assignments.length) return [person.university ? `الجامعات · ${person.university} · دون تكليف` : "دون تكليف"];
+  return [...new Set(assignments.map((a) => {
+    const role = roleById(a.roleId);
+    return [a.university ? `الجامعات · ${a.university}` : "المركزي", TEAM_TITLES[role?.team], SECTORS[a.sector]].filter(Boolean).join(" · ");
+  }))];
 }
 
 function holders(realm, { roleId, sector, university }) {
@@ -132,7 +140,7 @@ export function dashboardData(actor, realm, { eventsThisYear = null } = {}) {
 // Directory visibility. Same sector is visible; the other sector only shows
 // official lead role holders by default (setting "leads"), or nobody ("none").
 // Shared teams (media, relations) show their members to each other.
-function visibleToViewer(viewer, viewerAssignments, person, personAssignments, policy) {
+export function visibleToViewer(viewer, viewerAssignments, person, personAssignments, policy) {
   if (person.id === viewer.id) return true;
   if (!person.sector || !viewer.sector || person.sector === viewer.sector) return true;
   const viewerTeams = new Set(viewerAssignments.flatMap(teamKeys));
@@ -163,7 +171,7 @@ export function directoryCard(realm, person, { leadsOnly = false } = {}) {
 }
 
 export function directoryData(actor, realm, policy = "leads") {
-  if (actor.kind !== "account") return { all: [], university: [], team: [] };
+  if (actor.kind === "owner") return { all: realm.people.filter((p) => p.status === "نشط").map((p) => directoryCard(realm, p)), university: [], team: [], groups: [] };
   const viewer = realm.byId.get(actor.volunteerId);
   const viewerAssignments = realm.assignmentsByPerson.get(actor.volunteerId) || [];
   const viewerTeams = new Set(viewerAssignments.flatMap(teamKeys));
@@ -176,13 +184,24 @@ export function directoryData(actor, realm, policy = "leads") {
     const leadsOnly = p.sector && viewer.sector && p.sector !== viewer.sector && !sameTeam && policy !== "all";
     return directoryCard(realm, p, { leadsOnly });
   };
-  return {
-    all: visible.map(card),
-    university: visible.filter((p) => viewer.university && p.university === viewer.university).map(card),
-    team: visible
-      .filter((p) => p.id !== viewer.id && (realm.assignmentsByPerson.get(p.id) || []).some((a) => teamKeys(a).some((k) => viewerTeams.has(k))))
-      .map(card),
-  };
+  const groups = viewerAssignments.map((assignment) => {
+    const role = roleById(assignment.roleId);
+    const key = teamKeys(assignment)[0];
+    const contacts = resolveContacts(realm, assignment, viewer.id);
+    const managers = new Set(contacts.links.filter((l) => l.relation === "reports" || l.relation === "team").flatMap((l) => l.people.map((p) => p.id)));
+    const memberOf = (person) => (realm.assignmentsByPerson.get(person.id) || []).some((other) => {
+      if (teamKeys(other).includes(key)) return true;
+      return role?.level === "lead" && mayAssignRole({ ...actor, assignments: [assignment] }, other.roleId, assignmentTarget(other));
+    });
+    const peers = visible.filter((p) => p.id !== viewer.id && (managers.has(p.id) || memberOf(p)));
+    return { id: assignment.id, title: roleTitle(assignment.roleId, assignment.sector), scope: scopeLabel(assignment),
+      teamTitle: TEAM_TITLES[role?.team] || "", people: peers.map(card), managerIds: [...managers],
+      canManage: role?.level === "lead" && can(actor, "roles.assign", assignmentTarget(assignment)) && canAny(actor, "volunteers.view") };
+  });
+  const teamIds = new Set(groups.flatMap((g) => g.people.map((p) => p.id)));
+  return { all: visible.map(card), university: visible.filter((p) => viewer.university && p.university === viewer.university).map(card),
+    team: visible.filter((p) => teamIds.has(p.id)).map(card), groups };
+
 }
 
 // A post or event is visible when its audience fields match one of the
@@ -190,65 +209,55 @@ export function directoryData(actor, realm, policy = "leads") {
 export function viewerScopes(actor) {
   if (actor.kind === "owner") return null;
   return [
-    { university: actor.university || null, sector: actor.sector },
-    ...actor.assignments.map((a) => ({ university: a.university || CENTRAL, sector: a.sector || actor.sector })),
+    { university: actor.university || null, sector: actor.sector, team: null },
+    ...actor.assignments.map((a) => ({ ...assignmentTarget(a), sector: a.sector || actor.sector })),
   ];
 }
 
-export function audienceVisible(actor, university, sector) {
+export function audienceVisible(actor, university, sector, team = null) {
+  const target = { university, sector, team };
+  if (!can(actor, "community.view", target)) return false;
   const scopes = viewerScopes(actor);
-  if (scopes === null) return true;
-  return scopes.some((s) => (!university || university === s.university) && (!sector || sector === s.sector));
+  return scopes === null || scopes.some((s) => (!university || university === s.university) && (!sector || sector === s.sector) && (!team || team === s.team));
 }
 
 export function communityData(actor, posts, events, today) {
-  const visiblePosts = posts.filter((p) => audienceVisible(actor, p.audienceUniversity, p.audienceSector));
-  const visibleEvents = events.filter((e) => audienceVisible(actor, e.university, e.sector));
-  const weekAgo = new Date(new Date(`${today}T00:00:00Z`).getTime() - 7 * 86400000).toISOString().slice(0, 10);
-  const byKind = (kind) => visiblePosts.filter((p) => p.kind === kind);
+  const visible = posts.filter((p) => audienceVisible(actor, p.audienceUniversity, p.audienceSector, p.audienceTeam));
+  const visibleEvents = events.filter((e) => {
+    const teamAudience = ["internal-activities", "central-activities"].includes(e.team);
+    return audienceVisible(actor, e.university || (teamAudience ? CENTRAL : null), e.sector, teamAudience ? e.team : null);
+  });
+  const weekStart = new Date(Date.parse(today) - 6 * 86400000).toISOString().slice(0, 10);
+  const inWeek = (day) => day >= weekStart && day <= today;
+  const scopes = scopesFor(actor, "posts.publish").map(({ university, sector, team }) => ({ university, sector, team }));
   return {
-    news: byKind("news"),
-    current: byKind("current"),
-    projects: byKind("project"),
-    achievements: byKind("achievement"),
-    opportunities: byKind("opportunity"),
-    upcomingEvents: visibleEvents.filter((e) => e.eventDate && e.eventDate >= today).reverse(),
-    weekEvents: visibleEvents.filter((e) => e.eventDate && e.eventDate < today && e.eventDate >= weekAgo),
-    canPublish: canAny(actor, "posts.publish"),
-    publishScopes: scopesFor(actor, "posts.publish").map((s) => ({ university: s.university, sector: s.sector })),
+    news: visible.filter((p) => p.kind === "news" || p.kind === "current"),
+    projects: visible.filter((p) => p.kind === "project" && (!p.happensOn || p.happensOn >= today)),
+    achievements: visible.filter((p) => p.kind === "achievement" && inWeek(p.happensOn || new Date(p.createdAt).toLocaleDateString("en-CA", { timeZone: "Europe/Istanbul" }))),
+    upcomingEvents: visibleEvents.filter((e) => e.eventDate >= today && e.progress !== "completed" && e.progress !== "cancelled").sort((a,b) => a.eventDate.localeCompare(b.eventDate)),
+    weekEvents: visibleEvents.filter((e) => inWeek(e.eventDate) && e.progress === "completed"),
+    canPublish: scopes.length > 0,
+    publishScopes: scopes.filter((s,i) => scopes.findIndex((p) => p.university === s.university && p.sector === s.sector && p.team === s.team) === i),
   };
 }
 
-// Flat, uncluttered list of workspace tools available to this actor.
-// Files are hidden until ready; deferred notices appear only for holders of
-// those specific roles (never cluttering the general administrator's workspace).
-export function workspaceToolsFor(actor) {
-  const has = (p) => canAny(actor, p);
-  const tools = [];
-  if (has("volunteers.view"))
-    tools.push({ id: "volunteers", title: "إدارة المتطوعين", description: "عرض وإضافة وتعديل بيانات المتطوعين وأدوارهم في نطاقك.", href: "/team/volunteers" });
-  if (has("events.view"))
-    tools.push({ id: "events", title: "سجل الفعاليات", description: "متابعة الفعاليات وإضافة فعاليات جديدة في نطاقك.", href: "/team/events" });
-  if (has("forms.review") || actor.assignments.some((a) => ["internal-activities-lead", "central-activities-lead", "university-relations-lead", "central-relations-lead", "media-lead", "university-youth-lead", "university-women-lead", "women-sector-lead"].includes(a.roleId)))
-    tools.push({ id: "inbox", title: "الطلبات الواردة", description: "الأفكار والاقتراحات الموجهة لصندوقك.", href: "/team/forms/inbox" });
-  if (has("accounts.view") || has("permissions.manage") || has("permissions.delegate") || has("audit.view") || has("settings.manage") || has("forms.manage"))
-    tools.push({ id: "admin", title: "لوحة التحكم", description: "إدارة الحسابات والصلاحيات والنماذج والإعدادات.", href: "/team/admin" });
-  if (has("studio.use"))
-    tools.push({ id: "studio", title: "استوديو صحوة", description: "القوالب وأدوات التصميم بهوية صحوة.", href: "/studio" });
-  return tools;
-}
-
 export function workspaceData(actor) {
-  const roleIds = new Set(actor.assignments.map((a) => a.roleId));
-  const global = actor.kind === "owner" || roleIds.has("sahwa-lead");
-  const tools = workspaceToolsFor(actor);
-  const DEFERRED = [
-    { id: "finance", title: "المالية", roles: ["finance-lead"] },
-    { id: "archive", title: "التوثيق والأرشفة", roles: ["archive-lead"] },
-    { id: "review", title: "المتابعة والمراجعة والتظلمات", roles: ["review-lead", "review-member"] },
-  ];
-  const later = global ? [] : DEFERRED.filter((c) => c.roles.some((r) => roleIds.has(r))).map(({ id, title }) => ({ id, title }));
-  return { tools, later };
+  const tools = [];
+  const add = (permission, id, title, href, page = permission) => {
+    if (canAny(actor, permission) && canAny(actor, page)) tools.push({ id, title, href });
+  };
+  add("volunteers.view", "volunteers", canAny(actor, "permissions.manage") ? "إدارة المتطوعين والحسابات" : "إدارة فريقي وحساباته", "/team/volunteers", "volunteers.open");
+  if (canAny(actor, "permissions.manage") || canAny(actor, "permissions.delegate"))
+    tools.push({ id: "permissions", title: "إدارة الصلاحيات", href: "/team/admin?tab=grants" });
+  add("events.create", "create-event", "إضافة فعالية", "/team/events?new=1", "events.open");
+  add("events.view", "events", "سجل الفعاليات", "/team/events", "events.open");
+  add("relations.create", "create-relation", "إضافة علاقة", "/team/relations?new=1", "relations.open");
+  add("relations.view", "relations", "سجل العلاقات", "/team/relations", "relations.open");
+  add("forms.manage", "forms", "إدارة النماذج", "/team/admin?tab=forms");
+  add("forms.review", "inbox", "الطلبات الواردة", "/team/forms/inbox", "inbox.open");
+  add("posts.publish", "publish", "نشر مستجد", "/team?publish=1#community");
+  add("studio.use", "studio", "استوديو صحوة", "/studio");
+  return tools;
 }
 
 export { ROLE_CATEGORIES };

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Loader2, Trash2 } from "lucide-react";
+import { TEAM_TITLES } from "../../../shared/platform-roles.js";
 import TeamDialog from "./TeamDialog";
 import type {
   SahwaEvent,
@@ -11,7 +12,7 @@ import type {
 
 const SECTOR: Record<string, string> = { youth: "الشباب", women: "الطالبات" };
 export const scopeLabel = (s: EventScope) =>
-  [s.university === "*central*" ? "مركزي" : s.university || "كل الجامعات", s.sector ? SECTOR[s.sector] : "كل القطاعات"].join(" — ");
+  [s.university === "*central*" ? "مركزي" : s.university || "كل الجامعات", s.sector ? SECTOR[s.sector] : "كل القطاعات", s.team ? TEAM_TITLES[s.team as keyof typeof TEAM_TITLES] : ""].filter(Boolean).join(" — ");
 
 export default function EventForm({
   event,
@@ -29,6 +30,7 @@ export default function EventForm({
   scopes?: EventScope[];
 }) {
   const [scopeIndex, setScopeIndex] = useState(0);
+  const [progress, setProgress] = useState(event?.progress || "");
   const [shared, setShared] = useState(event?.audience === "internal");
   const [input, setInput] = useState<SahwaEventInput>(
     event
@@ -59,7 +61,7 @@ export default function EventForm({
           responsibleId:
             responsible === "__legacy__" ? null : responsible || null,
           preserveLegacyResponsible: responsible === "__legacy__",
-        }, { audience: shared ? "internal" : "private", ...(!event && scopes[scopeIndex] ? { scope: scopes[scopeIndex] } : {}) });
+        }, { progress: progress || null, audience: shared ? "internal" : "private", ...(!event && scopes[scopeIndex] ? { scope: scopes[scopeIndex] } : {}) });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "تعذر حفظ التعديل.");
       setBusy(false);
@@ -169,10 +171,13 @@ export default function EventForm({
                 placeholder="سطر أو اثنان عن الفعالية، إذا احتجت."
               />
             </label>
-            <label className="platform-check team-field-full">
+            <label className="team-field"><span>حالة الفعالية</span>
+              <select value={progress} onChange={(e) => setProgress(e.target.value)}><option value="">غير محددة</option><option value="planned">مخططة</option><option value="completed">مكتملة</option><option value="cancelled">ملغاة</option></select>
+            </label>
+            {(event ? event.canPublish : scopes[scopeIndex]?.canPublish) && <label className="platform-check team-field-full">
               <input type="checkbox" checked={shared} onChange={(e) => setShared(e.target.checked)} />
               مشاركة الفعالية مع أهل صحوة داخليًا (الاسم والتاريخ والمسؤول فقط؛ لا الحضور ولا الملاحظات)
-            </label>
+            </label>}
           </div>
           {error && (
             <p className="team-error mt-5" role="alert">

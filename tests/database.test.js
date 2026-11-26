@@ -133,9 +133,10 @@ test('volunteer roles round-trip through the API, including named committees, fr
   assert.equal(saved.roleId, null);
   assert.equal(saved.responsibility, 'منسق نادي القراءة');
   const listed = (await (await handler(req('team','GET',undefined,cookie))).json()).volunteers;
-  const { assignments, account, allowed, ...plain } = listed[0];
+  const { assignments, account, allowed, groups, ...plain } = listed[0];
   assert.deepEqual([plain], [saved]);
   assert.deepEqual(assignments, []);
+  assert.deepEqual(groups, ["الجامعات · جامعة مرمرة · دون تكليف"]);
   assert.equal(account.status, 'none');
   assert.equal(allowed.edit, true);
   const emptyRole = await handler(req('team', 'PUT', { id: saved.id, revision: saved.revision, person: { ...saved, roleTitle: '' } }, cookie));
