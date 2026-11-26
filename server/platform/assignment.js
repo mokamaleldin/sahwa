@@ -1,6 +1,6 @@
 import { CENTRAL, roleById, sectorForGender } from "../../shared/platform-roles.js";
 import { TeamError } from "../team-data.js";
-import { can, isGlobalAdmin, isProtectedLead, mayAssignRole } from "./access.js";
+import { assignmentManageTargets, can, isGlobalAdmin, isProtectedLead, mayAssignRole } from "./access.js";
 
 // The assignment's own scope, used both for validation and permission checks.
 export function assignmentScope(role, person, input) {
@@ -26,7 +26,6 @@ export function canRecruit(actor, person, assignments, roleId, university = null
   if (role.sector === "required" && !sector) return false;
   const scope = assignmentScope(role, { ...person, sector }, { university });
   if (!isGlobalAdmin(actor) && role.scope === "university" && person.university !== scope.university) return false;
-  const checkTarget = { ...scope.target, sector: scope.target.sector || sector };
-  return (mayAssignRole(actor, roleId, scope.target) && can(actor, "roles.assign", scope.target))
-    || (mayAssignRole(actor, roleId, checkTarget) && can(actor, "roles.assign", checkTarget));
+  const targets = assignmentManageTargets({ roleId, university: scope.university, sector: scope.sector }, { ...person, sector });
+  return targets.some((target) => mayAssignRole(actor, roleId, target) && can(actor, "roles.assign", target));
 }

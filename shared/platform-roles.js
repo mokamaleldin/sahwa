@@ -99,9 +99,9 @@ export const TEAM_TITLES = {
 // may assign roles outside this list. Assigning still needs the
 // `roles.assign` permission over the target scope.
 export const ASSIGNABLE_BY = {
-  "women-sector-lead": ["university-women-lead", "internal-activities-lead", "internal-activities-member", "central-activities-lead", "central-activities-member", "university-relations-lead", "university-relations-member", "university-volunteer", "central-volunteer"],
-  "university-youth-lead": ["internal-activities-lead", "internal-activities-member", "university-relations-lead", "university-relations-member", "university-volunteer"],
-  "university-women-lead": ["internal-activities-lead", "internal-activities-member", "university-relations-lead", "university-relations-member", "university-volunteer"],
+  "women-sector-lead": ["university-women-lead", "internal-activities-lead", "internal-activities-member", "central-activities-lead", "central-activities-member", "university-relations-lead", "university-relations-member", "media-member", "university-volunteer", "central-volunteer"],
+  "university-youth-lead": ["internal-activities-lead", "internal-activities-member", "university-relations-lead", "university-relations-member", "media-member", "university-volunteer"],
+  "university-women-lead": ["internal-activities-lead", "internal-activities-member", "university-relations-lead", "university-relations-member", "media-member", "university-volunteer"],
   "internal-activities-lead": ["internal-activities-member"],
   "central-activities-lead": ["central-activities-member"],
   "university-relations-lead": ["university-relations-member"],

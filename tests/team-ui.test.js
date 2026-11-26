@@ -235,3 +235,45 @@ test('account creation uses email and password only, and volunteer details pin t
     assert.ok(optionsHtml.includes(title), title);
   optionsDom.window.close();
 });
+
+test('dialog backdrop fallback ignores clicks on overflowing child pickers and only closes on direct backdrop clicks', async () => {
+  const dom = new JSDOM('<div id="root"></div>', { url: 'https://sahwa.world/team/volunteers', pretendToBeVisual: true });
+  const previous = { window: globalThis.window, document: globalThis.document, act: globalThis.IS_REACT_ACT_ENVIRONMENT };
+  globalThis.window = dom.window;
+  globalThis.document = dom.window.document;
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  dom.window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+  dom.window.HTMLDialogElement.prototype.close = function () { this.open = false; };
+  const React = await import('react'), { createRoot } = await import('react-dom/client');
+  const { default: TeamDialog } = await at('src/components/Team/TeamDialog.js');
+  const root = createRoot(document.getElementById('root'));
+  let closed = 0;
+  try {
+    await React.act(async () => root.render(
+      h(TeamDialog, { title: 'اختبار', onClose: () => { closed += 1; } },
+        h('select', null, h('option', { value: 'media-member' }, 'عضو الإعلام')),
+      ),
+    ));
+    const dialog = document.querySelector('dialog');
+    const option = document.querySelector('option');
+    dialog.getBoundingClientRect = () => ({ left: 100, right: 500, top: 50, bottom: 300, width: 400, height: 250, x: 100, y: 50, toJSON() {} });
+    const fire = (target, type, x, y) => {
+      const ev = new dom.window.MouseEvent(type, { bubbles: true, clientX: x, clientY: y });
+      target.dispatchEvent(ev);
+    };
+    // Clicking an <option> rendered below dialog.bottom must NOT close the dialog
+    fire(option, 'pointerdown', 250, 420);
+    fire(option, 'pointerup', 250, 420);
+    assert.equal(closed, 0, 'overflowing select option click must not dismiss dialog');
+    // Clicking directly on the backdrop outside the dialog box DOES close it
+    fire(dialog, 'pointerdown', 20, 20);
+    fire(dialog, 'pointerup', 20, 20);
+    assert.equal(closed, 1, 'direct backdrop click closes dialog');
+  } finally {
+    await React.act(async () => root.unmount());
+    dom.window.close();
+    globalThis.window = previous.window;
+    globalThis.document = previous.document;
+    globalThis.IS_REACT_ACT_ENVIRONMENT = previous.act;
+  }
+});

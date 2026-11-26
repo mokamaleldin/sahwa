@@ -526,15 +526,22 @@ test("campus leads see and manage all campus-sector volunteers (including Media 
   const asmaaCard = ghinaData.volunteers.find((v) => v.id === asmaa.id);
   assert.equal(asmaaCard.allowed.edit, true, "Ghina can edit Asmaa's basic campus info");
   assert.equal(asmaaCard.allowed.createAccount, true, "Ghina can create an account for Asmaa");
-  assert.equal(asmaaCard.assignments[0].canChange, false, "Ghina cannot end Asmaa's central Media role");
-  // Ghina can assign campus relations to female student at Istinye
+  assert.equal(asmaaCard.assignments[0].canChange, true, "Ghina can manage media-member on her own campus/sector volunteers");
+  // Ghina can assign campus relations & media-member to female students at Istinye
   assert.equal((await admin(req("admin", "POST", { action: "assign-role", volunteerId: unassigned.id, roleId: "university-relations-member", university: "استنيا" }, ghina.cookie))).status, 200);
+  assert.equal((await admin(req("admin", "POST", { action: "assign-role", volunteerId: unassigned.id, roleId: "media-member" }, ghina.cookie))).status, 200);
+  // Ghina can add a new female volunteer at Istinye directly as media-member, but never media-lead or central relations or other campuses/sectors
+  assert.equal((await team(req("team", "POST", { person: person({ fullName: "طالبة إعلام جديدة", university: "استنيا", gender: "بنت" }), assignment: { roleId: "media-member" } }, ghina.cookie))).status, 201);
+  const otherCampusWoman = await member("طالبة بيلجي", { university: "بيلجي", gender: "بنت", account: false });
+  assert.equal((await admin(req("admin", "POST", { action: "assign-role", volunteerId: otherCampusWoman.id, roleId: "media-member" }, ghina.cookie))).status, 403, "campus lead cannot assign media-member to another campus");
+  assert.equal((await admin(req("admin", "POST", { action: "assign-role", volunteerId: unassigned.id, roleId: "media-lead" }, ghina.cookie))).status, 403, "campus lead cannot assign media-lead");
+  assert.equal((await admin(req("admin", "POST", { action: "assign-role", volunteerId: unassigned.id, roleId: "central-relations-member" }, ghina.cookie))).status, 403, "campus lead cannot assign central relations");
   // Ghina can create account for Asmaa
   assert.equal((await admin(req("admin", "POST", { action: "create-account", volunteerId: asmaa.id }, ghina.cookie))).status, 201);
 
   // Media lead sees ONLY media members in volunteers, and can recruit existing volunteers across sectors
   const mediaData = await (await team(req("team", "GET", undefined, mediaLead.cookie))).json();
-  assert.deepEqual(mediaData.volunteers.map((v) => v.fullName).sort(), ["أسماء", "مسؤول الإعلام"].sort());
+  assert.deepEqual(mediaData.volunteers.map((v) => v.fullName).sort(), ["أسماء", "طالبة إعلام جديدة", "مسؤول الإعلام", "نور"].sort());
   assert.ok(mediaData.candidates.some((c) => c.id === fatima.id && c.roleIds.includes("media-member")), "Media lead can recruit existing campus member without duplicating");
 
   // Central Relations lead sees university relations members across campuses

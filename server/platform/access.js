@@ -218,6 +218,21 @@ export function assignmentTarget(a) {
   return { university: a.university || CENTRAL, sector: a.sector || null, team: roleById(a.roleId)?.team || null };
 }
 
+// Candidate scopes under which an actor may assign or manage a volunteer's role.
+// For central, sector-neutral member roles (e.g. `media-member`), campus and
+// sector leads may also assign/manage them for volunteers in their own campus/sector.
+export function assignmentManageTargets(assignment, person = null) {
+  const base = assignmentTarget(assignment);
+  const role = roleById(assignment.roleId);
+  const personSector = person ? (person.sector ?? null) : null;
+  const targets = [base];
+  if (!base.sector && personSector) targets.push({ ...base, sector: personSector });
+  if (person && role?.scope === "central" && role.sector === "none" && role.level === "member") {
+    targets.push({ university: person.university || null, sector: personSector, team: role.team });
+  }
+  return targets;
+}
+
 export function mayAssignRole(actor, roleId, target) {
   if (isGlobalAdmin(actor)) return !target || can(actor, "roles.assign", target);
   return actor.assignments.some((a) => {
@@ -238,10 +253,11 @@ export function mayManagePerson(actor, assignments, permission, person = null) {
   if (isProtectedLead(assignments)) return false;
   if (isGlobalAdmin(actor)) return true;
   const personSector = person ? (person.sector ?? null) : null;
-  const coversAll = assignments.every((a) => {
-    const target = { ...assignmentTarget(a), sector: a.sector || personSector || null };
-    return mayAssignRole(actor, a.roleId, target) && (!permission || can(actor, permission, target));
-  });
+  const coversAll = assignments.every((a) =>
+    assignmentManageTargets(a, person).some(
+      (target) => mayAssignRole(actor, a.roleId, target) && (!permission || can(actor, permission, target)),
+    ),
+  );
   if (coversAll) return true;
   // Campus and sector leads may edit basic records or create initial accounts
   // for non-higher volunteers belonging to their campus/sector (for example,

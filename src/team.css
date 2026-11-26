@@ -51,6 +51,7 @@
   .team-field select::picker-icon { color:var(--brand-primary); transition:rotate .18s ease; }
   .team-field select:open::picker-icon { rotate:180deg; }
   .team-field select::picker(select) { margin-block:6px; padding:6px; min-inline-size:anchor-size(width); max-block-size:min(320px,45dvh); overflow-y:auto; overscroll-behavior:contain; border:1px solid var(--line); border-radius:14px; background:var(--bg-base); color:var(--text-main); box-shadow:0 14px 30px -14px rgba(53,14,21,.24); text-align:start; }
+  .team-dialog .team-field select::picker(select) { max-block-size:min(260px,38dvh); }
   .team-field select optgroup { margin:8px 0 0; padding:6px 6px 4px; border:1px solid #75202614; border-radius:10px; background:#75202606; color:var(--brand-primary); font-size:12px; font-weight:700; text-align:start; }
   .team-field select optgroup:first-of-type { margin-top:6px; }
   .team-field select option { display:flex; align-items:center; justify-content:flex-start; gap:8px; min-height:38px; padding:7px 12px; border-radius:8px; background:transparent; color:var(--text-main); font-size:13.5px; font-weight:400; text-align:start; cursor:pointer; }

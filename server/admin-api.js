@@ -7,6 +7,7 @@ import {
   PERMISSIONS,
   PERMISSION_KEYS,
   NON_DELEGABLE,
+  assignmentManageTargets,
   can,
   canAny,
   covers,
@@ -201,9 +202,8 @@ export function createAdminHandler(teamStore, platformStore) {
         const next = { volunteerId: person.id, roleId: role.id, university: scope.university, sector: scope.sector, startsOn, assignedBy: label, source: isTest ? "test" : "manual" };
         if (action === "replace-role") {
           const previous = assignments.find((a) => a.id === input.assignmentId);
-          const prevTarget = previous && { university: previous.university || CENTRAL, sector: previous.sector, team: roleById(previous.roleId)?.team };
-          const prevPersonTarget = prevTarget && { ...prevTarget, sector: prevTarget.sector || person.sector || null };
-          if (!previous || (!mayAssignRole(actor, previous.roleId, prevTarget) && !mayAssignRole(actor, previous.roleId, prevPersonTarget))) throw forbidden();
+          const canReplace = previous && assignmentManageTargets(previous, person).some((t) => mayAssignRole(actor, previous.roleId, t));
+          if (!canReplace) throw forbidden();
           if (startsOn && startsOn > new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Istanbul" })) throw new TeamError("اختر تاريخ اليوم أو تاريخًا سابقًا لاستبدال التكليف.");
           const id = await platformStore.replaceAssignment(previous.id, next);
           await audit("role.replace", person.id, { previous: previous.id, assignmentId: id, roleId: role.id });
@@ -220,11 +220,9 @@ export function createAdminHandler(teamStore, platformStore) {
         const { person, assignments } = await loadTarget(platformStore, actor, assignment.volunteerId);
         if (isProtectedLead(assignments)) throw forbidden();
         if (person.id === actor.volunteerId) throw forbidden("لا يمكنك تعديل أدوارك بنفسك.");
-        const role = roleById(assignment.roleId);
-        const target = { university: assignment.university || CENTRAL, sector: assignment.sector, team: role?.team || null };
-        const personTarget = { ...target, sector: target.sector || person.sector || null };
-        const allowedEnd = (mayAssignRole(actor, assignment.roleId, target) && can(actor, "roles.assign", target))
-          || (mayAssignRole(actor, assignment.roleId, personTarget) && can(actor, "roles.assign", personTarget));
+        const allowedEnd = assignmentManageTargets(assignment, person).some(
+          (t) => mayAssignRole(actor, assignment.roleId, t) && can(actor, "roles.assign", t),
+        );
         if (!allowedEnd) throw forbidden("إنهاء هذا الدور خارج نطاق صلاحياتك.");
         await platformStore.endAssignment(assignment.id, label);
         await audit("role.end", person.id, { roleId: assignment.roleId, university: assignment.university, sector: assignment.sector });
