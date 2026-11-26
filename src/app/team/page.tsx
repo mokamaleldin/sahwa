@@ -4,7 +4,7 @@ import { canAny } from "../../../server/platform/access.js";
 import { loadRealm, dashboardData, communityData } from "../../../server/platform/service.js";
 import { todayInIstanbul } from "../../../shared/team-options.js";
 import { roleById } from "../../../shared/platform-roles.js";
-import { roleText, boardText, decisionTexts, generalVolunteerText } from "../../lib/roleTexts";
+import { roleText, generalVolunteerText } from "../../lib/roleTexts";
 import Dashboard from "../../views/platform/Dashboard";
 import Community from "../../views/platform/Community";
 
@@ -21,7 +21,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ p
   const today = todayInIstanbul();
   const community = communityData(actor, posts, events, today);
   const boardMember = roles.some((r: {roleId: string}) => ["sahwa-lead", "women-sector-lead", "central-activities-lead", "media-lead", "central-relations-lead"].includes(r.roleId));
-  return <Dashboard name={actor.fullName} roles={roles} owner={actor.kind === "owner"} today={today} board={boardMember ? boardText() : null} general={generalVolunteerText()} decisions={decisionTexts(boardMember)}
+  return <Dashboard name={actor.fullName} roles={roles} owner={actor.kind === "owner"} boardMember={boardMember} general={generalVolunteerText()}
     reviewActivity={actor.kind === "account" && actor.status !== "نشط" && actor.assignments.some((a: {roleId: string}) => roleById(a.roleId)?.level === "lead")}>
     {(feed || community.canPublish) && <Community key={params.publish || "read"} data={community} showFeed={feed} publish={params.publish === "1"} />}
   </Dashboard>;

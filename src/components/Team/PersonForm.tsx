@@ -2,6 +2,7 @@ import { useId, useState, type FormEvent } from "react";
 import { Loader2 } from "lucide-react";
 import TeamDialog from "./TeamDialog";
 import TeamComboField, { type ComboGroup, type ComboOption } from "./TeamComboField";
+import OrganizationalRoleOptions from "./OrganizationalRoleOptions";
 import VolunteerRoleField from "./VolunteerRoleField";
 import { roleForTitle, roleForVolunteer, volunteerRoleLabel } from "../../../shared/volunteer-roles.js";
 import {
@@ -11,7 +12,6 @@ import {
 } from "../../lib/team";
 import {
   GENDERS,
-  PERSON_STATUSES,
   UNIVERSITIES,
   STUDY_YEARS,
   MAJORS,
@@ -107,8 +107,8 @@ export default function PersonForm({
   }
   const statuses = [
     ...new Set([
-      ...PERSON_STATUSES,
-      ...(person?.status && !PERSON_STATUSES.includes(person.status) ? [person.status] : []),
+      "نشط", "غير نشط",
+      ...(person?.status && !["نشط", "غير نشط"].includes(person.status) ? [person.status] : []),
     ]),
   ];
   const studyYears = [
@@ -180,7 +180,7 @@ export default function PersonForm({
                   name="gender"
                   required
                   value={input.gender}
-                  onChange={(e) => update("gender", e.target.value)}
+                  onChange={(e) => { update("gender", e.target.value); setAssignmentRoleId(""); }}
                 >
                   <option value="">اختر</option>
                   {GENDERS.map((gender) => (
@@ -190,8 +190,7 @@ export default function PersonForm({
               </div>
               {roles ? (!person && <label className="team-field"><span>الدور التنظيمي *</span>
                 <select required value={assignmentRoleId} onChange={(e) => setAssignmentRoleId(e.target.value)}>
-                  <option value="">اختر الدور</option>{roles.filter((r) => (r.sector !== "women" || input.gender === "بنت") && (r.sector !== "youth" || input.gender === "شاب"))
-                    .map((r) => <option key={r.id} value={r.id}>{input.gender === "بنت" && r.titleWomen ? r.titleWomen : r.title}</option>)}
+                  <option value="">اختر الدور</option><OrganizationalRoleOptions roles={roles} women={input.gender === "بنت"} genderKnown={Boolean(input.gender)} />
                 </select></label>) : <VolunteerRoleField
                 value={roleTitle}
                 onChange={(title) => {

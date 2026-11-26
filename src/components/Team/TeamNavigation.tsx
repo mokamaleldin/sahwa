@@ -20,7 +20,7 @@ function isWorkspacePath(path: string) {
 
 function WorkspaceNavigation({ tools, pathname }: { tools: {id: string; title: string; href: string}[]; pathname: string }) {
   const params = useSearchParams();
-  return <nav className="workspace-bar" aria-label="مساحة العمل">{tools.map((tool) => {
+  return <nav className="workspace-bar" aria-label="مساحة العمل">{[{id:"home",title:"الرئيسية",href:"/team/workspace"}, ...tools].map((tool) => {
     const [path, query] = tool.href.split("?");
     const active = (pathname === path || (tool.id === "studio" && pathname === "/studio")) &&
       (!query ? (path !== "/team/relations" || params.get("new") !== "1") : [...new URLSearchParams(query)].every(([k,v]) => params.get(k) === v));

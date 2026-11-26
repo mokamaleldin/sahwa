@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import type { GovernanceBlock } from "../../data/sahwaGovernance";
-import type { StructureEntry, StructureChapter } from "../../lib/structureParser";
+import Link from "next/link";
+import type { StructureEntry } from "../../lib/structureParser";
 import type { ReactNode } from "react";
 import { GuideGovernanceBlocks } from "../../components/Team/GuideGovernance";
 import type { RoleText } from "../../lib/roleTexts";
@@ -68,53 +69,36 @@ function RoleCard({ role }: { role: DashboardRole }) {
         <div className="platform-contacts">
           {role.contacts.links.map((link, i) => <div className="platform-contact" key={i}>
             <span className="platform-contact-label">{link.label}<br /><small>{RELATION_TITLES[link.relation]}</small></span>
-            <span><span className="platform-muted block">«{link.phrase}»</span>{link.vacant ? <span className="platform-contact-vacant">{link.targetTitle}: غير معيّن حاليًا</span> : <People people={link.people} />}</span>
+            <span>{link.vacant ? <span className="platform-contact-vacant">{link.targetTitle}: غير معيّن حاليًا</span> : <People people={link.people} />}</span>
           </div>)}
-          {role.contacts.followers.length > 0 && <div className="platform-contact"><span className="platform-contact-label">يتبعونك وفق نصوص أدوارهم</span><People people={role.contacts.followers} /></div>}
+          {role.contacts.followers.length > 0 && <div className="platform-contact"><span className="platform-contact-label">المسؤولون التابعون لك</span><People people={role.contacts.followers} /></div>}
           {!role.contacts.links.length && !role.contacts.followers.length && <p className="platform-muted">لا توجد جهات تواصل مسجلة لهذا التكليف.</p>}
         </div>
         <p className="platform-muted mt-2">التنسيق والتواصل لا يعنيان التبعية، ولا يخوّلان التكليف.</p>
       </section>
     </div>
-    <div className="dashboard-topic-grid">{remaining.map((section, i) => <Topic key={i} {...section} wide={/مسؤوليات|الموقع الإداري/.test(section.title)} />)}</div>
+    <details className="platform-details dashboard-topic"><summary>تفاصيل دوري ومسؤولياتي وصلاحياتي<ChevronDown size={18} /></summary><div>{remaining.map((section, i) => <section key={i} className="mb-5"><h4 className="font-heading text-brand-primary">{section.title}</h4><GuideGovernanceBlocks blocks={section.blocks} /></section>)}<Link href="/team/guide" className="team-text-button">الرجوع إلى لائحة صحوة</Link></div></details>
     {role.text.status && <p className="platform-muted">حالة النص في اللائحة: {role.text.status}</p>}
     {role.text.needsApproval && <p className="platform-notice">لا يوجد نص مستقل لهذا الدور في الباب الثاني؛ يُعرض تعريف المتطوع العام إلى أن يُعتمد الربط.</p>}
     {role.text.pendingTitles.length > 0 && <p className="platform-notice">نص «{role.text.pendingTitles.join("، ")}» محفوظ في لائحة صحوة، ويُربط بهذه البطاقة بعد اعتماد الربط.</p>}
   </article>;
 }
 
-const WELCOME_MESSAGES = [
-  { verse: "وَتَعَاوَنُوا عَلَى الْبِرِّ وَالتَّقْوَىٰ", source: "المائدة: ٢", reflection: "حين تبذل وقتك في بناء بيئة صالحة للشباب، فأنت تشارك في عمل لا يحمله فرد وحده. بارك الله في وقتك وعملك." },
-  { verse: "فَمَن يَعْمَلْ مِثْقَالَ ذَرَّةٍ خَيْرًا يَرَهُ", source: "الزلزلة: ٧", reflection: "لا تستصغر مهمة تؤديها بإخلاص، فكل جهد نافع له أثر، وإن لم ترَ نتيجته اليوم." },
-  { verse: "وَأَن لَّيْسَ لِلْإِنسَانِ إِلَّا مَا سَعَىٰ", source: "النجم: ٣٩", reflection: "سعيك في ثغر الشباب يبدأ بالنية الصالحة وإتقان ما بين يديك، لا بكثرة الكلام عن العمل." },
-  { verse: "وَمَا تُقَدِّمُوا لِأَنفُسِكُم مِّنْ خَيْرٍ تَجِدُوهُ عِندَ اللَّهِ", source: "البقرة: ١١٠", reflection: "ما تقدمه من وقت وجهد في الخير ليس ضائعًا. نسأل الله أن يتقبل منك ويبارك في عملك." },
-  { verse: "إِنَّمَا الْمُؤْمِنُونَ إِخْوَةٌ", source: "الحجرات: ١٠", reflection: "من أجمل ما نبنيه في صحوة أخوة صادقة، نعين فيها بعضنا على الخير ونحفظ فيها حق بعضنا." },
-  { verse: "وَقُلِ اعْمَلُوا فَسَيَرَى اللَّهُ عَمَلَكُمْ", source: "التوبة: ١٠٥", reflection: "اجعل الإخلاص والإتقان أساس عملك، سواء كنت في مقدمة الفريق أو تعمل بعيدًا عن الأنظار." },
-  { verse: "إِنَّ اللَّهَ لَا يُضِيعُ أَجْرَ الْمُحْسِنِينَ", source: "التوبة: ١٢٠", reflection: "ليس كل أثر يُقاس بالأرقام؛ قد تترك كلمة أو موقف أو مساعدة أثرًا في حياة إنسان." },
-];
-
 interface Props {
-  name: string;
-  roles: DashboardRole[];
-  owner: boolean;
-  reviewActivity: boolean;
-  today: string;
-  board: StructureEntry | null;
-  general: StructureEntry | null;
-  decisions: StructureChapter[];
-  children: ReactNode;
+  name: string; roles: DashboardRole[]; owner: boolean; reviewActivity: boolean;
+  boardMember: boolean; general: StructureEntry | null; children: ReactNode;
 }
-export default function Dashboard({ name, roles, owner, reviewActivity, today, board, general, decisions, children }: Props) {
-  const day = Math.floor(Date.parse(today) / 86400000);
-  const message = WELCOME_MESSAGES[((day % WELCOME_MESSAGES.length) + WELCOME_MESSAGES.length) % WELCOME_MESSAGES.length];
+export default function Dashboard({ name, roles, owner, reviewActivity, boardMember, general, children }: Props) {
   return <>
     <section className="platform-welcome-hero dashboard-welcome">
       <div className="platform-welcome-main">
-        <h1 className="font-heading">أهلًا بك يا {name.trim().split(/\s+/)[0]} في صحوة</h1>
-        <p>شكرًا على تطوعك في صحوة، جزاك الله خيرًا على وقتك وجهدك.</p>
+        <h1 className="font-heading">أهلًا بك يا {name.trim().split(/\s+/)[0]} في صحوتك</h1>
+        <p>جزاك الله خيرًا على ما تبذله من وقتك وجهدك في صحوة</p>
         <div className="dashboard-daily-message">
-          <p className="dashboard-verse">﴿{message.verse}﴾ <small>({message.source})</small></p>
-          <p>{message.reflection}</p>
+          <p><strong>قال رسول الله ﷺ:</strong></p>
+          <p className="dashboard-verse">«فوالله لأن يهدي الله بك رجلًا واحدًا خير لك من حمر النعم» — متفق عليه.</p>
+          <p>لعل لقاءً ساهمت في إقامته، أو كلمةً ساعدت في إيصالها، أو جهدًا بذلته ولم يلتفت إليه أحد، يكون سببًا في صلاح إنسان، وأثرًا يمتد إلى ما بعد عمرك.</p>
+          <p className="mt-2">بارك الله في وقتك وعملك، وتقبّل منك.</p>
         </div>
       </div>
     </section>
@@ -124,8 +108,7 @@ export default function Dashboard({ name, roles, owner, reviewActivity, today, b
       {reviewActivity && <p className="platform-notice">صلاحيات العمل معلّقة بسبب حالة النشاط. يُرجى مراجعة تكليفك مع مسؤولك.</p>}
       {roles.length ? <div className="dashboard-roles">{roles.map((role) => <RoleCard key={role.id} role={role} />)}</div>
         : <><p className="platform-muted">{owner ? "حساب إدارة المنصة" : "لم يُسند إليك دور تنظيمي بعد."}</p>{!owner && general && <Topic title={general.title} blocks={general.blocks} wide />}</>}
+      <div className="platform-row mt-4"><Link className="team-text-button" href="/team/guide">{boardMember ? "مجلس الإدارة المركزي واتخاذ القرار — لائحة صحوة" : "الهيكل وقواعد اتخاذ القرار — لائحة صحوة"}</Link></div>
     </section>
-    {board && <section><h2 className="platform-section-title font-heading">{board.title}</h2><div className="platform-card dashboard-topic-grid">{topicSections(board.blocks).map((topic,i) => <Topic key={i} {...topic} wide={/مسؤوليات|تكوين/.test(topic.title)} />)}</div></section>}
-    {decisions.length > 0 && <section><h2 className="platform-section-title font-heading">اتخاذ القرار والتفويض — الباب الثالث</h2><p className="platform-muted">النصوص التنظيمية من لائحة صحوة؛ تبقى البنود المقترحة غير نافذة قبل اعتمادها.</p><div className="dashboard-topic-grid">{decisions.map((chapter) => <Topic key={chapter.id} title={chapter.label} blocks={chapter.blocks} wide={chapter.id === "3.1"} />)}</div></section>}
   </>;
 }

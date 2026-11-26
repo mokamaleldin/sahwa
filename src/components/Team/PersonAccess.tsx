@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { KeyRound, Loader2, Plus, X } from "lucide-react";
 import { teamRequest, type Volunteer, type VolunteerMeta } from "../../lib/team";
 import { UNIVERSITIES } from "../../../shared/team-options.js";
+import OrganizationalRoleOptions from "./OrganizationalRoleOptions";
 import CreateAccountForm from "./CreateAccountForm";
 
 const ACCOUNT_STATUS: Record<string, string> = { none: "لا يوجد حساب دخول", active: "فعال", suspended: "موقوف" };
@@ -71,7 +72,7 @@ export default function PersonAccess({ person, meta, onChanged }: { person: Volu
           <label className="team-field"><span>الدور</span>
             <select value={roleId} onChange={(e) => setRoleId(e.target.value)} required>
               <option value="">اختر من التصنيفات المعتمدة</option>
-              {meta.assignableRoles.filter((r) => !(r.sector === "youth" && women) && !(r.sector === "women" && !women)).map((r) => <option key={r.id} value={r.id}>{women && r.titleWomen ? r.titleWomen : r.title}{r.deferred ? " (مساحة عمل مؤجلة)" : ""}</option>)}
+              <OrganizationalRoleOptions roles={meta.assignableRoles} women={women} />
             </select>
           </label>
           {role?.scope === "university" && (
