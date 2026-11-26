@@ -5,8 +5,7 @@ import { requireActor, forbidden, validateNewPassword, createAccountSession } fr
 import { RESERVED } from "./platform/usernames.js";
 import { ageFromBirthDate } from "../shared/team-options.js";
 import { can, canAny } from "./platform/access.js";
-import { audienceVisible } from "./platform/service.js";
-import { TEAM_TITLES } from "../shared/platform-roles.js";
+import { audienceVisible, presentCommunityPost, mayRemoveCommunityPost } from "./platform/service.js";
 
 const HANDLE = /^[a-z0-9][a-z0-9._-]{2,29}$/;
 const OPTIONAL_PUBLIC = ["bio", "university", "major", "work", "skills", "participation", "links", "roles"];
@@ -122,18 +121,14 @@ export function createPostsHandler(teamStore, platformStore) {
       if (request.method === "GET") {
         if (!canAny(actor, "community.view")) throw forbidden();
         const posts = (await platformStore.posts(actor.isTest)).filter((p) => audienceVisible(actor, p.audienceUniversity, p.audienceSector, p.audienceTeam) && KINDS.includes(p.kind));
-        return json({ posts });
+        return json({ posts: posts.map(p => presentCommunityPost(actor, p)) });
       }
       const input = await readInput(request, 8 * 1024);
       if (request.method === "POST") {
         const kind = KINDS.includes(input.kind) ? input.kind : null;
         if (!kind) throw new TeamError("اختر نوع المنشور.");
-        const audienceUniversity = typeof input.audienceUniversity === "string" && input.audienceUniversity.trim() ? input.audienceUniversity.trim().slice(0, 120) : null;
-        const audienceSector = input.audienceSector === "youth" || input.audienceSector === "women" ? input.audienceSector : null;
-        const audienceTeam = input.audienceTeam || null;
-        if (audienceTeam && !Object.hasOwn(TEAM_TITLES, audienceTeam)) throw new TeamError("اختر فريقًا صحيحًا.");
-        if (!can(actor, "posts.publish", { university: audienceUniversity, sector: audienceSector, team: audienceTeam }))
-          throw forbidden("حدد جمهورًا داخل نطاق صلاحيتك للنشر.");
+        if (!canAny(actor, "posts.publish")) throw forbidden();
+        const audienceUniversity = null, audienceSector = null, audienceTeam = null;
         const title = clean(input.title, 160, "العنوان");
         if (!title) throw new TeamError("أدخل العنوان.");
         const link = input.link ? safeLink(String(input.link).trim()) : "";
@@ -157,7 +152,7 @@ export function createPostsHandler(teamStore, platformStore) {
       if (request.method === "DELETE") {
         const post = await platformStore.post(String(input.id || ""));
         if (!post || post.isTest !== actor.isTest) throw new TeamError("المنشور غير موجود.", 404);
-        if (!can(actor, "posts.publish", { university: post.audienceUniversity, sector: post.audienceSector, team: post.audienceTeam }))
+        if (!mayRemoveCommunityPost(actor, post))
           throw forbidden();
         await platformStore.archivePost(post.id, Number(input.revision));
         return json({ archived: true });

@@ -181,6 +181,11 @@ export default function TeamForms() {
     void load();
   }, [load]);
 
+  async function hideRequest(id:string) {
+    if (!confirm("حذف الطلب من قائمة طلباتي؟ يبقى لدى الجهة المختصة إذا سبق إرساله.")) return;
+    try { await teamRequest({method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})},"/api/forms"); setData(d=>d ? {...d,submissions:d.submissions.filter(s=>s.id!==id)} : d); }
+    catch(reason) { setError(reason instanceof Error ? reason.message : "تعذر حذف الطلب."); }
+  }
   const externalComplaints = TEAM_FORMS.find((f) => f.id === "feedback");
   const isOwner = user?.kind === "owner";
 
@@ -287,7 +292,7 @@ export default function TeamForms() {
                       <article key={s.id} className="platform-item">
                         <div className="platform-row">
                           <h4>{s.title}</h4>
-                          <span className="platform-chip">{s.statusLabel}</span>
+                          <div className="flex items-center gap-2"><span className="platform-chip">{s.statusLabel}</span><button type="button" className="team-text-button" onClick={()=>void hideRequest(s.id)}>حذف</button></div>
                         </div>
                         <p>
                           {new Date(s.createdAt).toLocaleDateString("ar-EG")} · إلى: {s.routeTitle}

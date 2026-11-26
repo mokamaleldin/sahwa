@@ -258,3 +258,12 @@
   .dashboard-role-columns,.dashboard-topic-grid { grid-template-columns:minmax(0,1fr); }
   .dashboard-roles .platform-role-card { padding:16px; }
 }
+
+.personal-public-profile { max-width:860px; padding:clamp(18px,4vw,40px); }
+.personal-profile-hero { display:flex; align-items:center; gap:20px; padding:24px; margin:-8px -8px 24px; border-radius:18px; background:#7520260a; border:1px solid var(--line); }
+.personal-profile-headline { color:var(--brand-primary)!important; font-size:16px!important; }
+.personal-profile-details { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.personal-profile-details > div { border:1px solid var(--line); border-radius:12px; padding:14px; overflow-wrap:anywhere; }
+.personal-profile-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.personal-profile-preview { border:1px solid var(--line); padding:18px; border-radius:16px; background:#fff9; }
+@media(max-width:640px){ .personal-profile-details{grid-template-columns:1fr;} .personal-profile-hero{padding:14px;gap:12px;} }

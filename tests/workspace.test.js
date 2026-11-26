@@ -59,6 +59,6 @@ test("community keeps confirmed completions in the seven Istanbul calendar days 
     event("start","2026-11-20","completed"),event("old","2026-11-19","completed"),event("today","2026-11-26","completed"),
     event("missed","2026-11-24","planned"),event("legacy","2026-11-24",null),event("cancel","2026-11-29","cancelled"),event("soon","2026-11-28","planned"),
     event("other","2026-11-26","completed","internal-activities")],"2026-11-26");
-  assert.deepEqual(feed.weekEvents.map((e) => e.id),["start","today"]);
+  assert.deepEqual(feed.weekEvents.map((e) => e.id),["start","today","other"]);
   assert.deepEqual(feed.upcomingEvents.map((e) => e.id),["soon"]);
 });

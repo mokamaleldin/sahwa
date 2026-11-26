@@ -222,9 +222,17 @@ export function audienceVisible(actor, university, sector, team = null) {
   return scopes === null || scopes.some((s) => (!university || university === s.university) && (!sector || sector === s.sector) && (!team || team === s.team));
 }
 
+export function mayRemoveCommunityPost(actor, post) {
+  return isGlobalAdmin(actor) || (Boolean(actor.volunteerId) && actor.volunteerId === post.authorVolunteer && canAny(actor, "posts.publish"));
+}
+export function presentCommunityPost(actor, post) {
+  const { authorLabel, authorVolunteer, ...safe } = post;
+  return { ...safe, canDelete: mayRemoveCommunityPost(actor, post) };
+}
 export function communityData(actor, posts, events, today) {
-  const visible = posts.filter((p) => audienceVisible(actor, p.audienceUniversity, p.audienceSector, p.audienceTeam));
+  const visible = posts.filter((p) => audienceVisible(actor, p.audienceUniversity, p.audienceSector, p.audienceTeam)).map(p => presentCommunityPost(actor, p));
   const visibleEvents = events.filter((e) => {
+    if (e.audience === "private") return false;
     const teamAudience = ["internal-activities", "central-activities"].includes(e.team);
     return audienceVisible(actor, e.university || (teamAudience ? CENTRAL : null), e.sector, teamAudience ? e.team : null);
   });
@@ -235,8 +243,9 @@ export function communityData(actor, posts, events, today) {
     news: visible.filter((p) => p.kind === "news" || p.kind === "current"),
     projects: visible.filter((p) => p.kind === "project" && (!p.happensOn || p.happensOn >= today)),
     achievements: visible.filter((p) => p.kind === "achievement" && inWeek(p.happensOn || new Date(p.createdAt).toLocaleDateString("en-CA", { timeZone: "Europe/Istanbul" }))),
-    upcomingEvents: visibleEvents.filter((e) => e.eventDate >= today && e.progress !== "completed" && e.progress !== "cancelled").sort((a,b) => a.eventDate.localeCompare(b.eventDate)),
-    weekEvents: visibleEvents.filter((e) => inWeek(e.eventDate) && e.progress === "completed"),
+    upcomingEvents: visibleEvents.filter((e) => e.eventDate >= today && e.progress !== "completed" && e.progress !== "cancelled").sort((a,b) => a.eventDate.localeCompare(b.eventDate)).map(({id,title,eventDate,university,sector})=>({id,title,eventDate,university,sector,responsible:""})),
+    weekEvents: events.filter((e) => inWeek(e.eventDate) && e.progress === "completed" && canAny(actor, "community.view")).map(({id,title,eventDate,university,sector})=>({id,title,eventDate,university,sector,responsible:""})),
+    manageablePosts: posts.filter(p=>mayRemoveCommunityPost(actor,p)).map(p=>presentCommunityPost(actor,p)),
     canPublish: scopes.length > 0,
     publishScopes: scopes.filter((s,i) => scopes.findIndex((p) => p.university === s.university && p.sector === s.sector && p.team === s.team) === i),
   };

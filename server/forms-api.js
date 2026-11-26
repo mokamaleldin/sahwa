@@ -143,6 +143,12 @@ export function createFormsHandler(teamStore, platformStore) {
         });
       }
       const input = await readInput(request, 32 * 1024);
+      if (request.method === "DELETE") {
+        if (actor.kind !== "account" || !can(actor,"forms.submit",{})) throw forbidden();
+        if (typeof input.id !== "string" || !UUID.test(input.id)) throw new TeamError("اختر طلبًا صحيحًا.");
+        await platformStore.hideOwnSubmission(input.id, actor.volunteerId, actor.isTest);
+        return json({ hidden: true });
+      }
       if (request.method === "POST") {
         if (actor.kind !== "account") throw forbidden("قدّم الطلبات من حسابك الشخصي.");
         if (!can(actor, "forms.submit", {})) throw forbidden();
