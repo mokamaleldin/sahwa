@@ -68,7 +68,7 @@ function RoleCard({ role }: { role: DashboardRole }) {
         <h4 className="font-heading">مع من أتواصل؟</h4>
         <div className="platform-contacts">
           {role.contacts.links.map((link, i) => <div className="platform-contact" key={i}>
-            <span className="platform-contact-label">{link.label}<br /><small>{RELATION_TITLES[link.relation]}</small></span>
+            <span className="platform-contact-label">{link.relation === "reports" ? "مسؤولي المباشر" : RELATION_TITLES[link.relation] || link.label}</span>
             <span>{link.vacant ? <span className="platform-contact-vacant">{link.targetTitle}: غير معيّن حاليًا</span> : <People people={link.people} />}</span>
           </div>)}
           {role.contacts.followers.length > 0 && <div className="platform-contact"><span className="platform-contact-label">المسؤولون التابعون لك</span><People people={role.contacts.followers} /></div>}

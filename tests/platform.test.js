@@ -293,6 +293,9 @@ test("forms route by the submitter's real record; inactive and complaint forms a
   assert.equal(save.status, 409);
   const mine = await (await forms(req("forms", "GET", undefined, volunteer.cookie))).json();
   assert.equal(mine.submissions.length, 1);
+  assert.equal((await forms(req("forms","DELETE",{id:mine.submissions[0].id},volunteer.cookie))).status,200);
+  assert.equal((await (await forms(req("forms","GET",undefined,volunteer.cookie))).json()).submissions.length,0);
+  assert.ok(await platform.submission(mine.submissions[0].id), "recipient retains the record");
 });
 
 test("profiles: unique handles, private by default, public projection only, unpublish blocks access", async () => {

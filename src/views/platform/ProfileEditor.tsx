@@ -10,7 +10,7 @@ interface Profile {
   links: { label: string; url: string }[]; directoryFields: string[]; publicFields: string[]; isPublic: boolean;
 }
 const EMPTY: Profile = { handle: "", displayName: "", bio: "", work: "", skills: "", participation: "", links: [], directoryFields: ["major", "bio", "skills"], publicFields: [], isPublic: false };
-const PUBLIC_OPTIONS = [["bio", "النبذة"], ["university", "الجامعة"], ["major", "التخصص"], ["work", "العمل أو المجال المهني"], ["skills", "المهارات والاهتمامات"], ["participation", "مشاركتي في صحوة"], ["links", "روابط التواصل"], ["roles", "الصفة التنظيمية"]] as const;
+const PUBLIC_OPTIONS = [["bio", "النبذة"], ["university", "الجامعة"], ["major", "التخصص"], ["work", "العمل أو المجال المهني"], ["skills", "المهارات والاهتمامات"], ["participation", "مشاركتي في صحوة"], ["links", "روابط أعمالي وحساباتي"], ["roles", "الصفة التنظيمية"]] as const;
 
 export default function ProfileEditor({
   initial,
@@ -30,7 +30,7 @@ export default function ProfileEditor({
   const [notice, setNotice] = useState("");
   const [preview, setPreview] = useState(true);
   const set = <K extends keyof Profile>(key: K, value: Profile[K]) => setProfile((p) => ({ ...p, [key]: value }));
-  const toggle = (key: "publicFields" | "directoryFields", field: string) => set(key, profile[key].includes(field) ? profile[key].filter((f) => f !== field) : [...profile[key], field]);
+  const toggle = (key: "publicFields", field: string) => set(key, profile[key].includes(field) ? profile[key].filter((f) => f !== field) : [...profile[key], field]);
   const url = profile.handle ? `https://sahwa.world/u/${profile.handle}` : "";
   async function save() {
     setBusy(true);

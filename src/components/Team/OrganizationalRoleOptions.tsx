@@ -10,6 +10,6 @@ export default function OrganizationalRoleOptions({ roles, women, genderKnown = 
   const all = [...groups, {title:"أدوار أخرى",ids:allowed.filter(r=>!groups.some(g=>g.ids.includes(r.id))).map(r=>r.id)}];
   return <>{all.map(g=>{
     const options = g.ids.flatMap(id=>allowed.filter(r=>r.id===id));
-    return options.length > 0 && <optgroup key={g.title} label={g.title}>{options.map(r=><option key={r.id} value={r.id}>{r.id==="university-volunteer" ? (women?"متطوعة عامة":"متطوع عام") : women && r.titleWomen ? r.titleWomen : r.title}</option>)}</optgroup>;
+    return options.length > 0 && <optgroup key={g.title} label={g.title}>{options.map(r=><option key={r.id} value={r.id}>{r.id==="university-volunteer" ? (women?"متطوعة عامة":"متطوع عام") : (women && r.titleWomen ? r.titleWomen : r.title) + (r.deferred ? " (مؤجل)" : "")}</option>)}</optgroup>;
   })}</>;
 }
