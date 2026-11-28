@@ -82,7 +82,7 @@ const ROLE_DEFAULTS = {
     studio,
   ],
   "university-youth-lead": [
-    ...rights([...managedTeam, ...activities, "events.manage", "events.delete", "forms.review", "accounts.reset", "accounts.suspend"], campus),
+    ...rights([...managedTeam, ...activities, "volunteers.archive", "events.manage", "events.delete", "forms.review", "accounts.reset", "accounts.suspend"], campus),
     studio,
   ],
   "internal-activities-lead": [
@@ -281,6 +281,23 @@ export function mayManagePerson(actor, assignments, permission, person = null) {
     return true;
   }
   return false;
+}
+
+// Archival removes the entire volunteer record from active work, so a campus
+// lead must manage all active/scheduled assignments, not merely see the person.
+export function mayArchiveVolunteer(actor, person, assignments) {
+  if (person.id === actor.volunteerId || isProtectedLead(assignments)) return false;
+  const targets = volunteerTargets(person, assignments);
+  if (!can(actor, "volunteers.archive", targets)) return false;
+  if (isGlobalAdmin(actor)) return true;
+  const base = targets[0];
+  if (!can(actor, "volunteers.archive", base)) {
+    // Retain explicit team-scoped archival grants; campus defaults alone
+    // must not archive a person whose home campus lies outside their scope.
+    const granted = scopesFor(actor, "volunteers.archive").some(a => a.source.startsWith("grant:") && scopeMatches(a, targets));
+    if (!granted) return false;
+  }
+  return mayManagePerson(actor, assignments);
 }
 
 // Scope targets of a volunteer: always keep the person's campus/sector base

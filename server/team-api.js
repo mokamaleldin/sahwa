@@ -1,7 +1,7 @@
 import { recordVersion, validatePerson, TeamError } from "./team-data.js";
 import { json, readInput, errorResponse } from "./http.js";
 import { requireActor, forbidden } from "./platform/session.js";
-import { can, canAny, mayAssignRole, mayManagePerson, volunteerTargets, scopesFor, isGlobalAdmin, buildPermissions, assignmentTarget, assignmentManageTargets } from "./platform/access.js";
+import { can, canAny, mayAssignRole, mayManagePerson, mayArchiveVolunteer, volunteerTargets, scopesFor, isGlobalAdmin, buildPermissions, assignmentTarget, assignmentManageTargets } from "./platform/access.js";
 import { assignmentScope, canRecruit } from "./platform/assignment.js";
 import { describeAssignment, directoryGroups, visibleToViewer } from "./platform/service.js";
 import { PLATFORM_ROLES, LEGACY_ROLE_MAP, roleById, sectorForGender } from "../shared/platform-roles.js";
@@ -25,7 +25,9 @@ export function createTeamHandler(store, platformStore) {
       if (!canAny(actor, "volunteers.view")) throw forbidden("هذا القسم متاح للمسؤولين المخولين فقط.");
       const realmTest = actor.isTest;
       if (request.method === "GET") {
-        const [people, assignments, policy] = await Promise.all([platformStore.people(realmTest), platformStore.assignments(realmTest), platformStore.setting("directory.crossSector", "leads")]);
+        const [people, assignments, policy, archiveAssignments] = await Promise.all([platformStore.people(realmTest), platformStore.assignments(realmTest), platformStore.setting("directory.crossSector", "leads"), canAny(actor, "volunteers.archive") ? platformStore.assignments(realmTest, { includeScheduled: true }) : []]);
+        const archiveByPerson = new Map();
+        for (const a of archiveAssignments) archiveByPerson.set(a.volunteerId, [...(archiveByPerson.get(a.volunteerId) || []), a]);
         const byPerson = new Map();
         for (const a of assignments) byPerson.set(a.volunteerId, [...(byPerson.get(a.volunteerId) || []), a]);
         const candidates = [];
@@ -45,7 +47,6 @@ export function createTeamHandler(store, platformStore) {
           }
           if (!can(actor, "volunteers.view", targets)) continue;
           const manageEdit = p.id !== actor.volunteerId && mayManagePerson(actor, own, "volunteers.edit", personWithSector);
-          const manageStrict = p.id !== actor.volunteerId && mayManagePerson(actor, own);
           const { accountId, username, accountEmail, accountStatus, mustChangePassword, lastLoginAt, lastResetAt, temporaryExpiresAt, accountCreatedAt, isTest, archivedAt, ...person } = p;
           const assignTargetCheck = (a) =>
             assignmentManageTargets(a, personWithSector).some((t) => mayAssignRole(actor, a.roleId, t));
@@ -63,7 +64,7 @@ export function createTeamHandler(store, platformStore) {
               : null,
             allowed: {
               edit: canEditPerson,
-              archive: manageStrict && can(actor, "volunteers.archive", targets),
+              archive: mayArchiveVolunteer(actor, personWithSector, archiveByPerson.get(p.id) || own),
               assign: canAssignPerson,
               createAccount: canCreateAcc,
               resetAccount: p.id !== actor.volunteerId && mayManagePerson(actor, own, "accounts.reset", personWithSector) && can(actor, "accounts.reset", targets),
@@ -121,14 +122,14 @@ export function createTeamHandler(store, platformStore) {
       const own = await platformStore.assignmentsOf(existing.id, { includeScheduled: true });
       const targets = targetsOf(existing, own);
       if (request.method === "DELETE") {
-        if (existing.id === actor.volunteerId || !mayManagePerson(actor, own) || !can(actor, "volunteers.archive", targets)) throw forbidden();
+        if (!mayArchiveVolunteer(actor, { ...existing, sector: sectorForGender(existing.gender) }, own)) throw forbidden("يمكنك حذف متطوعي نطاقك فقط ممن لا يحملون تكليفات خارج صلاحياتك.");
         await platformStore.archivePerson(input.id, input.revision);
         await platformStore.audit({ actor: actor.fullName, actorVolunteer: actor.volunteerId, action: "volunteer.archive", target: existing.id, isTest: realmTest });
         return json({ deleted: true, archived: true });
       }
       const existingWithSector = { ...existing, sector: sectorForGender(existing.gender) };
       if (existing.id === actor.volunteerId || !mayManagePerson(actor, own, "volunteers.edit", existingWithSector) || !can(actor, "volunteers.edit", targets)) throw forbidden();
-      const person = validatePerson(input.person);
+      const person = validatePerson(input.person, { existing });
       let legacyChange;
       if (person.responsibility !== existing.responsibility || person.team !== existing.team || (Object.hasOwn(person, "roleId") && person.roleId !== existing.roleId)) {
         const oldMatch = LEGACY_ROLE_MAP[existing.roleId];

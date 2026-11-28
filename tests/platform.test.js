@@ -141,7 +141,7 @@ test("delegation only passes on permissions the delegator holds, within scope", 
   const helper = await member("مساعد", { account: false });
   assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "events.view", university: "استنيا", sector: "youth", reason: "تنسيق" }, lead.cookie))).status, 200);
   assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "events.view", university: "بيلجي", sector: "youth", reason: "x" }, lead.cookie))).status, 403);
-  assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "volunteers.archive", university: "استنيا", sector: "youth", reason: "x" }, lead.cookie))).status, 403, "not held");
+  assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "volunteers.archive", university: "بيلجي", sector: "youth", reason: "x" }, lead.cookie))).status, 403, "outside archival scope");
   assert.equal((await admin(req("admin", "POST", { action: "grant", volunteerId: helper.id, permission: "permissions.manage", reason: "x" }, lead.cookie))).status, 403);
 });
 
@@ -668,4 +668,35 @@ test("the relations ledger reuses accepted bank proposals and limits changes to 
   const inbox = await (await forms(req("forms?view=inbox","GET",undefined,central.cookie))).json();
   assert.equal(inbox.submissions.length,1);
   assert.equal((await rows(central.cookie)).length,2);
+});
+
+test("campus leads can create, rename and archive local volunteers while preserving organizational assignments", async () => {
+  const { team } = handlers();
+  for (const [gender, sector, roleId] of [["شاب","youth","university-youth-lead"],["بنت","women","university-women-lead"]]) {
+    const lead = await member("مسؤول " + sector, {gender,roles:[{roleId,university:"استنيا",sector}]});
+    const created = await team(req("team","POST",{person:person({fullName:"متطوع جديد "+sector,gender,team:"",responsibility:""}),assignment:{roleId:"university-volunteer"}},lead.cookie));
+    assert.equal(created.status,201);
+    const local = (await created.json()).person;
+    // Reproduce migrated records whose legacy role text is blank although
+    // the current role is stored in sahwa_role_assignments.
+    await db.query("UPDATE sahwa_volunteers SET team='', responsibility='', role_id=NULL WHERE id=$1",[local.id]);
+    const listed = (await (await team(req("team","GET",undefined,lead.cookie))).json()).volunteers.find(p=>p.id===local.id);
+    assert.ok(listed.allowed.edit && listed.allowed.archive);
+    const before = await platform.assignmentsOf(local.id);
+    const update = await team(req("team","PUT",{id:local.id,revision:listed.revision,person:{...listed,fullName:"الاسم المعدل "+sector}},lead.cookie));
+    assert.equal(update.status,200);
+    const edited = (await update.json()).person;
+    assert.equal(edited.fullName,"الاسم المعدل "+sector);
+    assert.deepEqual(await platform.assignmentsOf(local.id),before);
+    const outsider = await member("جامعة أخرى "+sector,{university:"بيلجي",gender,account:false});
+    const outsiderRow = await platform.person(outsider.id);
+    assert.equal((await team(req("team","DELETE",{id:outsider.id,revision:outsiderRow.revision},lead.cookie))).status,403);
+    const peer = await member("مسؤول مركزي "+sector,{gender,account:false,roles:[{roleId:"central-activities-lead",sector}]});
+    const peerRow = await platform.person(peer.id);
+    assert.equal((await team(req("team","DELETE",{id:peer.id,revision:peerRow.revision},lead.cookie))).status,403);
+    const own = await platform.person(lead.id);
+    assert.equal((await team(req("team","DELETE",{id:lead.id,revision:own.revision},lead.cookie))).status,403);
+    assert.equal((await team(req("team","DELETE",{id:local.id,revision:edited.revision},lead.cookie))).status,200);
+    assert.ok((await platform.person(local.id)).archivedAt);
+  }
 });

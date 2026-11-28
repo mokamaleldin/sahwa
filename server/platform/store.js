@@ -98,10 +98,10 @@ export function createPlatformStore(getClient = getSql) {
         [isTest],
       );
     },
-    async assignments(isTest, { includeEnded = false } = {}) {
+    async assignments(isTest, { includeEnded = false, includeScheduled = false } = {}) {
       return query(
         `SELECT ${ASSIGNMENT} FROM sahwa_role_assignments a JOIN sahwa_volunteers v ON v.id=a.volunteer_id
-         WHERE v.is_test=$1 AND v.archived_at IS NULL ${includeEnded ? "" : "AND a.status='active' AND (a.starts_on IS NULL OR a.starts_on<=CURRENT_DATE) AND (a.ends_on IS NULL OR a.ends_on>=CURRENT_DATE)"} ORDER BY a.created_at`,
+         WHERE v.is_test=$1 AND v.archived_at IS NULL ${includeEnded ? "" : `AND a.status='active' ${includeScheduled ? "" : "AND (a.starts_on IS NULL OR a.starts_on<=CURRENT_DATE)"} AND (a.ends_on IS NULL OR a.ends_on>=CURRENT_DATE)`} ORDER BY a.created_at`,
         [isTest],
       );
     },
