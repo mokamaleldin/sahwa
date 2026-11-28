@@ -700,3 +700,25 @@ test("campus leads can create, rename and archive local volunteers while preserv
     assert.ok((await platform.person(local.id)).archivedAt);
   }
 });
+
+test("campus archival includes locally managed neutral roles but protects unrelated and scheduled assignments", async () => {
+  const { team } = handlers();
+  const lead = await member("مسؤولة الجامعة", { gender:"بنت", roles:[{roleId:"university-women-lead",university:"استنيا",sector:"women"}] });
+  const localMedia = await member("متطوعة إعلام", {gender:"بنت",account:false,roles:[{roleId:"media-member"}]});
+  const localRelations = await member("متطوعة علاقات", {gender:"بنت",account:false,roles:[{roleId:"university-relations-member",university:"استنيا"}]});
+  const central = await member("متطوعة مركزية", {gender:"بنت",account:false,roles:[{roleId:"central-activities-member",sector:"women"}]});
+  const otherSector = await member("متطوع شباب", {account:false});
+  const scheduled = await member("تكليف مستقبلي", {gender:"بنت",account:false});
+  await platform.addAssignment({volunteerId:scheduled.id,roleId:"central-activities-lead",university:null,sector:"women",startsOn:"2099-01-01",assignedBy:"test"});
+  const data = (await (await team(req("team","GET",undefined,lead.cookie))).json()).volunteers;
+  for(const v of [localMedia,localRelations]) {
+    const row=data.find(p=>p.id===v.id);
+    assert.equal(row.allowed.archive,true);
+    assert.equal((await team(req("team","DELETE",{id:v.id,revision:row.revision},lead.cookie))).status,200);
+  }
+  for(const v of [central,otherSector,scheduled]) {
+    const row=await platform.person(v.id);
+    assert.notEqual(data.find(p=>p.id===v.id)?.allowed.archive,true);
+    assert.equal((await team(req("team","DELETE",{id:v.id,revision:row.revision},lead.cookie))).status,403);
+  }
+});

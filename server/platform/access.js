@@ -297,7 +297,7 @@ export function mayArchiveVolunteer(actor, person, assignments) {
     const granted = scopesFor(actor, "volunteers.archive").some(a => a.source.startsWith("grant:") && scopeMatches(a, targets));
     if (!granted) return false;
   }
-  return mayManagePerson(actor, assignments);
+  return mayManagePerson(actor, assignments, "volunteers.archive", person);
 }
 
 // Scope targets of a volunteer: always keep the person's campus/sector base
