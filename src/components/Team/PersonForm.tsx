@@ -210,6 +210,7 @@ export default function PersonForm({
                   setRoleTitle(title);
                 }}
               />}
+              {roles && person && <div className="team-field team-field-full"><span>الدور التنظيمي الحالي</span><p className="platform-muted">{person.assignments?.map(a => a.title).join("، ") || "لا يوجد تكليف تنظيمي حالي"} — يُعدّل من تبويب الأدوار، ولا يلزم تغييره عند تعديل الاسم أو البيانات.</p></div>}
               {!roles && selectedRole?.detailLabel && (
                 detailSuggestions.length > 0 ? (
                   <TeamComboField

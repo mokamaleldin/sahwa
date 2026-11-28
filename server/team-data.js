@@ -33,7 +33,14 @@ export function date(value, label, required = false) {
     throw new TeamError(`أدخل ${label} صحيحًا.`);
   return value;
 }
-function volunteerAssignment(input) {
+function volunteerAssignment(input, existing = null) {
+  // Editing basic fields must not require legacy role text when organizational
+  // assignments are stored separately. Preserve the exact stored legacy fields.
+  if (existing && !Object.hasOwn(input, "roleTitle") &&
+      (!Object.hasOwn(input, "team") || input.team === existing.team) &&
+      (!Object.hasOwn(input, "responsibility") || input.responsibility === existing.responsibility)) {
+    return { team: existing.team || "", responsibility: existing.responsibility || "" };
+  }
   if (!Object.hasOwn(input, "roleTitle")) {
     const team = text(input, "team", "الفريق", 80);
     const responsibility = text(input, "responsibility", "الدور في صحوة", 120);
@@ -48,7 +55,7 @@ function volunteerAssignment(input) {
     team: role?.detailLabel ? text(input, "roleDetail", role.detailLabel, 80, true) : "",
   };
 }
-export function validatePerson(input) {
+export function validatePerson(input, { existing = null } = {}) {
   if (!input || typeof input !== "object" || Array.isArray(input))
     throw new TeamError("بيانات المتطوع غير صالحة.");
   const person = {
@@ -60,7 +67,7 @@ export function validatePerson(input) {
       text(input, "birthDate", "تاريخ الميلاد", 10),
       "تاريخ ميلاد",
     ),
-    ...volunteerAssignment(input),
+    ...volunteerAssignment(input, existing),
     phone: text(input, "phone", "رقم الهاتف", 30).replace(/[٠-٩]/g, (digit) =>
       String(digit.charCodeAt(0) - 1632),
     ),
